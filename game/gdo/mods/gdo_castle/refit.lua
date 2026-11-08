@@ -553,7 +553,7 @@ local function build()
     minetest.log("action","[GDO] Château des Brumes v5 généré : donjon, tours rondes, porte monumentale et parvis.")
 end
 
-local storage = nil -- stockage unique géré par le chargeur du mod
+local storage = gdo_castle_storage
 local VERSION = 8
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
