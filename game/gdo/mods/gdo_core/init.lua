@@ -143,6 +143,7 @@ local function build_starting_area()
 end
 
 minetest.register_entity("gdo:gerard", {
+    static_save = false,
     initial_properties = {
         physical = true,
         collide_with_objects = true,
@@ -153,7 +154,6 @@ minetest.register_entity("gdo:gerard", {
         makes_footstep_sound = false,
         nametag = "Gérard le Magnifique",
         nametag_color = "#ffe08a",
-        static_save = false,
     },
 
     on_activate = function(self)
