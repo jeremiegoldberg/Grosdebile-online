@@ -38,17 +38,17 @@ end
 -- Palette autonome : unknown_node.png est fourni par le moteur Luanti.
 -- Aucun PNG externe n'est référencé : les textures sont générées par modificateurs.
 local palette = {
-    refit_stone = "[fill:16x16:#78869b",
-    refit_trim = "[fill:16x16:#d8d2c5",
-    refit_roof = "[fill:16x16:#182b50",
-    refit_floor = "[fill:16x16:#c4bba8",
-    refit_wood = "[fill:16x16:#75472d",
-    refit_glass = "[fill:16x16:#70c9e8",
-    refit_gold = "[fill:16x16:#e4b83e",
-    refit_grass = "[fill:16x16:#4b8b3d",
-    refit_path = "[fill:16x16:#777b83",
-    refit_leaves = "[fill:16x16:#397b39",
-    refit_water = "[fill:16x16:#319bd1",
+    refit_stone = "unknown_node.png^[colorize:#78869b:255",
+    refit_trim = "unknown_node.png^[colorize:#d8d2c5:255",
+    refit_roof = "unknown_node.png^[colorize:#182b50:255",
+    refit_floor = "unknown_node.png^[colorize:#c4bba8:255",
+    refit_wood = "unknown_node.png^[colorize:#75472d:255",
+    refit_glass = "unknown_node.png^[colorize:#70c9e8:180",
+    refit_gold = "unknown_node.png^[colorize:#e4b83e:255",
+    refit_grass = "unknown_node.png^[colorize:#4b8b3d:255",
+    refit_path = "unknown_node.png^[colorize:#777b83:255",
+    refit_leaves = "unknown_node.png^[colorize:#397b39:255",
+    refit_water = "unknown_node.png^[colorize:#319bd1:180",
 }
 local function register_texture_node(name, desc, groups, extra)
     local short = name:match(":(.+)$")
@@ -63,7 +63,7 @@ register_texture_node(M.roof,"Ardoise bleu nuit")
 register_texture_node(M.floor,"Dallage clair")
 register_texture_node(M.wood,"Chêne ancien",{choppy=2})
 register_texture_node(M.glass,"Vitrail royal",{cracky=2},{
-    paramtype="light", sunlight_propagates=true, light_source=5, drawtype="glasslike",
+    paramtype="light", sunlight_propagates=true, light_source=14, drawtype="glasslike",
     use_texture_alpha="blend",})
 register_texture_node(M.gold,"Ornement royal")
 register_texture_node(M.grass,"Gazon du parvis",{crumbly=3,soil=1})
@@ -554,11 +554,11 @@ local function build()
         minetest.fix_light({x=-40,y=OFFSET+1,z=-52},{x=40,y=OFFSET+60,z=64})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Château des Brumes v12 généré : textures unies compatibles Luanti.")
+    minetest.log("action","[GDO] Château des Brumes v13 généré : textures colorisées compatibles Luanti 5.4.")
 end
 
 local storage = gdo_castle_storage
-local VERSION = 12
+local VERSION = 13
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
@@ -571,11 +571,11 @@ minetest.register_on_mods_loaded(function()
 end)
 
 minetest.register_chatcommand("refairechateau",{
-    description="Reconstruit le Château des Brumes (version architecturale 12)",
+    description="Reconstruit le Château des Brumes (version architecturale 13)",
     privs={server=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
-        return true,"Château des Brumes v12 reconstruit. Retourne sur le parvis sud."
+        return true,"Château des Brumes v13 reconstruit. Retourne sur le parvis sud."
     end,
 })
