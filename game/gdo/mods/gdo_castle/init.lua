@@ -15,15 +15,15 @@ gdo_zones.register_readonly_zone({
 })
 
 local nodes = {
-    stone = "gdo:castle_stone",
-    dark = "gdo:castle_dark_stone",
-    roof = "gdo:castle_roof",
-    wood = "gdo:castle_wood",
-    glass = "gdo:castle_glass",
-    floor = "gdo:castle_floor",
-    gold = "gdo:castle_gold",
-    marble = "gdo:castle_marble",
-    copper = "gdo:castle_copper",
+    stone = "gdo_castle:castle_stone",
+    dark = "gdo_castle:castle_dark_stone",
+    roof = "gdo_castle:castle_roof",
+    wood = "gdo_castle:castle_wood",
+    glass = "gdo_castle:castle_glass",
+    floor = "gdo_castle:castle_floor",
+    gold = "gdo_castle:castle_gold",
+    marble = "gdo_castle:castle_marble",
+    copper = "gdo_castle:castle_copper",
 }
 
 local function register_block(name, description, texture, groups, paramtype)
@@ -54,11 +54,11 @@ register_block(nodes.marble, "Marbre de cérémonie",
     "unknown_node.png^[colorize:#d9d0b8:220", {cracky = 2})
 register_block(nodes.copper, "Cuivre patiné",
     "unknown_node.png^[colorize:#9b6846:220", {cracky = 2})
-register_block("gdo:castle_books", "Rayonnage de grimoires",
+register_block("gdo_castle:castle_books", "Rayonnage de grimoires",
     "unknown_node.png^[colorize:#70452e:220", {choppy = 2})
-register_block("gdo:castle_banner", "Bannière du Nawak",
+register_block("gdo_castle:castle_banner", "Bannière du Nawak",
     "unknown_node.png^[colorize:#8c2638:220", {choppy = 2})
-minetest.register_node("gdo:castle_lantern", {
+minetest.register_node("gdo_castle:castle_lantern", {
     description = S("Lanterne enchantée"),
     tiles = {"unknown_node.png^[colorize:#ffd36a:220"},
     groups = {cracky = 2},
@@ -66,7 +66,7 @@ minetest.register_node("gdo:castle_lantern", {
     paramtype = "light",
     sunlight_propagates = true,
 })
-minetest.register_node("gdo:castle_noticeboard", {
+minetest.register_node("gdo_castle:castle_noticeboard", {
     description = S("Panneau officiel du château"),
     tiles = {"unknown_node.png^[colorize:#8b623e:220"},
     groups = {choppy = 2},
@@ -256,13 +256,13 @@ local function build_great_hall()
     for z = -30, -14, 8 do
         cuboid(-29, 11, z, -25, 11, z, nodes.copper)
         for x = -29, -25, 2 do
-            put(x, 10, z, "gdo:castle_lantern")
+            put(x, 10, z, "gdo_castle:castle_lantern")
         end
     end
     -- Vitraux et bannières de la maison du Nawak.
     for z = -30, -14, 8 do
         put(-34, 7, z, nodes.glass)
-        put(-34, 8, z, "gdo:castle_banner")
+        put(-34, 8, z, "gdo_castle:castle_banner")
     end
 end
 
@@ -270,12 +270,12 @@ local function build_library()
     -- Bibliothèque à deux niveaux, rayonnages hauts et passerelles.
     floor_rect(22, -35, 32, -11, 2, nodes.marble)
     for z = -34, -13, 3 do
-        cuboid(22, 3, z, 22, 7, z + 1, "gdo:castle_books")
-        cuboid(32, 3, z, 32, 7, z + 1, "gdo:castle_books")
+        cuboid(22, 3, z, 22, 7, z + 1, "gdo_castle:castle_books")
+        cuboid(32, 3, z, 32, 7, z + 1, "gdo_castle:castle_books")
     end
     for x = 24, 30, 3 do
-        cuboid(x, 3, -34, x + 1, 7, -34, "gdo:castle_books")
-        cuboid(x, 3, -12, x + 1, 7, -12, "gdo:castle_books")
+        cuboid(x, 3, -34, x + 1, 7, -34, "gdo_castle:castle_books")
+        cuboid(x, 3, -12, x + 1, 7, -12, "gdo_castle:castle_books")
     end
     floor_rect(23, -33, 31, -13, 9, nodes.wood)
     -- Tables de consultation au rez-de-chaussée.
@@ -288,9 +288,9 @@ local function build_library()
     for y = 3, 8 do
         put(30 - (y - 3), y, -23, nodes.wood)
     end
-    put(27, 10, -23, "gdo:castle_lantern")
-    put(27, 10, -18, "gdo:castle_lantern")
-    put(27, 10, -28, "gdo:castle_lantern")
+    put(27, 10, -23, "gdo_castle:castle_lantern")
+    put(27, 10, -18, "gdo_castle:castle_lantern")
+    put(27, 10, -28, "gdo_castle:castle_lantern")
 end
 
 local function build_keep_interior()
@@ -308,18 +308,18 @@ local function build_keep_interior()
     cuboid(-5, 18, -22, 5, 18, -14, nodes.wood)
     for x = -4, 4, 2 do put(x, 19, -18, nodes.gold) end
     for x = -10, 10, 4 do
-        put(x, 18, -12, "gdo:castle_lantern")
+        put(x, 18, -12, "gdo_castle:castle_lantern")
     end
     -- Bannières monumentales dans le hall central.
     for y = 4, 7 do
-        put(-15, y, -25, "gdo:castle_banner")
-        put(15, y, -25, "gdo:castle_banner")
+        put(-15, y, -25, "gdo_castle:castle_banner")
+        put(15, y, -25, "gdo_castle:castle_banner")
     end
     -- Portes intérieures stylisées et éclairage des paliers.
-    put(-8, 4, -10, "gdo:castle_lantern")
-    put(8, 4, -10, "gdo:castle_lantern")
-    put(-8, 12, -10, "gdo:castle_lantern")
-    put(8, 12, -10, "gdo:castle_lantern")
+    put(-8, 4, -10, "gdo_castle:castle_lantern")
+    put(8, 4, -10, "gdo_castle:castle_lantern")
+    put(-8, 12, -10, "gdo_castle:castle_lantern")
+    put(8, 12, -10, "gdo_castle:castle_lantern")
 end
 
 local function build_training_room()
@@ -333,9 +333,9 @@ local function build_training_room()
             put(x + 2, 9, z, nodes.wood)
         end
     end
-    put(0, 12, -39, "gdo:castle_lantern")
-    put(-12, 12, -34, "gdo:castle_banner")
-    put(12, 12, -34, "gdo:castle_banner")
+    put(0, 12, -39, "gdo_castle:castle_lantern")
+    put(-12, 12, -34, "gdo_castle:castle_banner")
+    put(12, 12, -34, "gdo_castle:castle_banner")
 end
 
 
@@ -353,13 +353,13 @@ local function build_great_hall()
     for x = -31, -23, 4 do cuboid(x, 12, -33, x, 12, -13, nodes.wood) end
     for z = -30, -14, 8 do
         cuboid(-29, 11, z, -25, 11, z, nodes.copper)
-        for x = -29, -25, 2 do put(x, 10, z, "gdo:castle_lantern") end
+        for x = -29, -25, 2 do put(x, 10, z, "gdo_castle:castle_lantern") end
     end
     for z = -30, -14, 8 do
         put(-34, 7, z, nodes.glass)
-        put(-34, 8, z, "gdo:castle_banner")
+        put(-34, 8, z, "gdo_castle:castle_banner")
     end
-    put(-27, 3, -12, "gdo:castle_noticeboard")
+    put(-27, 3, -12, "gdo_castle:castle_noticeboard")
 end
 
 local function build_library()
@@ -367,12 +367,12 @@ local function build_library()
     -- sauf ceux dont le titre commence par « probablement maudit ».
     floor_rect(22, -35, 32, -11, 2, nodes.marble)
     for z = -34, -13, 3 do
-        cuboid(22, 3, z, 22, 7, z + 1, "gdo:castle_books")
-        cuboid(32, 3, z, 32, 7, z + 1, "gdo:castle_books")
+        cuboid(22, 3, z, 22, 7, z + 1, "gdo_castle:castle_books")
+        cuboid(32, 3, z, 32, 7, z + 1, "gdo_castle:castle_books")
     end
     for x = 24, 30, 3 do
-        cuboid(x, 3, -34, x + 1, 7, -34, "gdo:castle_books")
-        cuboid(x, 3, -12, x + 1, 7, -12, "gdo:castle_books")
+        cuboid(x, 3, -34, x + 1, 7, -34, "gdo_castle:castle_books")
+        cuboid(x, 3, -12, x + 1, 7, -12, "gdo_castle:castle_books")
     end
     floor_rect(23, -33, 31, -13, 9, nodes.wood)
     for z = -29, -17, 6 do
@@ -381,10 +381,10 @@ local function build_library()
         put(30, 2, z, nodes.wood)
     end
     for y = 3, 8 do put(30 - (y - 3), y, -23, nodes.wood) end
-    put(27, 10, -23, "gdo:castle_lantern")
-    put(27, 10, -18, "gdo:castle_lantern")
-    put(27, 10, -28, "gdo:castle_lantern")
-    put(27, 3, -12, "gdo:castle_noticeboard")
+    put(27, 10, -23, "gdo_castle:castle_lantern")
+    put(27, 10, -18, "gdo_castle:castle_lantern")
+    put(27, 10, -28, "gdo_castle:castle_lantern")
+    put(27, 3, -12, "gdo_castle:castle_noticeboard")
 end
 
 local function build_school_of_nawak()
@@ -398,10 +398,10 @@ local function build_school_of_nawak()
             put(x + 2, 9, z, nodes.wood)
         end
     end
-    put(0, 12, -39, "gdo:castle_lantern")
-    put(-12, 12, -34, "gdo:castle_banner")
-    put(12, 12, -34, "gdo:castle_banner")
-    put(0, 10, -29, "gdo:castle_noticeboard")
+    put(0, 12, -39, "gdo_castle:castle_lantern")
+    put(-12, 12, -34, "gdo_castle:castle_banner")
+    put(12, 12, -34, "gdo_castle:castle_banner")
+    put(0, 10, -29, "gdo_castle:castle_noticeboard")
 end
 
 local function build_bureau_des_quetes()
@@ -412,10 +412,10 @@ local function build_bureau_des_quetes()
         put(x, 5, -3, nodes.gold)
         put(x, 3, 1, nodes.wood)
     end
-    put(0, 5, -5, "gdo:castle_lantern")
-    put(0, 3, 4, "gdo:castle_noticeboard")
-    put(-7, 3, 0, "gdo:castle_banner")
-    put(7, 3, 0, "gdo:castle_banner")
+    put(0, 5, -5, "gdo_castle:castle_lantern")
+    put(0, 3, 4, "gdo_castle:castle_noticeboard")
+    put(-7, 3, 0, "gdo_castle:castle_banner")
+    put(7, 3, 0, "gdo_castle:castle_banner")
 end
 
 local function build_trophy_gallery()
@@ -426,9 +426,9 @@ local function build_trophy_gallery()
     end
     for x = -12, 12, 6 do
         cuboid(x - 1, 3, 19, x + 1, 4, 19, nodes.gold)
-        put(x, 5, 19, "gdo:castle_lantern")
+        put(x, 5, 19, "gdo_castle:castle_lantern")
     end
-    put(0, 3, 18, "gdo:castle_noticeboard")
+    put(0, 3, 18, "gdo_castle:castle_noticeboard")
 end
 
 
@@ -466,12 +466,12 @@ local houses = {
 
 for _, definition in ipairs(houses) do
     local house = definition
-    minetest.register_node("gdo:house_wall_" .. house.id, {
+    minetest.register_node("gdo_castle:house_wall_" .. house.id, {
         description = "Pierre aux couleurs — " .. house.title,
         tiles = {house.emblem},
         groups = {cracky = 2},
     })
-    minetest.register_node("gdo:house_crest_" .. house.id, {
+    minetest.register_node("gdo_castle:house_crest_" .. house.id, {
         description = "Blason — " .. house.title,
         tiles = {house.emblem},
         groups = {cracky = 2, oddly_breakable_by_hand = 2},
@@ -504,10 +504,10 @@ local function build_house_common_room(house)
     local x1, x2, z1, z2 = cx - 4, cx + 4, cz - 4, cz + 4
     -- Pavillon compact : façade tournée vers le centre de la cour.
     floor_rect(x1, z1, x2, z2, 1, nodes.marble)
-    cuboid(x1, 2, z1, x2, 6, z1, "gdo:house_wall_" .. house.id)
-    cuboid(x1, 2, z2, x2, 6, z2, "gdo:house_wall_" .. house.id)
-    cuboid(x1, 2, z1 + 1, x1, 6, z2 - 1, "gdo:house_wall_" .. house.id)
-    cuboid(x2, 2, z1 + 1, x2, 6, z2 - 1, "gdo:house_wall_" .. house.id)
+    cuboid(x1, 2, z1, x2, 6, z1, "gdo_castle:house_wall_" .. house.id)
+    cuboid(x1, 2, z2, x2, 6, z2, "gdo_castle:house_wall_" .. house.id)
+    cuboid(x1, 2, z1 + 1, x1, 6, z2 - 1, "gdo_castle:house_wall_" .. house.id)
+    cuboid(x2, 2, z1 + 1, x2, 6, z2 - 1, "gdo_castle:house_wall_" .. house.id)
     -- Porte ouverte sur la cour, côté sud pour les pavillons nord et inversement.
     local front_z = cz < 5 and z2 or z1
     clear_box(cx - 1, 2, front_z, cx + 1, 4, front_z)
@@ -515,18 +515,18 @@ local function build_house_common_room(house)
     cuboid(x1 - 1, 7, z1 - 1, x2 + 1, 7, z2 + 1, nodes.roof)
     cuboid(x1 + 1, 8, z1 + 1, x2 - 1, 8, z2 - 1, nodes.dark)
     -- Blason visible depuis la cour.
-    put(cx, 5, front_z, "gdo:house_crest_" .. house.id)
+    put(cx, 5, front_z, "gdo_castle:house_crest_" .. house.id)
     -- Cheminée et foyer symbolique.
     cuboid(x1 + 1, 2, z1 + 1, x1 + 2, 4, z1 + 2, nodes.wood)
-    put(x1 + 1, 5, z1 + 1, "gdo:castle_lantern")
+    put(x1 + 1, 5, z1 + 1, "gdo_castle:castle_lantern")
     -- Tables, bancs et tapis aux couleurs de la maison.
     cuboid(cx - 2, 2, cz - 1, cx + 2, 2, cz + 1, nodes.wood)
     cuboid(cx - 3, 2, cz - 2, cx - 3, 2, cz + 2, nodes.wood)
     cuboid(cx + 3, 2, cz - 2, cx + 3, 2, cz + 2, nodes.wood)
     for dx = -2, 2 do
-        put(cx + dx, 3, z1, "gdo:house_crest_" .. house.id)
+        put(cx + dx, 3, z1, "gdo_castle:house_crest_" .. house.id)
     end
-    put(cx, 3, cz, "gdo:castle_lantern")
+    put(cx, 3, cz, "gdo_castle:castle_lantern")
 end
 
 local function build_four_houses()
@@ -610,8 +610,8 @@ local function build_ground()
     -- Plateau de construction en blocs du jeu, sans dépendance à un autre game.
     for x = -52, 52 do
         for z = -58, 52 do
-            put(x, -1, z, "gdo:terre")
-            put(x, 0, z, "gdo:herbe")
+            put(x, -1, z, "gdo_castle:terre")
+            put(x, 0, z, "gdo_castle:herbe")
         end
     end
 end
@@ -630,9 +630,9 @@ local function generate_castle()
     build_courtyard()
     build_four_houses()
     -- Le jardin de la quête est recréé après la construction du terrain.
-    put(-8, 1, 39, "gdo:navet_sur_pied")
-    put(-8, 1, 41, "gdo:navet_sur_pied")
-    put(-10, 1, 40, "gdo:navet_sur_pied")
+    put(-8, 1, 39, "gdo_castle:navet_sur_pied")
+    put(-8, 1, 41, "gdo_castle:navet_sur_pied")
+    put(-10, 1, 40, "gdo_castle:navet_sur_pied")
 
     -- Deux longues galeries latérales à arcades.
     for _, side in ipairs({-1, 1}) do
