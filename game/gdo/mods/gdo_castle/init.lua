@@ -778,3 +778,6 @@ minetest.register_chatcommand("chateau", {
 })
 
 minetest.log("action", "[GDO] Le module du Château des Brumes est chargé.")
+
+-- Refonte visuelle et remise à niveau du terrain de départ.
+dofile(minetest.get_modpath(modname) .. "/refit.lua")
