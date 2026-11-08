@@ -227,11 +227,16 @@ end
 
 minetest.register_on_mods_loaded(function()
     minetest.after(1, function()
-        local world_meta = minetest.get_worldpath()
-        local marker = minetest.get_mod_storage()
-        if marker:get_int("starting_area_built") ~= 1 then
+        -- Le stockage de mod n'est pas disponible sur certaines anciennes
+        -- versions/forks de Minetest : on évite alors de faire planter le jeu.
+        local marker = minetest.get_mod_storage and minetest.get_mod_storage() or nil
+        local already_built = marker and marker:get_int("starting_area_built") == 1
+
+        if not already_built then
             build_starting_area()
-            marker:set_int("starting_area_built", 1)
+            if marker then
+                marker:set_int("starting_area_built", 1)
+            end
             minetest.log("action", "[GDO] Zone de départ construite.")
         end
         ensure_gerard()
