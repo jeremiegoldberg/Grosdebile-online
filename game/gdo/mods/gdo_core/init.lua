@@ -282,8 +282,8 @@ minetest.register_on_joinplayer(function(player)
             )
         end
 
-        -- Position du joueur au-dessus du sol, avec une grande hauteur libre.
-        player:set_pos({x = 0, y = 2, z = 64})
+        -- Position centrée sur le joueur : pieds au niveau du dallage (y=0).
+        player:set_pos({x = 0, y = 1, z = 64})
         player:set_velocity({x = 0, y = 0, z = 0})
         if player.set_look_horizontal then
             player:set_look_horizontal(0)
