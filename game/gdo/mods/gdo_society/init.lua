@@ -1,6 +1,6 @@
 -- GDO — Guildes fondatrices, guildes de joueurs et villages persistants.
 -- Les données sont locales au monde Luanti ; migration backend prévue ultérieurement.
-gdo_society = gdo_society or {}
+gdo_society = {}
 local storage = minetest.get_mod_storage()
 local founders = {
     bras_casses={name="Les Bras Cassés",x=-240,z=-240},
