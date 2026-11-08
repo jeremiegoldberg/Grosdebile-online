@@ -11,8 +11,6 @@ Sur Debian/Ubuntu, selon la version de ta distribution, le paquet peut s'appeler
 
 ## 2. Récupérer le projet
 
-Depuis un terminal :
-
 ```bash
 git clone https://github.com/jeremiegoldberg/Grosdebile-online.git
 cd Grosdebile-online
@@ -44,18 +42,19 @@ Dans le menu :
 
 Si la commande `luanti` n'existe pas, essaie `minetest` selon le nom du paquet installé.
 
-## 5. Première quête
+## 5. Visite guidée du Château des Brumes
 
-- Tu apparais devant le Château des Brumes, une immense forteresse-école gothique.
-- Passe la grande porte pour rejoindre la cour intérieure.
+- Tu apparais devant le château. Avance vers la grande porte et traverse le pont.
+- Explore la cour intérieure et repère les tours du donjon.
+- Entre dans l'aile gauche pour découvrir la grande salle : tables de banquet, estrade et lustres.
+- Visite l'aile droite : la bibliothèque possède des rayonnages sur plusieurs niveaux, une passerelle et des tables de lecture.
+- Rejoins le donjon central pour voir l'escalier monumental, la salle du conseil et la salle de cours.
 - Gérard le Magnifique t'attend près de l'entrée de la cour.
 - Fais un **clic droit** sur Gérard pour accepter sa quête.
-- Le jardin avec les trois navets se trouve près de la grande porte.
-- Fais un **clic droit** sur chaque navet pour le récolter.
-- Retourne voir Gérard et fais un nouveau clic droit.
+- Récolte les trois navets du jardin près de la grande porte avec un clic droit, puis retourne voir Gérard.
 - Tu reçois le Badge officiel du Nawak.
 
-La commande `/gdo` rappelle l'objectif.
+La commande `/gdo` rappelle l'objectif et `/chateau` affiche la présentation du château.
 
 ## 6. Touches utiles
 
@@ -67,14 +66,26 @@ Les touches sont celles configurées dans Luanti :
 - E : inventaire.
 - Échap : menu.
 
-## 7. Limites connues de cette ébauche
+## 7. Mise à jour du prototype
+
+Pour mettre à jour une installation existante :
+
+```bash
+cd Grosdebile-online
+git pull
+rm -rf ~/.minetest/games/gdo
+cp -a game/gdo ~/.minetest/games/gdo
+```
+
+La version actuelle du module reconstruit automatiquement le château une fois au prochain chargement d'un monde existant. La génération réécrit les blocs de la zone du château (environ x=-52..52, z=-58..52) : évite d'y construire tes propres bâtiments avant la mise à jour. Fais une sauvegarde du monde au préalable.
+
+## 8. Limites connues
 
 - C'est une démo locale mono-monde, pas encore un MMORPG.
-- Le Château des Brumes est généré automatiquement une seule fois par monde. Le module construit les remparts, les tours, le donjon, les ailes et la cour au premier chargement.
-- Le personnage de Gérard et les blocs utilisent des textures de remplacement intégrées au moteur ; les modèles et graphismes originaux viendront ensuite.
-- La quête est volontairement simple et son état est conservé dans les métadonnées du joueur.
+- Le château est généré en blocs procéduraux ; le mobilier est volontairement stylisé et les textures sont provisoires.
+- Le personnage de Gérard et les blocs utilisent des textures de remplacement ; les modèles et graphismes originaux viendront ensuite.
 - Pas encore de compte web, classes, combat, sauvegarde centralisée, multijoueur public ou fédération ActivityPub.
-- Le prototype n'a pas encore été exécuté sur une machine de test dans le cadre de ce commit.
+- Le code n'a pas encore été validé par un lancement automatisé de Luanti sur une machine de test indépendante.
 
 ## Dépannage
 
