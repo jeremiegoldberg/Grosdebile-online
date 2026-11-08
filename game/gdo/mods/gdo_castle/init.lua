@@ -610,7 +610,7 @@ local function build_ground()
     -- Plateau de construction en blocs du jeu, sans dépendance à un autre game.
     for x = -52, 52 do
         for z = -58, 52 do
-            put(x, -1, z, "gdo_castle:terre")
+            put(x, -1, z, "gdo_core:terre")
             put(x, 0, z, "gdo_castle:herbe")
         end
     end
