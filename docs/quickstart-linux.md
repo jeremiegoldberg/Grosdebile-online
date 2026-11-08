@@ -36,7 +36,7 @@ Dans le menu, crée un monde et sélectionne **Gros Débile Online** comme jeu. 
 - Récolte les trois navets héroïques du jardin près de la grande porte, puis retourne voir Gérard.
 - Tu reçois le Badge officiel du Nawak. Il ne donne aucun pouvoir, mais il est officiellement officiel.
 
-La commande `/gdo` rappelle l'objectif et `/chateau` affiche la présentation du château.
+La commande `/gdo` rappelle l'objectif, `/chateau` affiche la présentation du château et `/gdo_zones` liste les zones protégées ainsi que les règles de construction.
 
 ## 4. Touches utiles
 
@@ -58,9 +58,21 @@ rm -rf ~/.minetest/games/gdo
 cp -a game/gdo ~/.minetest/games/gdo
 ```
 
-La version actuelle du module reconstruit automatiquement le château une fois au prochain chargement d'un monde existant. La génération réécrit les blocs de la zone du château (environ x=-52..52, z=-58..52) : évite d'y construire tes propres bâtiments avant la mise à jour. Fais une sauvegarde du monde au préalable.
+La mise à jour active la protection du Château des Brumes (environ X=-52..52, Y=-10..100, Z=-58..52). Les blocs de cette zone deviennent intouchables par les joueurs. Fais une sauvegarde avant toute mise à jour importante.
 
-## 6. Limites connues
+## 6. Construction libre et zones protégées
+
+Le Château des Brumes, ses pavillons, son jardin de quête et le parcours d'initiation sont en lecture seule : impossible d'y poser ou d'y retirer des blocs.
+
+En dehors de ces zones, le monde est entièrement libre :
+- construis ta base où tu veux ;
+- creuse, aménage et transforme le terrain ;
+- tu peux aussi démolir ou modifier les constructions d'autres joueurs ;
+- aucun claim, terrain privé ou protection automatique ne te met à l'abri.
+
+C'est intentionnel : GDO assume un bac à sable collectif et destructible. La commande `/gdo_zones` affiche les limites actuellement sanctuarisées.
+
+## 7. Limites connues
 
 - C'est une démo locale mono-monde, pas encore un MMORPG.
 - Le château est généré en blocs procéduraux ; le mobilier est stylisé et les textures sont provisoires.
