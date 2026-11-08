@@ -21,7 +21,7 @@ local M = {
 local function node(name, desc, color, groups, extra)
     local def = {
         description = S(desc),
-        tiles = {"unknown_node.png^[colorize:" .. color .. ":255"},
+        tiles = {name .. ".png"},
         groups = groups or {cracky = 2},
     }
     if extra then
@@ -52,7 +52,7 @@ node(M.water, "Bassin décoratif", "#527f9b", {cracky = 3}, {
     liquid_viscosity = 1, liquid_renewable = false,
 })
 minetest.register_node("gdo_castle:refit_water_flowing", {
-    description = S("Eau décorative"), tiles = {"unknown_node.png^[colorize:#527f9b:255"},
+    description = S("Eau décorative"), tiles = {"gdo_castle_water.png"},
     drawtype = "flowingliquid", paramtype = "light", paramtype2 = "flowingliquid",
     groups = {not_in_creative_inventory = 1}, walkable = false, pointable = false,
     buildable_to = true, drop = "", liquidtype = "flowing",
@@ -61,8 +61,9 @@ minetest.register_node("gdo_castle:refit_water_flowing", {
     liquid_viscosity = 1,
 })
 
+local HEIGHT_OFFSET = 24
 local function put(x,y,z,n)
-    minetest.set_node({x=x,y=y,z=z},{name=n})
+    minetest.set_node({x=x,y=y + HEIGHT_OFFSET,z=z},{name=n})
 end
 local function fill(x1,y1,z1,x2,y2,z2,n)
     for x=math.min(x1,x2),math.max(x1,x2) do
@@ -361,18 +362,18 @@ local function build()
     -- Le terrain autour du château reste horizontal et dégagé.
     fill(-52,-1,-58,52,-1,85,"gdo_core:terre")
     if minetest.fix_light then
-        minetest.fix_light({x=-52,y=-8,z=-58},{x=52,y=70,z=85})
+        minetest.fix_light({x=-52,y=16,z=-58},{x=52,y=94,z=85})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Refonte du Château des Brumes construite (version 1).")
+    minetest.log("action","[GDO] Refonte du Château des Brumes construite au-dessus du terrain (version 3).")
 end
 
 local storage = minetest.get_mod_storage and minetest.get_mod_storage() or nil
 minetest.register_on_mods_loaded(function()
     minetest.after(5,function()
-        if not storage or storage:get_int("refit_version") < 2 then
+        if not storage or storage:get_int("refit_version") < 3 then
             build()
-            if storage then storage:set_int("refit_version",2) end
+            if storage then storage:set_int("refit_version",3) end
         end
     end)
 end)
@@ -382,7 +383,7 @@ minetest.register_chatcommand("refairechateau", {
     privs = {server = true},
     func = function()
         build()
-        if storage then storage:set_int("refit_version",1) end
+        if storage then storage:set_int("refit_version",3) end
         return true, "Le Château des Brumes a été reconstruit."
     end,
 })
