@@ -554,6 +554,11 @@ local function build_outer_walls()
     wall_z(-50, 27, 1, 12, -40, nodes.dark, 2)
     wall_z(-28, 27, 1, 12, 39, nodes.dark, 2)
 
+    -- Deux sorties latérales au niveau du parvis : le joueur ne doit pas
+    -- apparaître dans une enceinte qui ressemble à une fosse sans issue.
+    clear_box(-41, 1, 38, -38, 14, 44)
+    clear_box(38, 1, 38, 41, 14, 44)
+
     -- Remparts et merlons.
     for x = -40, 40, 2 do
         cuboid(x, 13, -50, x, 14, -49, nodes.stone)
@@ -713,12 +718,12 @@ local castle_storage = minetest.get_mod_storage and minetest.get_mod_storage() o
 minetest.register_on_mods_loaded(function()
     minetest.after(2, function()
         local already_generated = castle_storage
-            and castle_storage:get_int("castle_generated") == 7
+            and castle_storage:get_int("castle_generated") == 8
 
         if not already_generated then
             generate_castle()
             if castle_storage then
-                castle_storage:set_int("castle_generated", 7)
+                castle_storage:set_int("castle_generated", 8)
             else
                 minetest.log("warning", "[GDO] Stockage du château indisponible : génération sans mémorisation.")
             end
