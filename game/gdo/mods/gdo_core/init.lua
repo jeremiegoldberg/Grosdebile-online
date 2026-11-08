@@ -259,15 +259,28 @@ minetest.register_on_joinplayer(function(player)
     local meta = player:get_meta()
     local first_spawn = meta:get_int("gdo_spawned") ~= 1
 
-    -- Replacer le joueur à chaque connexion : une ancienne position sauvegardée
-    -- peut se trouver sous le terrain après une modification du monde.
-    minetest.after(0.5, function()
+    -- Attendre la fin des autres traitements de connexion et le chargement
+    -- de la zone avant de replacer le joueur.
+    minetest.after(2, function()
         if not player or not player:is_player() then
             return
         end
 
-        player:set_pos({x = 0, y = 2, z = 43})
+        player:set_pos({x = 0, y = 3, z = 43})
+        player:set_velocity({x = 0, y = 0, z = 0})
+        if player.set_look_horizontal then
+            player:set_look_horizontal(0)
+        end
+        if player.set_look_vertical then
+            player:set_look_vertical(0)
+        end
+        if player.override_day_night_ratio then
+            player:override_day_night_ratio(1)
+        end
         meta:set_int("gdo_spawned", 1)
+
+        minetest.chat_send_player(player:get_player_name(),
+            "[GDO diagnostic] Position forcée : x=0, y=3, z=43 ; caméra réinitialisée.")
 
         if first_spawn then
             minetest.chat_send_player(player:get_player_name(),
