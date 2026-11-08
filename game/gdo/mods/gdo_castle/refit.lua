@@ -35,18 +35,20 @@ end
 -- Textures autonomes : aucun fichier PNG externe n'est requis.
 -- Textures fournies par minetest_game : aucun PNG GDO manquant.
 -- Les modificateurs donnent une palette cohérente sans dépendre de fichiers externes.
+-- Palette autonome : unknown_node.png est fourni par le moteur Luanti.
+-- Aucun PNG externe n'est référencé : les textures sont générées par modificateurs.
 local palette = {
-    refit_stone = "refit_stone.png",
-    refit_trim = "refit_trim.png",
-    refit_roof = "refit_roof.png",
-    refit_floor = "refit_floor.png",
-    refit_wood = "refit_wood.png",
-    refit_glass = "refit_glass.png",
-    refit_gold = "refit_gold.png",
-    refit_grass = "refit_grass.png",
-    refit_path = "refit_path.png",
-    refit_leaves = "refit_leaves.png",
-    refit_water = "refit_water.png",
+    refit_stone = "unknown_node.png^[colorize:#78869b:115^[contrast:18",
+    refit_trim = "unknown_node.png^[colorize:#d8d2c5:105^[contrast:25",
+    refit_roof = "unknown_node.png^[colorize:#182b50:150^[contrast:35",
+    refit_floor = "unknown_node.png^[colorize:#c4bba8:100^[contrast:20",
+    refit_wood = "unknown_node.png^[colorize:#75472d:125^[contrast:25",
+    refit_glass = "unknown_node.png^[colorize:#70c9e8:90^[opacity:180",
+    refit_gold = "unknown_node.png^[colorize:#e4b83e:110^[contrast:30",
+    refit_grass = "unknown_node.png^[colorize:#4b8b3d:95",
+    refit_path = "unknown_node.png^[colorize:#777b83:105^[contrast:35",
+    refit_leaves = "unknown_node.png^[colorize:#397b39:95",
+    refit_water = "unknown_node.png^[colorize:#319bd1:90^[opacity:190",
 }
 local function register_texture_node(name, desc, groups, extra)
     local short = name:match(":(.+)$")
@@ -552,11 +554,11 @@ local function build()
         minetest.fix_light({x=-40,y=OFFSET+1,z=-52},{x=40,y=OFFSET+60,z=64})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Château des Brumes v10 généré : donjon, tours rondes, porte monumentale et parvis.")
+    minetest.log("action","[GDO] Château des Brumes v11 généré : architecture refondue et textures intégrées.")
 end
 
 local storage = gdo_castle_storage
-local VERSION = 10
+local VERSION = 11
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
@@ -569,11 +571,11 @@ minetest.register_on_mods_loaded(function()
 end)
 
 minetest.register_chatcommand("refairechateau",{
-    description="Reconstruit le Château des Brumes (version architecturale 6)",
+    description="Reconstruit le Château des Brumes (version architecturale 11)",
     privs={server=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
-        return true,"Château des Brumes v10 reconstruit. Retourne sur le parvis sud."
+        return true,"Château des Brumes v11 reconstruit. Retourne sur le parvis sud."
     end,
 })
