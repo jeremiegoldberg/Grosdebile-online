@@ -21,7 +21,7 @@ local M = {
 local function node(name, desc, color, groups, extra)
     local def = {
         description = S(desc),
-        tiles = {name .. ".png"},
+        tiles = {name:match(":(.+)$") .. ".png"},
         groups = groups or {cracky = 2},
     }
     if extra then
@@ -52,7 +52,7 @@ node(M.water, "Bassin décoratif", "#527f9b", {cracky = 3}, {
     liquid_viscosity = 1, liquid_renewable = false,
 })
 minetest.register_node("gdo_castle:refit_water_flowing", {
-    description = S("Eau décorative"), tiles = {"gdo_castle_water.png"},
+    description = S("Eau décorative"), tiles = {"refit_water.png"},
     drawtype = "flowingliquid", paramtype = "light", paramtype2 = "flowingliquid",
     groups = {not_in_creative_inventory = 1}, walkable = false, pointable = false,
     buildable_to = true, drop = "", liquidtype = "flowing",
