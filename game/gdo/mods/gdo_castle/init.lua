@@ -712,25 +712,8 @@ local function generate_castle()
     minetest.log("action", "[GDO] Le Château des Brumes a été construit.")
 end
 
--- Récupérer le stockage pendant le chargement du mod : certains moteurs
--- ne le fournissent pas correctement depuis un callback différé.
-local castle_storage = minetest.get_mod_storage and minetest.get_mod_storage() or nil
-
-minetest.register_on_mods_loaded(function()
-    minetest.after(2, function()
-        local already_generated = true -- génération historique désactivée : refit.lua construit le château sur le plateau surélevé
-
-        if not already_generated then
-            generate_castle()
-            if castle_storage then
-                castle_storage:set_int("castle_generated", 9)
-            else
-                minetest.log("warning", "[GDO] Stockage du château indisponible : génération sans mémorisation.")
-            end
-        end
-    end)
-end)
-
+-- La génération du château est désormais entièrement gérée par refit.lua.
+-- Un seul stockage de mod est initialisé, dans ce fichier de refonte.
 
 minetest.register_chatcommand("maison", {
     description = "Affiche ta maison ou explique comment en rejoindre une",
