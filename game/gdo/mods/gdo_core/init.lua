@@ -251,6 +251,10 @@ minetest.register_on_mods_loaded(function()
 end)
 
 minetest.register_on_joinplayer(function(player)
+    -- Évite l'obscurité du cycle jour/nuit pendant le prototype.
+    if player.override_day_night_ratio then
+        player:override_day_night_ratio(1)
+    end
     local meta = player:get_meta()
     if meta:get_int("gdo_spawned") ~= 1 then
         minetest.after(0.2, function()
