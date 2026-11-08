@@ -15,6 +15,21 @@ Gros Débile Online (GDO) est un projet communautaire de MMORPG fantasy humorist
 - **Multiplateforme** : PC et Android en priorité ; compatibilité VR Meta Quest via un portage Luanti/OpenXR à valider.
 - **Auto-hébergeable** : chacun doit pouvoir lancer son propre serveur et créer sa variante du Royaume du Nawak.
 
+## Le monde partagé
+
+GDO repose sur **un seul Royaume du Nawak persistant**, commun à l'ensemble des joueurs du serveur officiel. Le monde s'organise autour de quatre espaces complémentaires :
+
+1. **Le Château des Brumes** : point d'accueil, lieux de quêtes et espaces scénarisés.
+2. **Les villages de guildes** : places, bâtiments et services développés collectivement.
+3. **Les parcelles personnelles** : chaque joueur dispose d'un terrain et d'une maison de départ qu'il peut faire évoluer.
+4. **Les terres sauvages** : zones d'exploration, de récolte et de construction libre.
+
+Les parcelles individuelles s'inscrivent dans les villages sans isoler les joueurs : les lieux communs, les routes et les espaces sauvages restent partagés. Les illustrations ci-dessous représentent la vision cible du monde ; elles ne constituent pas des captures d'écran du prototype actuel.
+
+![Vue d'ensemble illustrée du Royaume du Nawak](docs/visuals/royaume-du-nawak.svg)
+
+![Organisation des espaces du monde partagé](docs/visuals/organisation-du-monde.svg)
+
 ## État du projet
 
 **Prototype 0.6 — guildes fondatrices et villages persistants.** Le choix d'une des quatre maisons affecte le joueur à sa guilde historique, lui attribue une parcelle protégée et construit une petite maison standardisée. Les quatre villages disposent de bâtiments communs. Les joueurs peuvent quitter une guilde (sauf le responsable d'une guilde fondatrice), fonder une nouvelle guilde au niveau 2, inviter des membres et attribuer des rôles de construction. Le village d'une guilde de joueurs s'étend automatiquement à mesure que ses effectifs augmentent. Le démonstrateur comprend désormais une grande salle de banquet, une bibliothèque à rayonnages et passerelle, une salle de cours, un bureau des quêtes, une galerie des trophées, quatre pavillons avec salles communes et blasons interactifs, ainsi qu’un système d’affectation des joueurs à une maison. Le château conserve son donjon, ses remparts, ses tours et sa cour.
