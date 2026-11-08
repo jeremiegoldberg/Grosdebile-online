@@ -1,70 +1,21 @@
--- GDO — Refonte du Château des Brumes
--- Architecture compacte, lisible et praticable. Aucun mod externe requis.
+-- GDO — Château des Brumes : architecture monumentale v4
+-- Génération au-dessus du terrain, façade tournée vers le sud (+Z).
+-- Textures fournies dans textures/refit_*.png.
 
 local modname = minetest.get_current_modname()
 local S = minetest.get_translator and minetest.get_translator(modname) or function(s) return s end
 
 local M = {
-    stone = "gdo_castle:refit_stone",
-    trim = "gdo_castle:refit_trim",
-    roof = "gdo_castle:refit_roof",
-    floor = "gdo_castle:refit_floor",
-    wood = "gdo_castle:refit_wood",
-    glass = "gdo_castle:refit_glass",
-    gold = "gdo_castle:refit_gold",
-    grass = "gdo_castle:refit_grass",
-    path = "gdo_castle:refit_path",
-    leaves = "gdo_castle:refit_leaves",
+    stone = "gdo_castle:refit_stone", trim = "gdo_castle:refit_trim",
+    roof = "gdo_castle:refit_roof", floor = "gdo_castle:refit_floor",
+    wood = "gdo_castle:refit_wood", glass = "gdo_castle:refit_glass",
+    gold = "gdo_castle:refit_gold", grass = "gdo_castle:refit_grass",
+    path = "gdo_castle:refit_path", leaves = "gdo_castle:refit_leaves",
     water = "gdo_castle:refit_water",
 }
-
-local function node(name, desc, color, groups, extra)
-    local def = {
-        description = S(desc),
-        tiles = {name:match(":(.+)$") .. ".png"},
-        groups = groups or {cracky = 2},
-    }
-    if extra then
-        for k, v in pairs(extra) do def[k] = v end
-    end
-    minetest.register_node(name, def)
-end
-
-node(M.stone, "Calcaire du Château", "#9a9ba4")
-node(M.trim, "Pierre sculptée", "#d0c8b8")
-node(M.roof, "Ardoise bleu nuit", "#343d55")
-node(M.floor, "Dallage clair", "#b7b2a8")
-node(M.wood, "Chêne brun", "#68452f", {choppy = 2})
-node(M.glass, "Vitrail doré", "#e9bd62", {cracky = 2}, {
-    paramtype = "light", sunlight_propagates = true, light_source = 5,
-})
-node(M.gold, "Ornement royal", "#d7a844")
-node(M.grass, "Gazon du parvis", "#56834a", {crumbly = 3, soil = 1})
-node(M.path, "Pavés du royaume", "#817f83")
-node(M.leaves, "Feuillage", "#3e7544", {snappy = 3}, {
-    drawtype = "allfaces_optional", paramtype = "light", sunlight_propagates = true,
-})
-node(M.water, "Bassin décoratif", "#527f9b", {cracky = 3}, {
-    drawtype = "liquid", paramtype = "light", sunlight_propagates = true,
-    walkable = false, pointable = false, buildable_to = true,
-    liquidtype = "source", liquid_alternative_flowing = "gdo_castle:refit_water_flowing",
-    liquid_alternative_source = "gdo_castle:refit_water",
-    liquid_viscosity = 1, liquid_renewable = false,
-})
-minetest.register_node("gdo_castle:refit_water_flowing", {
-    description = S("Eau décorative"), tiles = {"refit_water.png"},
-    drawtype = "flowingliquid", paramtype = "light", paramtype2 = "flowingliquid",
-    groups = {not_in_creative_inventory = 1}, walkable = false, pointable = false,
-    buildable_to = true, drop = "", liquidtype = "flowing",
-    liquid_alternative_flowing = "gdo_castle:refit_water_flowing",
-    liquid_alternative_source = "gdo_castle:refit_water",
-    liquid_viscosity = 1,
-})
-
-local HEIGHT_OFFSET = 24
-local function put(x,y,z,n)
-    minetest.set_node({x=x,y=y + HEIGHT_OFFSET,z=z},{name=n})
-end
+local OFFSET = 24
+local function pos(x,y,z) return {x=x,y=y+OFFSET,z=z} end
+local function put(x,y,z,n) minetest.set_node(pos(x,y,z), {name=n}) end
 local function fill(x1,y1,z1,x2,y2,z2,n)
     for x=math.min(x1,x2),math.max(x1,x2) do
         for y=math.min(y1,y2),math.max(y1,y2) do
@@ -72,318 +23,358 @@ local function fill(x1,y1,z1,x2,y2,z2,n)
         end
     end
 end
-local function clear(x1,y1,z1,x2,y2,z2)
-    fill(x1,y1,z1,x2,y2,z2,"air")
+local function clear(x1,y1,z1,x2,y2,z2) fill(x1,y1,z1,x2,y2,z2,"air") end
+local function deck(x1,z1,x2,z2,y,n) fill(x1,y,z1,x2,y,z2,n) end
+local function wall_x(x1,x2,y1,y2,z,n,t)
+    fill(x1,y1,z,x2,y2,z+(t or 1)-1,n)
 end
-local function floor(x1,z1,x2,z2,y,n) fill(x1,y,z1,x2,y,z2,n) end
+local function wall_z(z1,z2,y1,y2,x,n,t)
+    fill(x,y1,z1,x+(t or 1)-1,y2,z2,n)
+end
 
-local function tower(cx,cz,r,h)
-    -- Tour carrée à pans coupés, avec corniche et toit pyramidal.
+local function register_texture_node(name, desc, groups, extra)
+    local short = name:match(":(.+)$")
+    local def = {description=S(desc), tiles={short .. ".png"}, groups=groups or {cracky=2}}
+    if extra then for k,v in pairs(extra) do def[k]=v end end
+    minetest.register_node(name, def)
+end
+
+register_texture_node(M.stone,"Calcaire du Château")
+register_texture_node(M.trim,"Pierre sculptée")
+register_texture_node(M.roof,"Ardoise bleu nuit")
+register_texture_node(M.floor,"Dallage clair")
+register_texture_node(M.wood,"Chêne ancien",{choppy=2})
+register_texture_node(M.glass,"Vitrail royal",{cracky=2},{
+    paramtype="light", sunlight_propagates=true, light_source=5, drawtype="glasslike",
+    use_texture_alpha="blend",})
+register_texture_node(M.gold,"Ornement royal")
+register_texture_node(M.grass,"Gazon du parvis",{crumbly=3,soil=1})
+register_texture_node(M.path,"Pavés du royaume")
+register_texture_node(M.leaves,"Feuillage",{snappy=3},{
+    drawtype="allfaces_optional",paramtype="light",sunlight_propagates=true})
+register_texture_node(M.water,"Eau décorative",{cracky=3},{
+    drawtype="liquid",paramtype="light",sunlight_propagates=true,walkable=false,
+    pointable=false,buildable_to=true,liquidtype="source",
+    liquid_alternative_flowing="gdo_castle:refit_water_flowing",
+    liquid_alternative_source="gdo_castle:refit_water",liquid_viscosity=1,
+    liquid_renewable=false})
+minetest.register_node("gdo_castle:refit_water_flowing",{
+    description=S("Eau décorative"),tiles={"refit_water.png"},
+    drawtype="flowingliquid",paramtype="light",paramtype2="flowingliquid",
+    groups={not_in_creative_inventory=1},walkable=false,pointable=false,
+    buildable_to=true,drop="",liquidtype="flowing",
+    liquid_alternative_flowing="gdo_castle:refit_water_flowing",
+    liquid_alternative_source=M.water,liquid_viscosity=1})
+
+local function lantern(x,y,z)
+    put(x,y,z,"gdo_castle:castle_lantern")
+end
+
+-- Tour octogonale massive, avec ouvertures, mâchicoulis et toit conique étagé.
+local function round_tower(cx,cz,r,h)
     for y=1,h do
         for x=-r,r do for z=-r,r do
-            if math.max(math.abs(x),math.abs(z))==r
-                or (math.abs(x)==r-1 and math.abs(z)==r-1) then
+            local d=x*x+z*z
+            if d <= r*r and d >= (r-1.35)*(r-1.35) then
                 put(cx+x,y,cz+z,M.stone)
             end
         end end
     end
-    for y=4,h-3,5 do
+    -- Planchers intérieurs et fenêtres hautes.
+    for y=7,h-4,7 do
+        deck(cx-r+1,cz-r+1,cx+r-1,cz+r-1,y,M.wood)
         put(cx,y,cz-r,M.glass); put(cx,y,cz+r,M.glass)
         put(cx-r,y,cz,M.glass); put(cx+r,y,cz,M.glass)
+        lantern(cx,y+1,cz)
     end
-    for x=-r,r do for z=-r,r do
-        if math.max(math.abs(x),math.abs(z))==r and (x+z)%2==0 then
+    -- Corniche en pierre claire.
+    for x=-r-1,r+1 do for z=-r-1,r+1 do
+        if x*x+z*z <= (r+1)*(r+1) and x*x+z*z >= (r-2)*(r-2) then
             put(cx+x,h+1,cz+z,M.trim)
         end
     end end
-    for layer=0,r+1 do
-        local rr=r-layer
+    -- Toit conique bleu, chaque rang est légèrement resserré.
+    for layer=0,r+2 do
+        local rr=r+1-layer
         if rr>=0 then
             for x=-rr,rr do for z=-rr,rr do
-                if math.max(math.abs(x),math.abs(z))==rr then
+                if x*x+z*z <= rr*rr and x*x+z*z >= math.max(0,(rr-1.7)*(rr-1.7)) then
                     put(cx+x,h+2+layer,cz+z,M.roof)
                 end
             end end
         end
     end
-    put(cx,h+r+3,cz,M.gold)
+    fill(cx-1,h+r+4,cz-1,cx+1,h+r+5,cz+1,M.gold)
+    put(cx,h+r+6,cz,M.gold)
 end
 
-local function tree(x,z)
-    fill(x,1,z,x,5,z,M.wood)
-    for dx=-2,2 do for dz=-2,2 do for dy=3,6 do
-        if dx*dx+dz*dz+(dy-4)*(dy-4)<=9 then
-            put(x+dx,dy,z+dz,M.leaves)
+local function battlement_x(x1,x2,y,z)
+    for x=x1,x2 do
+        if x%2==0 then fill(x,y,z,x,y+1,z,M.trim) end
+    end
+end
+local function battlement_z(z1,z2,y,x)
+    for z=z1,z2 do
+        if z%2==0 then fill(x,y,z,x,y+1,z,M.trim) end
+    end
+end
+
+local function gable(xc,base_y,zfront,width,height,depth)
+    for y=0,height do
+        local half=math.floor(width*(1-y/height)/2)
+        if half>=0 then
+            fill(xc-half,base_y+y,zfront-depth,xc+half,base_y+y,zfront,M.roof)
         end
-    end end end
+    end
+end
+
+local function main_keep()
+    -- Corps central haut, derrière la porte.
+    fill(-17,1,-48,17,25,-17,M.stone)
+    clear(-15,2,-46,15,23,-19)
+    deck(-15,-46,15,-19,1,M.floor)
+    deck(-15,-46,15,-19,9,M.wood)
+    deck(-15,-46,15,-19,17,M.wood)
+    -- Façade sud et entrée axiale du donjon.
+    clear(-4,1,-18,4,12,-17)
+    fill(-6,12,-18,6,13,-17,M.trim)
+    fill(-5,13,-18,5,14,-17,M.roof)
+    -- Fenêtres symétriques sur la façade.
+    for x=-13,13,4 do
+        for y=6,21,7 do
+            put(x,y,-18,M.glass)
+            fill(x-1,y-1,-19,x+1,y-1,-19,M.trim)
+            fill(x-1,y+1,-19,x+1,y+1,-19,M.trim)
+        end
+    end
+    -- Bandeaux horizontaux et pilastres.
+    for x=-16,16,8 do
+        fill(x,2,-48,x+1,24,-17,M.trim)
+    end
+    for y=8,16,8 do wall_x(-16,16,y,y,-19,M.trim,1) end
+    -- Toit principal à quatre pans, largement débordant.
+    for layer=0,8 do
+        local inset=layer*2
+        fill(-19+inset,26+layer,-50+inset,19-inset,26+layer,-15-inset,M.roof)
+    end
+    -- Lucarnes et fenêtres de toit.
+    for _,x in ipairs({-10,0,10}) do
+        gable(x,27,-18,7,5,7)
+        put(x,29,-18,M.glass)
+        put(x,32,-18,M.gold)
+    end
+    -- Quatre tours d'angle du donjon.
+    round_tower(-17,-48,5,33)
+    round_tower(17,-48,5,37)
+    round_tower(-17,-17,5,29)
+    round_tower(17,-17,5,32)
+    -- Tour centrale supérieure, plus haute que les autres.
+    round_tower(0,-35,4,43)
+    -- Balcon royal sous les fenêtres.
+    fill(-8,15,-16,8,15,-13,M.trim)
+    for x=-8,8,2 do put(x,16,-13,M.wood); put(x,17,-13,M.trim) end
+    fill(-9,18,-17,9,18,-14,M.roof)
+    -- Bannière centrale.
+    fill(-1,12,-16,1,15,-16,M.gold)
+    fill(-1,10,-16,1,11,-16,M.roof)
+end
+
+local function front_gate()
+    -- Muraille basse au pied du donjon, avec portail central ouvert.
+    wall_x(-43,43,1,13,-8,M.stone,3)
+    clear(-6,1,-9,6,10,-5)
+    -- Deux grandes tours rondes de part et d'autre du portail.
+    round_tower(-20,-5,6,28)
+    round_tower(20,-5,6,28)
+    -- Arc supérieur et voussoirs contrastés.
+    fill(-8,11,-9,8,13,-5,M.trim)
+    fill(-7,14,-9,7,15,-5,M.roof)
+    for x=-7,7 do
+        local y=10+math.floor(3*(1-math.abs(x)/7))
+        put(x,y,-9,M.gold)
+    end
+    -- Petites tours secondaires aux extrémités des ailes.
+    round_tower(-37,-19,4,21)
+    round_tower(37,-19,4,21)
+    -- Chemin de ronde et créneaux.
+    deck(-42,-5,42,-4,14,M.floor)
+    battlement_x(-42,42,15,-5)
+    wall_z(-8,25,1,12,-43,M.stone,2)
+    wall_z(-8,25,1,12,42,M.stone,2)
+    battlement_z(-7,24,13,-42); battlement_z(-7,24,13,42)
+    -- Tours de flanquement arrière.
+    round_tower(-43,25,5,23)
+    round_tower(43,25,5,23)
+end
+
+local function side_wings()
+    -- Ailes basses à colombages, pignons et toitures rouges/ardoise.
+    for _,side in ipairs({-1,1}) do
+        local x1,x2 = side<0 and -36 or 22, side<0 and -22 or 36
+        fill(x1,1,-39,x2,13,-12,M.stone)
+        clear(x1+2,2,-37,x2-2,11,-14)
+        deck(x1+2,-37,x2-2,-14,1,M.floor)
+        for z=-34,-18,8 do
+            wall_x(x1+1,x2-1,2,9,z,M.wood,1)
+            put(x1+1,5,z-1,M.glass); put(x2-1,5,z-1,M.glass)
+        end
+        -- Toiture à deux pans, pignon côté cour.
+        gable(math.floor((x1+x2)/2),13,-12,18,8,27)
+        for z=-35,-17,6 do
+            put(side<0 and x2 or x1,6,z,M.glass)
+            lantern(side<0 and x2-1 or x1+1,7,z)
+        end
+    end
+end
+
+local function house(cx,cz,roof)
+    fill(cx-6,1,cz-5,cx+6,8,cz+5,M.wood)
+    clear(cx-5,2,cz-4,cx+5,7,cz+4)
+    deck(cx-5,cz-4,cx+5,cz+4,1,M.floor)
+    -- Socle en pierre et colombages apparents.
+    wall_x(cx-6,cx+6,2,2,cz-5,M.trim,1)
+    wall_x(cx-6,cx+6,7,7,cz-5,M.trim,1)
+    for x=cx-5,cx+5,5 do
+        wall_x(x,x,2,7,cz-5,M.wood,1)
+        put(x,4,cz-5,M.glass)
+    end
+    -- Porte et toit pentu.
+    clear(cx-1,2,cz-5,cx+1,4,cz-5)
+    for layer=0,3 do
+        fill(cx-7+layer,9+layer,cz-6+layer,cx+7-layer,9+layer,cz+6-layer,roof)
+    end
+    fill(cx-1,12,cz-1,cx+1,13,cz+1,M.gold)
+    lantern(cx,5,cz-4)
+end
+
+local function gardens_and_plaza()
+    -- Parvis principal en pavés, aligné sur le portail.
+    deck(-27,0,27,58,0,M.path)
+    deck(-21,2,21,54,0,M.floor)
+    -- Motif axial de la place.
+    for z=2,54,2 do
+        put(-2,1,z,M.trim); put(2,1,z,M.trim)
+    end
+    for x=-20,20,4 do
+        put(x,1,4,M.trim); put(x,1,52,M.trim)
+    end
+    -- Bassin et fontaine à gauche de l'axe, dégagés de l'allée.
+    deck(-16,22,-7,31,0,M.trim)
+    fill(-14,23,24,-9,23,29,M.water)
+    fill(-13,24,26,-10,26,27,M.trim)
+    lantern(-12,27,26)
+    -- Jardinières fleuries en bandes.
+    for _,x in ipairs({-24,24}) do
+        for z=7,47,8 do
+            fill(x-2,1,z-2,x+2,1,z+2,M.trim)
+            fill(x-1,2,z-1,x+1,2,z+1,M.leaves)
+            put(x,3,z,M.gold)
+        end
+    end
+    -- Haies, arbres et lanternes.
+    local trees={{-31,8},{31,8},{-31,35},{31,35},{-27,51},{27,51},{-40,42},{40,42}}
+    for _,p in ipairs(trees) do
+        fill(p[1],1,p[2],p[1],5,p[2],M.wood)
+        for dx=-3,3 do for dz=-3,3 do for dy=3,7 do
+            if dx*dx+dz*dz+(dy-5)*(dy-5)<=12 then put(p[1]+dx,dy,p[2]+dz,M.leaves) end
+        end end end
+    end
+    for _,p in ipairs({{-18,10},{18,10},{-18,43},{18,43},{-9,55},{9,55}}) do
+        fill(p[1]-1,1,p[2]-1,p[1]+1,4,p[2]+1,M.trim)
+        lantern(p[1],5,p[2]); put(p[1],6,p[2],M.gold)
+    end
+    -- Maisons de guilde et échoppes bordant la place.
+    house(-30,17,M.roof)
+    house(30,17,M.roof)
+    house(-30,43,M.roof)
+    house(30,43,M.roof)
+    -- Bancs et petits étals.
+    for _,p in ipairs({{-12,13},{12,13},{-12,42},{12,42}}) do
+        fill(p[1]-2,1,p[2],p[1]+2,1,p[2],M.wood)
+        put(p[1]-2,2,p[2],M.trim); put(p[1]+2,2,p[2],M.trim)
+    end
+end
+
+local function entrance_details()
+    -- Deux bannières bleues et or suspendues aux tours de la porte.
+    for _,x in ipairs({-13,13}) do
+        fill(x-2,17,-7,x+2,18,-7,M.gold)
+        fill(x-1,12,-7,x+1,16,-7,M.roof)
+        put(x,11,-7,M.gold)
+        lantern(x,19,-7)
+    end
+    -- Fenêtres éclairées sur la façade des tours.
+    for _,x in ipairs({-20,20}) do
+        for y=8,24,8 do
+            put(x,y,-11,M.glass)
+            put(x,y+1,-11,M.gold)
+        end
+    end
+    -- Escalier large et praticable devant le portail.
+    for step=0,4 do
+        deck(-8-step, -step+1, 8+step, -step+1, step, M.floor)
+    end
+    -- Pavillons de guilde avec leurs enseignes.
+    for _,p in ipairs({{-30,17},{30,17},{-30,43},{30,43}}) do
+        fill(p[1]-1,5,p[2]-6,p[1]+1,7,p[2]-6,M.gold)
+        fill(p[1]-1,3,p[2]-6,p[1]+1,4,p[2]-6,M.roof)
+    end
 end
 
 local function build()
-    -- Nettoyage strict du chantier : retire les anciens volumes et les pièges.
-    clear(-52,-8,-58,52,70,85)
-    fill(-52,-1,-58,52,-1,85,"gdo_core:terre")
-    floor(-52,-58,52,85,0,M.grass)
+    -- Nettoyage de l'ancienne emprise, y compris l'ancien château enterré.
+    clear(-54,-12,-60,54,82,82)
+    fill(-54,-1,-60,54,-1,82,"gdo_core:terre")
+    deck(-54,-60,54,82,0,M.grass)
 
-    -- Grande enceinte et cour au même niveau que le terrain.
-    floor(-38,-34,38,28,0,M.floor)
-    floor(-4,28,4,68,0,M.path)
-    floor(-13,54,13,75,0,M.floor)
-    for x=-38,38 do
-        if x < -5 or x > 5 then
-            fill(x,1,30,x,9,31,M.stone)
-            if x%4==0 then fill(x,10,30,x,11,31,M.trim) end
-        end
-    end
-    fill(-38,1,-48,-37,10,31,M.stone)
-    fill(37,1,-48,38,10,31,M.stone)
-    fill(-38,1,-48,38,1,-47,M.stone)
-    for x=-38,38,2 do
-        put(x,11,31,M.trim)
-        put(x,11,-47,M.trim)
-    end
-    for z=-46,30,2 do
-        put(-38,11,z,M.trim); put(38,11,z,M.trim)
-    end
+    -- Le château est posé au niveau du sol naturel (y=0), pas sur un plateau aérien.
+    gardens_and_plaza()
+    side_wings()
+    main_keep()
+    front_gate()
+    entrance_details()
 
-    -- Porte ouverte : deux tours et un arc haut, aucun bloc dans le passage.
-    fill(-8,1,28,-6,17,33,M.stone)
-    fill(6,1,28,8,17,33,M.stone)
-    fill(-8,17,28,8,19,33,M.trim)
-    fill(-5,1,28,5,7,33,"air")
-    for x=-5,5 do put(x,8,28,M.gold); put(x,8,33,M.gold) end
-    tower(-7,30,3,18); tower(7,30,3,18)
-    -- Remparts crénelés.
-    for x=-36,36,2 do
-        if x < -5 or x > 5 then put(x,12,31,M.trim) end
+    -- Sol et cheminement depuis le point d'arrivée historique (0,64).
+    deck(-15,56,15,78,0,M.floor)
+    deck(-3,40,3,64,0,M.path)
+    for z=57,74,3 do
+        put(-12,1,z,M.trim); put(12,1,z,M.trim)
     end
+    -- Accès ouvert : aucun mur transversal ne ferme la sortie.
+    clear(-5,1,36,5,8,39)
+    -- Panneau d'accueil et jardinet des navets.
+    put(0,1,75,"gdo_castle:arrival_sign")
+    deck(-16,37,-9,47,0,M.grass)
+    put(-13,1,40,"gdo_core:navet_sur_pied")
+    put(-13,1,42,"gdo_core:navet_sur_pied")
+    put(-15,1,41,"gdo_core:navet_sur_pied")
 
-    -- Donjon principal : volumes creux, fenêtres alignées, façade sud.
-    fill(-15,1,-44,15,20,-14,M.stone)
-    clear(-13,2,-42,13,18,-16)
-    floor(-13,-42,13,-16,1,M.floor)
-    floor(-13,-42,13,-16,9,M.wood)
-    floor(-13,-42,13,-16,16,M.wood)
-    -- Façade sud ouverte et encadrée.
-    clear(-3,1,-14,3,8,-13)
-    fill(-5,8,-14,5,9,-13,M.trim)
-    for x=-11,11,4 do
-        put(x,5,-14,M.glass); put(x,12,-14,M.glass)
-    end
-    for z=-40,-18,4 do
-        put(-15,5,z,M.glass); put(15,5,z,M.glass)
-        put(-15,12,z,M.glass); put(15,12,z,M.glass)
-    end
-    -- Toit à quatre pans en retraits successifs.
-    for layer=0,7 do
-        local inset=layer*2
-        fill(-16+inset,21+layer,-45+inset,16-inset,21+layer,-13-inset,M.roof)
-    end
-    for x=-14,14,2 do put(x,21,-13,M.trim) end
-
-    -- Quatre tours du donjon, légèrement décalées en hauteur.
-    tower(-15,-44,4,27); tower(15,-44,4,31)
-    tower(-15,-14,4,24); tower(15,-14,4,28)
-
-    -- Ailes basses, plus larges, avec pignons et galeries.
-    fill(-29,1,-39,-19,13,-17,M.stone)
-    clear(-27,2,-37,-21,11,-19)
-    floor(-27,-37,-21,-19,1,M.floor)
-    fill(19,1,-39,29,13,-17,M.stone)
-    clear(21,2,-37,27,11,-19)
-    floor(21,-37,27,-19,1,M.floor)
-    tower(-24,-38,3,18); tower(-24,-17,3,16)
-    tower(24,-38,3,20); tower(24,-17,3,17)
-
-    -- Arcades et piliers qui relient les ailes à la cour.
-    for z=-12,20,8 do
-        fill(-30,1,z,-30,7,z,M.trim)
-        fill(30,1,z,30,7,z,M.trim)
-        fill(-30,8,z,-30,8,z+3,M.roof)
-        fill(30,8,z,30,8,z+3,M.roof)
-    end
-
-    -- Pavillons des quatre maisons, de part et d'autre de la cour.
-    local houses={{-25,-3,"#b84a35"},{25,-3,"#536eb5"},{-25,15,"#4d986a"},{25,15,"#c49b39"}}
-    for _,p in ipairs(houses) do
-        local x,z=p[1],p[2]
-        fill(x-5,1,z-4,x+5,7,z+4,M.stone)
-        clear(x-4,2,z-3,x+4,6,z+3)
-        floor(x-4,z-3,x+4,z+3,1,M.floor)
-        fill(x-5,7,z-4,x+5,7,z+4,M.roof)
-        put(x,4,z-4,M.gold)
-        put(x,4,z+4,M.gold)
-    end
-
-    -- Place centrale, fontaines et jardins.
-    floor(-8,-8,8,8,0,M.trim)
-    for x=-6,6 do put(x,1,0,M.gold) end
-    for z=-6,6 do put(0,1,z,M.gold) end
-    for _,x in ipairs({-27,27}) do
-        floor(x-3,-2,x+3,2,0,M.trim)
-        fill(x-2,1,-1,x+2,1,1,M.water)
-        put(x,2,0,M.gold)
-    end
-    for _,p in ipairs({{-33,-28},{33,-28},{-33,20},{33,20},{-18,24},{18,24}}) do
-        tree(p[1],p[2])
-    end
-    -- Haies et massifs, sans obstruer les allées.
-    for x=-32,32,4 do
-        if math.abs(x)>10 then
-            put(x,1,22,M.leaves); put(x,2,22,M.leaves)
-        end
-    end
-
-    -- Place d'arrivée dégagée au sud, avec allée continue vers la porte.
-    floor(-12,55,12,75,0,M.floor)
-    floor(-3,32,3,56,0,M.path)
-    for x=-9,9,3 do
-        put(x,1,59,M.gold); put(x,1,71,M.gold)
-    end
-    for _,x in ipairs({-10,10}) do
-        fill(x-1,1,62,x+1,4,64,M.trim)
-        put(x,5,63,"gdo_castle:castle_lantern")
-        put(x,6,63,M.gold)
-    end
-    put(0,1,73,"gdo_castle:arrival_sign")
-
-    -- Petit jardin des navets à côté de l'entrée, sur un sol praticable.
-    floor(-12,35,-6,44,0,M.grass)
-    put(-9,1,38,"gdo_core:navet_sur_pied")
-    put(-9,1,40,"gdo_core:navet_sur_pied")
-    put(-11,1,39,"gdo_core:navet_sur_pied")
-
-    -- Détails architecturaux : contreforts, bandeaux, fenêtres profondes,
-    -- balcons, enseignes et éclairage régulier pour casser les grands aplats.
-    -- Donjon : soubassement, corniches et pilastres verticaux.
-    for x=-16,16,8 do
-        fill(x,1,-45,x+1,4,-14,M.trim)
-        fill(x,19,-45,x+1,20,-14,M.trim)
-        for y=5,15,5 do
-            put(x,y,-14,M.gold)
-        end
-    end
-    for z=-40,-18,6 do
-        fill(-16,8,z,-16,9,z+2,M.trim)
-        fill(16,8,z,16,9,z+2,M.trim)
-    end
-    -- Fenêtres en alcôve avec linteaux et appuis.
-    for x=-12,12,4 do
-        for _,y in ipairs({5,12}) do
-            fill(x-1,y-1,-15,x+1,y-1,-15,M.trim)
-            fill(x-1,y+1,-15,x+1,y+1,-15,M.trim)
-            put(x,y,-15,M.glass)
-        end
-    end
-    -- Balcon royal au-dessus de l'entrée du donjon.
-    fill(-7,10,-12,7,10,-10,M.trim)
-    for x=-7,7,2 do
-        put(x,11,-10,M.wood)
-        put(x,12,-10,M.trim)
-    end
-    fill(-8,13,-12,8,13,-10,M.roof)
-    -- Pignons et lucarnes du toit.
-    for _,x in ipairs({-9,0,9}) do
-        fill(x-2,22,-30,x+2,22,-26,M.trim)
-        fill(x-1,23,-29,x+1,24,-27,M.roof)
-        put(x,25,-28,M.gold)
-    end
-
-    -- Remparts : merlons alternés et chemins de ronde lisibles.
-    for x=-36,36,2 do
-        if x < -5 or x > 5 then
-            fill(x,12,30,x,13,31,M.trim)
-            if x%6==0 then put(x,14,30,M.gold) end
-        end
-    end
-    for z=-44,28,4 do
-        fill(-37,12,z,-37,13,z,M.trim)
-        fill(37,12,z,37,13,z,M.trim)
-    end
-
-    -- Porte monumentale : voussoirs contrastés et deux lanternes.
-    for x=-5,5 do
-        local arch_y = 8 + math.floor(3 * (1 - math.abs(x)/5))
-        put(x,arch_y,28,M.trim)
-        put(x,arch_y,33,M.trim)
-    end
-    for _,x in ipairs({-9,9}) do
-        fill(x-1,1,29,x+1,15,32,M.trim)
-        for y=4,12,4 do put(x,y,28,M.glass) end
-        put(x,16,30,M.gold)
-        put(x,17,30,"gdo_castle:castle_lantern")
-    end
-
-    -- Cour : bandes de pavés, bancs, jardinières et lanternes.
-    for z=-30,24,6 do
-        for x=-34,34 do
-            if math.abs(x)>10 and x%2==0 then put(x,1,z,M.path) end
-        end
-    end
-    for _,p in ipairs({{-16,-4},{16,-4},{-16,17},{16,17}}) do
-        local x,z=p[1],p[2]
-        fill(x-2,1,z-2,x+2,1,z+2,M.trim)
-        fill(x-1,2,z-1,x+1,2,z+1,M.leaves)
-        put(x,3,z,"gdo_castle:castle_lantern")
-    end
-    -- Bancs près de la fontaine.
-    for _,x in ipairs({-11,11}) do
-        fill(x-2,1,-2,x+2,1,-2,M.wood)
-        put(x-2,2,-2,M.trim); put(x+2,2,-2,M.trim)
-    end
-
-    -- Façades des pavillons : colombages, enseignes et petites toitures à pignons.
-    for _,p in ipairs({{-25,-3},{25,-3},{-25,15},{25,15}}) do
-        local x,z=p[1],p[2]
-        for dx=-4,4,4 do
-            fill(x+dx,2,z-4,x+dx,6,z-4,M.wood)
-        end
-        fill(x-5,6,z-5,x+5,6,z-4,M.trim)
-        fill(x-3,8,z-3,x+3,8,z+3,M.roof)
-        fill(x-2,9,z-2,x+2,9,z+2,M.roof)
-        put(x,10,z,M.gold)
-        put(x,4,z-5,M.glass)
-        put(x,5,z-5,M.gold)
-        put(x,3,z+5,"gdo_castle:castle_lantern")
-    end
-
-    -- Jardins d'entrée : haies, fleurs stylisées et lampadaires.
-    for _,z in ipairs({57,73}) do
-        for x=-8,8,4 do
-            put(x,1,z,M.leaves)
-            put(x,2,z,M.leaves)
-            put(x,3,z,"gdo_castle:castle_lantern")
-        end
-    end
-    for _,p in ipairs({{-11,55},{11,55},{-11,74},{11,74}}) do
-        put(p[1],1,p[2],M.gold)
-        put(p[1],2,p[2],"gdo_castle:castle_lantern")
-    end
-
-    -- Le terrain autour du château reste horizontal et dégagé.
-    fill(-52,-1,-58,52,-1,85,"gdo_core:terre")
     if minetest.fix_light then
-        minetest.fix_light({x=-52,y=16,z=-58},{x=52,y=94,z=85})
+        minetest.fix_light({x=-54,y=OFFSET-2,z=-60},{x=54,y=OFFSET+82,z=82})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Refonte du Château des Brumes construite au-dessus du terrain (version 3).")
+    minetest.log("action","[GDO] Château des Brumes v4 généré : donjon, tours rondes, porte monumentale et parvis.")
 end
 
 local storage = minetest.get_mod_storage and minetest.get_mod_storage() or nil
+local VERSION = 4
+local function generate_if_needed()
+    if not storage or storage:get_int("refit_version") < VERSION then
+        build()
+        if storage then storage:set_int("refit_version",VERSION) end
+    end
+end
+
 minetest.register_on_mods_loaded(function()
-    minetest.after(5,function()
-        if not storage or storage:get_int("refit_version") < 3 then
-            build()
-            if storage then storage:set_int("refit_version",3) end
-        end
-    end)
+    minetest.after(5,generate_if_needed)
 end)
 
-minetest.register_chatcommand("refairechateau", {
-    description = "Reconstruit le Château des Brumes",
-    privs = {server = true},
-    func = function()
+minetest.register_chatcommand("refairechateau",{
+    description="Reconstruit le Château des Brumes (version architecturale 4)",
+    privs={server=true},
+    func=function()
         build()
-        if storage then storage:set_int("refit_version",3) end
-        return true, "Le Château des Brumes a été reconstruit."
+        if storage then storage:set_int("refit_version",VERSION) end
+        return true,"Château des Brumes v4 reconstruit. Retourne sur le parvis sud."
     end,
 })
