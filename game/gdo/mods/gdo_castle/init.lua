@@ -495,8 +495,8 @@ local function build_house_common_room(house)
     local front_z = cz < 5 and z2 or z1
     clear_box(cx - 1, 2, front_z, cx + 1, 4, front_z)
     -- Toit à deux niveaux, avec blason au sommet.
-    cuboid(x1 - 1, 7, z1 - 1, x2 + 1, 7, z2 + 1, house and nodes.roof or nodes.roof)
-    cuboid(x1 + 1, 8, z1 + 1, x2 - 1, 8, z2 - 1, house and nodes.dark or nodes.dark)
+    cuboid(x1 - 1, 7, z1 - 1, x2 + 1, 7, z2 + 1, nodes.roof)
+    cuboid(x1 + 1, 8, z1 + 1, x2 - 1, 8, z2 - 1, nodes.dark)
     -- Blason visible depuis la cour.
     put(cx, 5, front_z, "gdo:house_crest_" .. house.id)
     -- Cheminée et foyer symbolique.
@@ -507,7 +507,7 @@ local function build_house_common_room(house)
     cuboid(cx - 3, 2, cz - 2, cx - 3, 2, cz + 2, nodes.wood)
     cuboid(cx + 3, 2, cz - 2, cx + 3, 2, cz + 2, nodes.wood)
     for dx = -2, 2 do
-        put(cx + dx, 2, cz + 3, "gdo:house_crest_" .. house.id)
+        put(cx + dx, 3, z1, "gdo:house_crest_" .. house.id)
     end
     put(cx, 3, cz, "gdo:castle_lantern")
 end
