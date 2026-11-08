@@ -321,6 +321,153 @@ local function entrance_details()
     end
 end
 
+
+-- Éclairage intérieur dédié : les lanternes de décoration héritées ne suffisent
+-- pas à éclairer les volumes fermés du donjon.
+minetest.register_node("gdo_castle:refit_lamp", {
+    description = S("Lanterne du château"),
+    drawtype = "glasslike",
+    tiles = {"refit_gold.png"},
+    paramtype = "light",
+    sunlight_propagates = true,
+    light_source = 14,
+    groups = {cracky = 2, oddly_breakable_by_hand = 2},
+})
+minetest.register_node("gdo_castle:refit_chandelier", {
+    description = S("Lustre royal"),
+    tiles = {"refit_gold.png"},
+    paramtype = "light",
+    sunlight_propagates = true,
+    light_source = 15,
+    groups = {cracky = 2},
+})
+
+local function lamp(x,y,z)
+    put(x,y,z,"gdo_castle:refit_lamp")
+end
+local function chandelier(x,y,z)
+    put(x,y,z,"gdo_castle:refit_chandelier")
+    put(x,y+1,z,M.gold)
+end
+local function table_block(x1,y,z1,x2,z2)
+    fill(x1,y,z1,x2,y,z2,M.wood)
+    for x=x1,x2,math.max(1,x2-x1) do
+        put(x,y-1,z1,M.trim); put(x,y-1,z2,M.trim)
+    end
+end
+local function build_interiors()
+    -- REZ-DE-CHAUSSÉE : vestibule, salle du trône et salle du conseil.
+    deck(-14,-45,14,-20,1,M.floor)
+    -- Tapis d'apparat menant au trône.
+    fill(-2,2,-44,2,2,-22,M.roof)
+    fill(-1,2,-44,1,2,-22,M.gold)
+    -- Colonnes jumelées et arcs décoratifs.
+    for _,x in ipairs({-12,-8,8,12}) do
+        fill(x,2,-43,x,7,-43,M.trim)
+        fill(x,2,-23,x,7,-23,M.trim)
+        put(x,8,-43,M.gold); put(x,8,-23,M.gold)
+    end
+    -- Estrade et trône au nord.
+    fill(-5,2,-45,5,3,-41,M.trim)
+    fill(-2,4,-45,2,5,-44,M.wood)
+    fill(-2,6,-45,2,7,-45,M.gold)
+    fill(-1,4,-43,1,5,-43,M.roof)
+    -- Bancs latéraux et tables de réception.
+    for z=-38,-28,5 do
+        table_block(-11,3,z,-6,z+1)
+        table_block(6,3,z,11,z+1)
+    end
+    -- Cloisons basses avec passages pour créer des espaces lisibles.
+    wall_z(-40,-39,2,7,-14,M.trim,1)
+    wall_z(-40,-39,2,7,14,M.trim,1)
+    clear(-2,2,-40,2,4,-39)
+    -- Lustres suspendus et appliques.
+    for _,p in ipairs({{-8,6,-34},{0,6,-34},{8,6,-34},{-8,6,-25},{0,6,-25},{8,6,-25}}) do
+        chandelier(p[1],p[2],p[3])
+    end
+    for _,p in ipairs({{-14,4,-35},{14,4,-35},{-14,4,-25},{14,4,-25}}) do lamp(p[1],p[2],p[3]) end
+    -- Étage noble : bibliothèque à gauche, armurerie à droite, salle du conseil au fond.
+    deck(-14,-45,14,-20,9,M.floor)
+    wall_x(-14,14,10,15,-33,M.trim,1)
+    clear(-2,10,-33,2,12,-33)
+    wall_z(-32,-20,10,15,0,M.trim,1)
+    clear(-2,10,-25,2,12,-20)
+    -- Bibliothèque : rayonnages, échelle et tables de lecture.
+    for z=-43,-35,3 do
+        fill(-13,10,z,-12,14,z+1,M.wood)
+        fill(-10,10,z,-9,14,z+1,M.wood)
+    end
+    for x=-11,-9,2 do
+        fill(x,10,-30,x,14,-29,M.wood)
+    end
+    table_block(-11,11,-26,-6,-25)
+    lamp(-8,14,-28); lamp(-13,14,-38)
+    -- Armurerie : râteliers, coffres et mannequins stylisés.
+    for z=-43,-35,4 do
+        fill(9,10,z,13,11,z,M.wood)
+        for x=10,12 do put(x,12,z,M.gold) end
+    end
+    fill(7,10,-29,13,11,-27,M.wood)
+    lamp(12,14,-30); lamp(8,14,-40)
+    -- Salle du conseil : grande table, sièges et lustre central.
+    table_block(-5,11,-24,5,-22)
+    for x=-4,4,2 do
+        put(x,10,-26,M.wood); put(x,10,-20,M.wood)
+    end
+    chandelier(0,14,-23)
+    -- Niveau supérieur : observatoire et chapelle des novices.
+    deck(-14,-45,14,-20,17,M.floor)
+    wall_x(-14,14,18,22,-33,M.trim,1)
+    clear(-2,18,-33,2,20,-33)
+    -- Chapelle : autel, vitraux et rangées de bancs.
+    fill(-11,18,-43,11,19,-41,M.trim)
+    fill(-3,20,-43,3,21,-42,M.gold)
+    for z=-38,-34,2 do
+        fill(-9,18,z,-5,18,z,M.wood)
+        fill(5,18,z,9,18,z,M.wood)
+    end
+    for x=-10,-6,4 do put(x,21,-44,M.glass) end
+    for x=6,10,4 do put(x,21,-44,M.glass) end
+    chandelier(0,21,-32); lamp(-12,21,-25); lamp(12,21,-25)
+    -- Passerelles de circulation, portes ouvertes et garde-corps.
+    fill(-14,18,-31,-4,18,-30,M.wood)
+    fill(4,18,-31,14,18,-30,M.wood)
+    for x=-14,14,2 do
+        put(x,19,-30,M.trim)
+    end
+
+    -- AILE OUEST : cuisine, cellier et réfectoire.
+    deck(-34,-37,-24,-14,1,M.floor)
+    fill(-33,2,-36,-25,2,-35,M.wood)
+    fill(-33,2,-19,-25,2,-18,M.wood)
+    -- Four et cheminée (lumière chaude).
+    fill(-33,2,-33,-30,4,-30,M.trim)
+    fill(-32,3,-32,-31,4,-31,M.roof)
+    lamp(-31,5,-31)
+    -- Plans de travail, tonneaux et tables.
+    table_block(-29,3,-32,-25,-31)
+    table_block(-33,3,-25,-29,-24)
+    for _,p in ipairs({{-25,-35},{-25,-21},{-33,-21}}) do
+        fill(p[1],2,p[2],p[1]+1,4,p[2]+1,M.wood)
+    end
+    chandelier(-29,7,-25); lamp(-26,7,-35)
+    -- AILE EST : dortoir, lits et coffres.
+    deck(24,-37,34,-14,1,M.floor)
+    for z=-34,-18,5 do
+        fill(25,2,z,27,2,z+2,M.roof)
+        fill(25,3,z,27,3,z,M.trim)
+        fill(31,2,z,33,2,z+2,M.roof)
+        fill(31,3,z,33,3,z,M.trim)
+        put(26,4,z+1,M.gold); put(32,4,z+1,M.gold)
+    end
+    fill(28,2,-28,30,3,-27,M.wood)
+    fill(28,2,-20,30,3,-19,M.wood)
+    chandelier(29,7,-26); lamp(25,7,-16); lamp(33,7,-36)
+
+    -- Les lampes sont volontairement réparties dans chaque pièce, pas seulement
+    -- sur les façades : recalcul lumière effectué après la génération.
+end
+
 local function build()
     -- Nettoyage de l'ancienne emprise, y compris l'ancien château enterré.
     clear(-54,-12,-60,54,82,82)
@@ -331,6 +478,7 @@ local function build()
     gardens_and_plaza()
     side_wings()
     main_keep()
+    build_interiors()
     front_gate()
     entrance_details()
 
@@ -351,13 +499,14 @@ local function build()
 
     if minetest.fix_light then
         minetest.fix_light({x=-54,y=OFFSET-2,z=-60},{x=54,y=OFFSET+82,z=82})
+        minetest.fix_light({x=-40,y=OFFSET+1,z=-52},{x=40,y=OFFSET+60,z=64})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
     minetest.log("action","[GDO] Château des Brumes v4 généré : donjon, tours rondes, porte monumentale et parvis.")
 end
 
 local storage = minetest.get_mod_storage and minetest.get_mod_storage() or nil
-local VERSION = 4
+local VERSION = 5
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
