@@ -263,13 +263,13 @@ minetest.register_on_joinplayer(function(player)
             return
         end
 
-        -- Plateforme de spawn surélevée : le bas de la collisionbox du joueur
-        -- doit se trouver au-dessus du bloc (position du joueur = centre du corps).
-        -- On reconstruit une dalle 7 x 7 au niveau y=1 et on libère 8 blocs au-dessus.
-        for x = -3, 3 do
-            for z = 7, 13 do
-                minetest.set_node({x = x, y = 1, z = z}, {name = "gdo_castle:castle_floor"})
-                for y = 2, 9 do
+        -- Spawn sur le parvis sud, hors de l'emprise des bâtiments et des remparts.
+        -- La zone d'arrivée du château se trouve en z=32..49 ; on utilise z=45,
+        -- au-delà du mur transversal situé en z=39.
+        for x = -4, 4 do
+            for z = 41, 49 do
+                minetest.set_node({x = x, y = 0, z = z}, {name = "gdo_castle:castle_marble"})
+                for y = 1, 12 do
                     minetest.set_node({x = x, y = y, z = z}, {name = "air"})
                 end
             end
@@ -277,13 +277,13 @@ minetest.register_on_joinplayer(function(player)
 
         if minetest.fix_light then
             minetest.fix_light(
-                {x = -5, y = 1, z = 5},
-                {x = 5, y = 11, z = 15}
+                {x = -6, y = 0, z = 39},
+                {x = 6, y = 14, z = 51}
             )
         end
 
-        -- Le joueur mesure environ 1,8 bloc : y=3 place ses pieds sur la dalle y=1.
-        player:set_pos({x = 0, y = 3, z = 10})
+        -- Position du joueur au-dessus du sol, avec une grande hauteur libre.
+        player:set_pos({x = 0, y = 2, z = 45})
         player:set_velocity({x = 0, y = 0, z = 0})
         if player.set_look_horizontal then
             player:set_look_horizontal(0)
@@ -296,10 +296,10 @@ minetest.register_on_joinplayer(function(player)
         end
         meta:set_int("gdo_spawned", 1)
 
-        local feet = minetest.get_node({x = 0, y = 1, z = 10}).name
-        local body = minetest.get_node({x = 0, y = 3, z = 10}).name
+        local feet = minetest.get_node({x = 0, y = 0, z = 45}).name
+        local body = minetest.get_node({x = 0, y = 2, z = 45}).name
         minetest.chat_send_player(player:get_player_name(),
-            string.format("[GDO] Spawn sur la plateforme centrale | sol=%s | espace=%s",
+            string.format("[GDO] Spawn sur le parvis sud | sol=%s | espace=%s",
                 feet, body))
 
         if first_spawn then
