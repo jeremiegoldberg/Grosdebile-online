@@ -422,6 +422,102 @@ local function build_trophy_gallery()
     put(0, 3, 18, "gdo:castle_noticeboard")
 end
 
+
+-- Les quatre maisons : chaque blason est un point d'inscription interactif.
+local houses = {
+    {
+        id = "bras_casses", title = "Les Bras Cassés",
+        motto = "Le courage avant la compétence.",
+        color = "#b84a35", emblem = "unknown_node.png^[colorize:#b84a35:220",
+        center = {x = -24, z = -1},
+        lore = "On fonce d'abord. On lit le panneau après. Parfois.",
+    },
+    {
+        id = "mages_dimanche", title = "Les Mages du Dimanche",
+        motto = "La magie, c'est 10 % de talent et 90 % d'excuses.",
+        color = "#536eb5", emblem = "unknown_node.png^[colorize:#536eb5:220",
+        center = {x = 24, z = -1},
+        lore = "Leurs sorts fonctionnent. Les effets secondaires sont une fonctionnalité.",
+    },
+    {
+        id = "rats_bibliotheque", title = "Les Rats de Bibliothèque",
+        motto = "Savoir, c'est pouvoir. Sortir, c'est facultatif.",
+        color = "#4d986a", emblem = "unknown_node.png^[colorize:#4d986a:220",
+        center = {x = -24, z = 13},
+        lore = "Ils connaissent tous les secrets du Royaume, sauf le chemin de la sortie.",
+    },
+    {
+        id = "seigneurs_navet", title = "Les Seigneurs du Navet",
+        motto = "Une racine noble, un destin grandiose.",
+        color = "#c49b39", emblem = "unknown_node.png^[colorize:#c49b39:220",
+        center = {x = 24, z = 13},
+        lore = "Une aristocratie agricole qui prend ses récoltes très au sérieux.",
+    },
+}
+
+for _, definition in ipairs(houses) do
+    local house = definition
+    minetest.register_node("gdo:house_crest_" .. house.id, {
+        description = "Blason — " .. house.title,
+        tiles = {house.emblem},
+        groups = {cracky = 2, oddly_breakable_by_hand = 2},
+        on_rightclick = function(pos, node, clicker)
+            if not clicker or not clicker:is_player() then return end
+            local meta = clicker:get_meta()
+            local current = meta:get_string("gdo_house")
+            if current == house.id then
+                minetest.chat_send_player(clicker:get_player_name(),
+                    house.title .. " : " .. house.motto .. " " .. house.lore)
+                return
+            end
+            if current ~= "" then
+                minetest.chat_send_player(clicker:get_player_name(),
+                    "Tu appartiens déjà à une maison. Le changement de maison nécessite l'autorisation du proviseur (qui est actuellement en réunion).")
+                return
+            end
+            meta:set_string("gdo_house", house.id)
+            meta:set_string("gdo_house_title", house.title)
+            minetest.chat_send_all(clicker:get_player_name() .. " rejoint " .. house.title .. " ! " .. house.motto)
+        end,
+    })
+end
+
+local function build_house_common_room(house)
+    local cx, cz = house.center.x, house.center.z
+    local x1, x2, z1, z2 = cx - 4, cx + 4, cz - 4, cz + 4
+    -- Pavillon compact : façade tournée vers le centre de la cour.
+    floor_rect(x1, z1, x2, z2, 1, nodes.marble)
+    cuboid(x1, 2, z1, x2, 6, z1, nodes.dark)
+    cuboid(x1, 2, z2, x2, 6, z2, nodes.dark)
+    cuboid(x1, 2, z1 + 1, x1, 6, z2 - 1, nodes.dark)
+    cuboid(x2, 2, z1 + 1, x2, 6, z2 - 1, nodes.dark)
+    -- Porte ouverte sur la cour, côté sud pour les pavillons nord et inversement.
+    local front_z = cz < 5 and z2 or z1
+    clear_box(cx - 1, 2, front_z, cx + 1, 4, front_z)
+    -- Toit à deux niveaux, avec blason au sommet.
+    cuboid(x1 - 1, 7, z1 - 1, x2 + 1, 7, z2 + 1, house and nodes.roof or nodes.roof)
+    cuboid(x1 + 1, 8, z1 + 1, x2 - 1, 8, z2 - 1, house and nodes.dark or nodes.dark)
+    -- Blason visible depuis la cour.
+    put(cx, 5, front_z, "gdo:house_crest_" .. house.id)
+    -- Cheminée et foyer symbolique.
+    cuboid(x1 + 1, 2, z1 + 1, x1 + 2, 4, z1 + 2, nodes.wood)
+    put(x1 + 1, 5, z1 + 1, "gdo:castle_lantern")
+    -- Tables, bancs et tapis aux couleurs de la maison.
+    cuboid(cx - 2, 2, cz - 1, cx + 2, 2, cz + 1, nodes.wood)
+    cuboid(cx - 3, 2, cz - 2, cx - 3, 2, cz + 2, nodes.wood)
+    cuboid(cx + 3, 2, cz - 2, cx + 3, 2, cz + 2, nodes.wood)
+    for dx = -2, 2 do
+        put(cx + dx, 2, cz + 3, "gdo:house_crest_" .. house.id)
+    end
+    put(cx, 3, cz, "gdo:castle_lantern")
+end
+
+local function build_four_houses()
+    for _, house in ipairs(houses) do
+        build_house_common_room(house)
+    end
+end
+
 local function build_outer_walls()
     -- Grande enceinte rectangulaire, avec chemin de ronde et créneaux.
     wall_x(-40, 40, 1, 12, -50, nodes.dark, 2)
@@ -515,6 +611,7 @@ local function generate_castle()
     build_bureau_des_quetes()
     build_trophy_gallery()
     build_courtyard()
+    build_four_houses()
     -- Le jardin de la quête est recréé après la construction du terrain.
     put(-8, 1, 39, "gdo:navet_sur_pied")
     put(-8, 1, 41, "gdo:navet_sur_pied")
@@ -537,12 +634,48 @@ end
 minetest.register_on_mods_loaded(function()
     minetest.after(2, function()
         local storage = minetest.get_mod_storage()
-        if storage:get_int("castle_generated") ~= 4 then
+        if storage:get_int("castle_generated") ~= 5 then
             generate_castle()
-            storage:set_int("castle_generated", 4)
+            storage:set_int("castle_generated", 5)
         end
     end)
 end)
+
+
+minetest.register_chatcommand("maison", {
+    description = "Affiche ta maison ou explique comment en rejoindre une",
+    func = function(name)
+        local player = minetest.get_player_by_name(name)
+        if not player then return false, "Joueur introuvable." end
+        local id = player:get_meta():get_string("gdo_house")
+        if id == "" then
+            minetest.chat_send_player(name,
+                "Tu n'as pas encore de maison ! Dans la cour, visite les quatre pavillons et fais un clic droit sur le blason de celui qui te ressemble. Attention : le choix est définitif pour cette version.")
+            return true
+        end
+        for _, house in ipairs(houses) do
+            if house.id == id then
+                minetest.chat_send_player(name,
+                    "Ta maison : " .. house.title .. " — " .. house.motto .. " " .. house.lore)
+                return true
+            end
+        end
+        return true
+    end,
+})
+
+minetest.register_chatcommand("maisons", {
+    description = "Présente les quatre maisons du Château des Brumes",
+    func = function(name)
+        for _, house in ipairs(houses) do
+            minetest.chat_send_player(name,
+                house.title .. " — " .. house.motto .. " " .. house.lore)
+        end
+        minetest.chat_send_player(name,
+            "Pour rejoindre une maison, clique droit sur son blason dans son pavillon. /maison affiche ton affectation.")
+        return true
+    end,
+})
 
 minetest.register_chatcommand("chateau", {
     description = "Affiche les informations sur le Château des Brumes",
