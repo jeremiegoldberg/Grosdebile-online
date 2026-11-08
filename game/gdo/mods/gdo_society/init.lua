@@ -123,7 +123,11 @@ local function inside(pos,x1,z1,x2,z2)
 end
 local function village_at(pos)
     for id,g in pairs(guilds) do
-        if inside(pos,g.x-48,g.z-48,g.x+48,g.z+120) then return id,g end
+        -- L'emprise s'étend vers le sud au fur et à mesure que de nouvelles rangées
+        -- de parcelles sont attribuées.
+        local last_row=math.floor(math.max(0,(g.plots or 1)-1)/5)
+        local south=math.max(48,17+last_row*15+PLOT-1)
+        if inside(pos,g.x-48,g.z-48,g.x+48,g.z+south) then return id,g end
     end
 end
 local function in_plot(pos,p)
@@ -171,11 +175,11 @@ local function update_growth(g)
     g.village_stage=stage
     minetest.chat_send_all("Le village de "..g.name.." s'étoffe ! Niveau "..stage..", avec "..n.." membres.")
     local x,z=g.x,g.z
-    if stage>=2 then box(x-24,1,z-24,x+24,3,z-23,"gdo_society:stone") end
-    if stage>=3 then box(x-24,1,z+23,x+24,3,z+24,"gdo_society:stone") end
+    if stage>=2 then box(x-44,1,z-44,x+44,3,z-43,"gdo_society:stone") end
+    if stage>=3 then box(x-44,1,z-44,x-43,3,z+44,"gdo_society:stone") end
     if stage>=4 then
-        box(x-24,1,z-24,x-23,5,z+24,"gdo_society:stone")
-        box(x+23,1,z-24,x+24,5,z+24,"gdo_society:stone")
+        box(x+43,1,z-44,x+44,5,z+44,"gdo_society:stone")
+        box(x-44,1,z+43,x+44,5,z+44,"gdo_society:stone")
     end
     save()
 end
