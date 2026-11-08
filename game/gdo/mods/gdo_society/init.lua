@@ -141,8 +141,10 @@ minetest.is_protected=function(pos,name)
     local id,g=village_at(pos)
     if g then
         if not member(g,name or "") then return true end
-        local p=plots[name]
-        if p and p.guild==id and in_plot(pos,p) then return false end
+        -- Une parcelle personnelle reste privée, même pour les officiers et bâtisseurs.
+        for owner,p in pairs(plots) do
+            if p.guild==id and in_plot(pos,p) then return owner~=name end
+        end
         return not can_edit_common(g,name)
     end
     for owner,p in pairs(plots) do
@@ -197,8 +199,14 @@ minetest.register_chatcommand("gdo_guild_leave",{
     description="Quitte ta guilde actuelle",
     func=function(name)
         local id,g=find_guild(name); if not g then return false,"Tu n'as pas de guilde." end
-        if g.founder and g.leader==name then return false,"Tu es responsable de cette guilde fondatrice : tu ne peux pas l'abandonner." end
-        if g.leader==name then return false,"Transfère d'abord le rôle de chef." end
+        if g.leader==name then
+            local successor=nil
+            for candidate in pairs(g.members or {}) do
+                if candidate~=name then successor=candidate; break end
+            end
+            g.leader=successor or ""
+            if successor then g.roles[successor]="leader" end
+        end
         g.members[name]=nil; if g.roles then g.roles[name]=nil end
         plots[name]=nil
         local p=minetest.get_player_by_name(name)
