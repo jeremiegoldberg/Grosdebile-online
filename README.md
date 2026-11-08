@@ -17,7 +17,7 @@ Gros Débile Online (GDO) est un projet communautaire de MMORPG fantasy humorist
 
 ## État du projet
 
-**Prototype 0.1 — première tranche jouable locale.** Le dépôt contient maintenant un jeu Luanti autonome minimal : une zone de départ, un PNJ (Gérard le Magnifique), une quête de récolte et une récompense. Il s'agit d'une première ébauche technique, pas encore d'un MMORPG complet. Le prototype n'a pas encore été validé sur une machine de test indépendante.
+**Prototype 0.2 — première tranche jouable et Château des Brumes.** Le jeu Luanti autonome comprend une cour d'arrivée, un château-école gothique géant aux nombreuses tours, un grand donjon, des ailes de bibliothèque et de grande salle, une enceinte fortifiée, ainsi que Gérard le Magnifique et sa quête des trois navets. Architecture originale inspirée des grands châteaux fantastiques, sans reproduire un bâtiment existant. Le prototype n'a pas encore été validé sur une machine de test indépendante.
 
 ## Démarrage rapide sous Linux
 
@@ -66,7 +66,7 @@ Le serveur Luanti reste autoritaire pour les actions de gameplay. Le service Fed
 ## Limites actuelles
 
 - Démo locale, sans comptes web ni persistance centralisée.
-- Une seule zone et une seule quête.
+- Une zone de départ et un château monumental ; une seule quête pour le moment.
 - Textures de remplacement ; identité graphique à créer.
 - Pas encore de classes, combat, économie, guildes, donjons, multijoueur public ou fédération ActivityPub.
 - Pas de validation automatisée ni de test multi-client pour cette première ébauche.
