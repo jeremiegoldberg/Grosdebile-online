@@ -25,6 +25,9 @@ end
 
 local previous_is_protected = minetest.is_protected
 minetest.is_protected = function(pos, name)
+    if name and name ~= "" and minetest.check_player_privs(name, {protection_bypass = true}) then
+        return previous_is_protected and previous_is_protected(pos, name) or false
+    end
     for _, zone in ipairs(zones) do
         if contains(zone, pos) then
             return true
