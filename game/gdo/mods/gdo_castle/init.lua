@@ -198,17 +198,17 @@ end
 
 local function build_outer_walls()
     -- Grande enceinte rectangulaire, avec chemin de ronde et créneaux.
-    wall_x(-40, 40, 1, 12, -28, nodes.dark, 2)
+    wall_x(-40, 40, 1, 12, -50, nodes.dark, 2)
     wall_x(-40, 40, 1, 12, 27, nodes.dark, 2)
-    wall_z(-28, 27, 1, 12, -40, nodes.dark, 2)
+    wall_z(-50, 27, 1, 12, -40, nodes.dark, 2)
     wall_z(-28, 27, 1, 12, 39, nodes.dark, 2)
 
     -- Remparts et merlons.
     for x = -40, 40, 2 do
-        cuboid(x, 13, -28, x, 14, -27, nodes.stone)
+        cuboid(x, 13, -50, x, 14, -49, nodes.stone)
         cuboid(x, 13, 27, x, 14, 28, nodes.stone)
     end
-    for z = -28, 27, 2 do
+    for z = -50, 27, 2 do
         cuboid(-40, 13, z, -39, 14, z, nodes.stone)
         cuboid(39, 13, z, 40, 14, z, nodes.stone)
     end
@@ -225,8 +225,8 @@ local function build_outer_walls()
     end
 
     -- Tours d'angle et tours de la porte.
-    tower(-40, -28, 6, 1, 20, nodes.dark, nodes.roof)
-    tower(40, -28, 6, 1, 20, nodes.dark, nodes.roof)
+    tower(-40, -50, 6, 1, 20, nodes.dark, nodes.roof)
+    tower(40, -50, 6, 1, 20, nodes.dark, nodes.roof)
     tower(-40, 27, 6, 1, 20, nodes.dark, nodes.roof)
     tower(40, 27, 6, 1, 20, nodes.dark, nodes.roof)
     tower(-10, 27, 4, 1, 22, nodes.dark, nodes.roof)
