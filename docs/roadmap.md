@@ -29,7 +29,7 @@ Les étapes sont indicatives. Une fonctionnalité n'est considérée comme livr�
 - [ ] API Go et PostgreSQL
 - [ ] Inscription et authentification sécurisées
 - [ ] Liaison sûre entre compte web et identité Luanti
-- [x] Guildes fondatrices, parcelles personnelles et maisons de départ (prototype local)\n- [x] Création de guildes au niveau 10, invitations et rôles de construction (prototype local)\n- [x] Villages de guildes avec bâtiments communs et croissance par effectif (prototype visuel)\n- [ ] Persistance centralisée des personnages, guildes et économie
+- [x] Guildes fondatrices, parcelles personnelles et maisons de départ (prototype local)\n- [x] Création de guildes au niveau 2, invitations et rôles de construction (prototype local)\n- [x] Villages de guildes avec bâtiments communs et croissance par effectif (prototype visuel)\n- [ ] Persistance centralisée des personnages, guildes et économie
 - [ ] Sauvegardes, observabilité et procédures d'exploitation
 
 ## Phase 4 — Clients et accessibilité
