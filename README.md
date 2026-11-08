@@ -17,7 +17,23 @@ Gros Débile Online (GDO) est un projet communautaire de MMORPG fantasy humorist
 
 ## État du projet
 
-**Phase : cadrage et socle initial.** Ce dépôt contient la vision, les décisions d'architecture et la feuille de route. Il ne s'agit pas encore d'un jeu jouable ni d'une fédération ActivityPub opérationnelle.
+**Prototype 0.1 — première tranche jouable locale.** Le dépôt contient maintenant un jeu Luanti autonome minimal : une zone de départ, un PNJ (Gérard le Magnifique), une quête de récolte et une récompense. Il s'agit d'une première ébauche technique, pas encore d'un MMORPG complet. Le prototype n'a pas encore été validé sur une machine de test indépendante.
+
+## Démarrage rapide sous Linux
+
+Voir [docs/quickstart-linux.md](docs/quickstart-linux.md).
+
+En bref :
+
+```bash
+git clone https://github.com/jeremiegoldberg/Grosdebile-online.git
+cd Grosdebile-online
+mkdir -p ~/.minetest/games
+cp -a game/gdo ~/.minetest/games/gdo
+luanti
+```
+
+Dans Luanti, crée un monde et sélectionne **Gros Débile Online** comme jeu.
 
 ## Architecture cible
 
@@ -32,14 +48,14 @@ Gros Débile Online (GDO) est un projet communautaire de MMORPG fantasy humorist
 
 Le serveur Luanti reste autoritaire pour les actions de gameplay. Le service Fediverse est indépendant : une panne de fédération ne doit jamais empêcher de jouer.
 
-## Arborescence cible
+## Arborescence
 
 ```text
 .
-├── game/gdo/             # Jeu Luanti et mods Lua
-├── backend/              # API Go
+├── game/gdo/             # Jeu Luanti autonome et mods Lua
+├── backend/              # API Go (à construire)
 ├── federation/           # Service ActivityPub (à construire)
-├── database/             # Migrations SQL
+├── database/             # Migrations SQL (à construire)
 ├── world/                # Données et définitions du monde
 ├── assets/               # Assets originaux et métadonnées de licence
 ├── deploy/               # Docker, Kubernetes et configuration
@@ -47,9 +63,13 @@ Le serveur Luanti reste autoritaire pour les actions de gameplay. Le service Fed
 └── .github/              # CI et modèles de contribution
 ```
 
-## Démarrage
+## Limites actuelles
 
-Les instructions de démarrage local seront ajoutées avec le premier prototype exécutable. Voir [docs/architecture.md](docs/architecture.md) et [docs/roadmap.md](docs/roadmap.md).
+- Démo locale, sans comptes web ni persistance centralisée.
+- Une seule zone et une seule quête.
+- Textures de remplacement ; identité graphique à créer.
+- Pas encore de classes, combat, économie, guildes, donjons, multijoueur public ou fédération ActivityPub.
+- Pas de validation automatisée ni de test multi-client pour cette première ébauche.
 
 ## Licences
 
