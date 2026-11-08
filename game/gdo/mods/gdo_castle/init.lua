@@ -630,14 +630,14 @@ end
 
 local function build_arrival_area()
     -- Parvis d'arrivée clairement identifiable, aligné sur le portail sud.
-    floor_rect(-7, 32, 7, 49, 1, nodes.marble)
-    floor_rect(-2, 27, 2, 32, 1, nodes.gold)
+    floor_rect(-7, 32, 7, 49, 0, nodes.marble)
+    floor_rect(-2, 27, 2, 32, 0, nodes.gold)
 
     -- Chemin axial vers le portail du château.
-    floor_rect(-2, 25, 2, 32, 1, nodes.floor)
+    floor_rect(-2, 25, 2, 32, 0, nodes.floor)
     for z = 27, 32 do
-        put(-3, 1, z, nodes.gold)
-        put(3, 1, z, nodes.gold)
+        put(-3, 0, z, nodes.gold)
+        put(3, 0, z, nodes.gold)
     end
 
     -- Quatre bornes lumineuses encadrent le point d'apparition.
@@ -713,12 +713,12 @@ local castle_storage = minetest.get_mod_storage and minetest.get_mod_storage() o
 minetest.register_on_mods_loaded(function()
     minetest.after(2, function()
         local already_generated = castle_storage
-            and castle_storage:get_int("castle_generated") == 6
+            and castle_storage:get_int("castle_generated") == 7
 
         if not already_generated then
             generate_castle()
             if castle_storage then
-                castle_storage:set_int("castle_generated", 6)
+                castle_storage:set_int("castle_generated", 7)
             else
                 minetest.log("warning", "[GDO] Stockage du château indisponible : génération sans mémorisation.")
             end
