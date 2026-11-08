@@ -194,6 +194,9 @@ minetest.register_entity("gdo:gerard", {
             inventory:remove_item("main", "gdo:navet 3")
             inventory:add_item("main", "gdo:badge_du_nawak")
             meta:set_int("gdo_quest_done", 1)
+            if gdo_society and gdo_society.add_experience then
+                gdo_society.add_experience(clicker, 100)
+            end
             minetest.chat_send_player(name,
                 "Gérard : Trois navets ! L'Histoire retiendra ton courage. Voici le Badge officiel du Nawak. Tu es désormais une légende locale.")
         else
