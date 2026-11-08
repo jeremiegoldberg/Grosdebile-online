@@ -38,17 +38,17 @@ end
 -- Palette autonome : unknown_node.png est fourni par le moteur Luanti.
 -- Aucun PNG externe n'est référencé : les textures sont générées par modificateurs.
 local palette = {
-    refit_stone = "unknown_node.png^[colorize:#78869b:115^[contrast:18",
-    refit_trim = "unknown_node.png^[colorize:#d8d2c5:105^[contrast:25",
-    refit_roof = "unknown_node.png^[colorize:#182b50:150^[contrast:35",
-    refit_floor = "unknown_node.png^[colorize:#c4bba8:100^[contrast:20",
-    refit_wood = "unknown_node.png^[colorize:#75472d:125^[contrast:25",
-    refit_glass = "unknown_node.png^[colorize:#70c9e8:90^[opacity:180",
-    refit_gold = "unknown_node.png^[colorize:#e4b83e:110^[contrast:30",
-    refit_grass = "unknown_node.png^[colorize:#4b8b3d:95",
-    refit_path = "unknown_node.png^[colorize:#777b83:105^[contrast:35",
-    refit_leaves = "unknown_node.png^[colorize:#397b39:95",
-    refit_water = "unknown_node.png^[colorize:#319bd1:90^[opacity:190",
+    refit_stone = "[fill:16x16:#78869b",
+    refit_trim = "[fill:16x16:#d8d2c5",
+    refit_roof = "[fill:16x16:#182b50",
+    refit_floor = "[fill:16x16:#c4bba8",
+    refit_wood = "[fill:16x16:#75472d",
+    refit_glass = "[fill:16x16:#70c9e8",
+    refit_gold = "[fill:16x16:#e4b83e",
+    refit_grass = "[fill:16x16:#4b8b3d",
+    refit_path = "[fill:16x16:#777b83",
+    refit_leaves = "[fill:16x16:#397b39",
+    refit_water = "[fill:16x16:#319bd1",
 }
 local function register_texture_node(name, desc, groups, extra)
     local short = name:match(":(.+)$")
@@ -554,11 +554,11 @@ local function build()
         minetest.fix_light({x=-40,y=OFFSET+1,z=-52},{x=40,y=OFFSET+60,z=64})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Château des Brumes v11 généré : architecture refondue et textures intégrées.")
+    minetest.log("action","[GDO] Château des Brumes v12 généré : textures unies compatibles Luanti.")
 end
 
 local storage = gdo_castle_storage
-local VERSION = 11
+local VERSION = 12
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
@@ -571,11 +571,11 @@ minetest.register_on_mods_loaded(function()
 end)
 
 minetest.register_chatcommand("refairechateau",{
-    description="Reconstruit le Château des Brumes (version architecturale 11)",
+    description="Reconstruit le Château des Brumes (version architecturale 12)",
     privs={server=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
-        return true,"Château des Brumes v11 reconstruit. Retourne sur le parvis sud."
+        return true,"Château des Brumes v12 reconstruit. Retourne sur le parvis sud."
     end,
 })
