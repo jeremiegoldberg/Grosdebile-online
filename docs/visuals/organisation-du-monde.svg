@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650" role="img" aria-labelledby="t d">
+<title id="t">Organisation du Royaume du Nawak</title><desc id="d">Schéma des espaces de jeu : château scénarisé, villages de guildes, parcelles personnelles et monde sauvage partagé.</desc>
+<rect width="1200" height="650" rx="28" fill="#f2f5ed"/>
+<text x="600" y="68" text-anchor="middle" font-family="sans-serif" font-size="34" font-weight="800" fill="#24463b">UN ROYAUME, QUATRE ESPACES COMPLÉMENTAIRES</text>
+<g font-family="sans-serif">
+ <rect x="55" y="120" width="510" height="190" rx="20" fill="#dce5ef" stroke="#617b94" stroke-width="4"/>
+ <text x="85" y="165" font-size="27" font-weight="800" fill="#304c65">1. LE CHÂTEAU DES BRUMES</text>
+ <text x="85" y="205" font-size="20" fill="#304c65">• Lieu d'accueil et de départ</text><text x="85" y="239" font-size="20" fill="#304c65">• Quêtes et services communs</text><text x="85" y="273" font-size="20" fill="#304c65">• Espaces scénarisés protégés</text>
+ <rect x="635" y="120" width="510" height="190" rx="20" fill="#e7dfc8" stroke="#9b8350" stroke-width="4"/>
+ <text x="665" y="165" font-size="27" font-weight="800" fill="#66532f">2. LES VILLAGES DE GUILDE</text>
+ <text x="665" y="205" font-size="20" fill="#66532f">• Place et bâtiments partagés</text><text x="665" y="239" font-size="20" fill="#66532f">• Ateliers, réserves et services</text><text x="665" y="273" font-size="20" fill="#66532f">• Développement collectif</text>
+ <rect x="55" y="355" width="510" height="190" rx="20" fill="#dcebd6" stroke="#6c9b60" stroke-width="4"/>
+ <text x="85" y="400" font-size="27" font-weight="800" fill="#35613a">3. LES PARCELLES PERSONNELLES</text>
+ <text x="85" y="440" font-size="20" fill="#35613a">• Une parcelle par joueur</text><text x="85" y="474" font-size="20" fill="#35613a">• Maison de départ évolutive</text><text x="85" y="508" font-size="20" fill="#35613a">• Construction et décoration</text>
+ <rect x="635" y="355" width="510" height="190" rx="20" fill="#d8e8e9" stroke="#55939a" stroke-width="4"/>
+ <text x="665" y="400" font-size="27" font-weight="800" fill="#285c62">4. LES TERRES SAUVAGES</text>
+ <text x="665" y="440" font-size="20" fill="#285c62">• Exploration et ressources</text><text x="665" y="474" font-size="20" fill="#285c62">• Constructions libres</text><text x="665" y="508" font-size="20" fill="#285c62">• Aventures et découvertes</text>
+ <path d="M565 215H635 M565 450H635 M310 310V355 M890 310V355" stroke="#8a9b8d" stroke-width="6" stroke-linecap="round"/>
+</g>
+<text x="600" y="605" text-anchor="middle" font-family="sans-serif" font-size="19" fill="#53675b">Un seul monde partagé : les choix et les constructions de chacun font évoluer le même royaume.</text>
+</svg>
