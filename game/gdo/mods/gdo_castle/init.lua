@@ -648,12 +648,22 @@ local function generate_castle()
     minetest.log("action", "[GDO] Le Château des Brumes a été construit.")
 end
 
+-- Récupérer le stockage pendant le chargement du mod : certains moteurs
+-- ne le fournissent pas correctement depuis un callback différé.
+local castle_storage = minetest.get_mod_storage and minetest.get_mod_storage() or nil
+
 minetest.register_on_mods_loaded(function()
     minetest.after(2, function()
-        local storage = minetest.get_mod_storage()
-        if storage:get_int("castle_generated") ~= 6 then
+        local already_generated = castle_storage
+            and castle_storage:get_int("castle_generated") == 6
+
+        if not already_generated then
             generate_castle()
-            storage:set_int("castle_generated", 6)
+            if castle_storage then
+                castle_storage:set_int("castle_generated", 6)
+            else
+                minetest.log("warning", "[GDO] Stockage du château indisponible : génération sans mémorisation.")
+            end
         end
     end)
 end)
