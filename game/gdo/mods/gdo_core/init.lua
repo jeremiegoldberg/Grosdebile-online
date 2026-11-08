@@ -243,7 +243,7 @@ minetest.register_on_joinplayer(function(player)
                 player:set_pos({x = 0, y = 1.5, z = 43})
                 meta:set_int("gdo_spawned", 1)
                 minetest.chat_send_player(player:get_player_name(),
-                    "Bienvenue dans le Royaume du Nawak ! Approche-toi de Gérard le Magnifique, puis fais un clic droit sur lui.")
+                    "Bienvenue dans le Royaume du Nawak ! Parle à Gérard le Magnifique, puis choisis ta maison en cliquant sur un blason dans la cour. Utilise /maisons pour découvrir les quatre maisons.")
             end
         end)
     end
@@ -253,7 +253,7 @@ minetest.register_chatcommand("gdo", {
     description = "Affiche les commandes et objectifs du prototype GDO",
     func = function(name)
         minetest.chat_send_player(name,
-            "GDO — Objectif : parle à Gérard (clic droit), récolte 3 navets héroïques dans le jardin près de la grande porte, puis retourne le voir. Commande : /gdo")
+            "GDO — Parle à Gérard, récolte 3 navets héroïques puis retourne le voir. Choisis une maison avec un clic droit sur son blason dans la cour. /maisons présente les maisons, /maison affiche ton affectation.")
         return true
     end,
 })
