@@ -2,7 +2,7 @@
 -- Les zones d'histoire sont protégées. Le reste du monde est volontairement libre :
 -- pas de claims, pas de propriété des constructions, pas de protection entre joueurs.
 
-gdo_zones = gdo_zones or {}
+gdo_zones = {}
 local zones = {}
 gdo_zones.register_readonly_zone = function(def)
     assert(type(def) == "table" and type(def.name) == "string", "zone needs a name")
