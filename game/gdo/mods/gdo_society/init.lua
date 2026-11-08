@@ -9,7 +9,7 @@ local founders = {
     seigneurs_navet={name="Les Seigneurs du Navet",x=240,z=240},
 }
 local PLOT = 11
-local CREATE_LEVEL = 10
+local CREATE_LEVEL = 2
 local guilds = minetest.deserialize(storage:get_string("guilds")) or {}
 local counters = minetest.deserialize(storage:get_string("plot_counters")) or {}
 local plots = minetest.deserialize(storage:get_string("player_plots")) or {}
@@ -219,7 +219,7 @@ minetest.register_chatcommand("gdo_guild_leave",{
     end,
 })
 minetest.register_chatcommand("gdo_guild_create",{
-    params="<nom>",description="Fonde une guilde et son village (niveau 10 requis)",
+    params="<nom>",description="Fonde une guilde et son village (niveau 2 requis)",
     func=function(name,param)
         local title=(param or ""):match("^%s*(.-)%s*$")
         if not title or #title<3 or #title>32 then return false,"Le nom doit contenir 3 à 32 caractères." end
@@ -284,7 +284,7 @@ minetest.register_chatcommand("gdo_progression",{
     func=function(name)
         local p=minetest.get_player_by_name(name); if not p then return false,"Joueur introuvable." end
         local m=p:get_meta(); local l=math.max(1,m:get_int("gdo_level"))
-        return true,"Niveau "..l.." — "..m:get_int("gdo_xp").."/"..(l*100).." XP. Fondation de guilde au niveau 10."
+        return true,"Niveau "..l.." — "..m:get_int("gdo_xp").."/"..(l*100).." XP. Fondation de guilde au niveau 2."
     end,
 })
 
