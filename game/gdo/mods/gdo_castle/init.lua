@@ -630,9 +630,9 @@ local function generate_castle()
     build_courtyard()
     build_four_houses()
     -- Le jardin de la quête est recréé après la construction du terrain.
-    put(-8, 1, 39, "gdo_castle:navet_sur_pied")
-    put(-8, 1, 41, "gdo_castle:navet_sur_pied")
-    put(-10, 1, 40, "gdo_castle:navet_sur_pied")
+    put(-8, 1, 39, "gdo_core:navet_sur_pied")
+    put(-8, 1, 41, "gdo_core:navet_sur_pied")
+    put(-10, 1, 40, "gdo_core:navet_sur_pied")
 
     -- Deux longues galeries latérales à arcades.
     for _, side in ipairs({-1, 1}) do
