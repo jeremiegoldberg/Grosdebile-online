@@ -38,7 +38,7 @@ end
 local palette = {
     refit_stone = "default_stone_brick.png^[colorize:#8290a8:35",
     refit_trim = "default_stone_block.png^[colorize:#d8d0bd:35",
-    refit_roof = "default_obsidian_brick.png^[colorize:#263b67:45",
+    refit_roof = "default_obsidian.png^[colorize:#263b67:45",
     refit_floor = "default_stone_brick.png^[colorize:#c8c0ad:55",
     refit_wood = "default_wood.png^[colorize:#765033:35",
     refit_glass = "default_glass.png^[colorize:#f2c66d:65",
