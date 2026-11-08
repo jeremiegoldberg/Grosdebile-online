@@ -255,17 +255,25 @@ minetest.register_on_joinplayer(function(player)
     if player.override_day_night_ratio then
         player:override_day_night_ratio(1)
     end
+
     local meta = player:get_meta()
-    if meta:get_int("gdo_spawned") ~= 1 then
-        minetest.after(0.2, function()
-            if player and player:is_player() then
-                player:set_pos({x = 0, y = 1.5, z = 43})
-                meta:set_int("gdo_spawned", 1)
-                minetest.chat_send_player(player:get_player_name(),
-                    "Bienvenue dans le Royaume du Nawak ! Parle à Gérard le Magnifique, puis choisis ta maison en cliquant sur un blason dans la cour. Utilise /maisons pour découvrir les quatre maisons.")
-            end
-        end)
-    end
+    local first_spawn = meta:get_int("gdo_spawned") ~= 1
+
+    -- Replacer le joueur à chaque connexion : une ancienne position sauvegardée
+    -- peut se trouver sous le terrain après une modification du monde.
+    minetest.after(0.5, function()
+        if not player or not player:is_player() then
+            return
+        end
+
+        player:set_pos({x = 0, y = 2, z = 43})
+        meta:set_int("gdo_spawned", 1)
+
+        if first_spawn then
+            minetest.chat_send_player(player:get_player_name(),
+                "Bienvenue dans le Royaume du Nawak ! Parle à Gérard le Magnifique, puis choisis ta maison en cliquant sur un blason dans la cour. Utilise /maisons pour découvrir les quatre maisons.")
+        end
+    end)
 end)
 
 minetest.register_chatcommand("gdo", {
