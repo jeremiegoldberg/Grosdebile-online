@@ -128,9 +128,9 @@ local function build_starting_area()
 
     -- Jardin : trois navets, pas un de plus. La pénurie est une tradition locale.
     for _, p in ipairs({
-        {x = -4, y = 1, z = 2},
-        {x = -4, y = 1, z = 4},
-        {x = -6, y = 1, z = 3},
+        {x = -8, y = 1, z = 39},
+        {x = -8, y = 1, z = 41},
+        {x = -10, y = 1, z = 40},
     }) do
         minetest.set_node(p, {name = "gdo:navet_sur_pied"})
     end
@@ -186,7 +186,7 @@ minetest.register_entity("gdo:gerard", {
         if meta:get_int("gdo_quest_started") ~= 1 then
             meta:set_int("gdo_quest_started", 1)
             minetest.chat_send_player(name,
-                "Gérard le Magnifique : Bienvenue, aventurier ! Le Royaume est en danger : nous manquons de navets. Récolte les 3 navets héroïques dans le petit jardin à l'ouest, puis reviens me voir. Oui, c'est une quête officielle.")
+                "Gérard le Magnifique : Bienvenue, aventurier ! Le Royaume est en danger : nous manquons de navets. Récolte les 3 navets héroïques dans le jardin près de la grande porte, puis reviens me voir. Oui, c'est une quête officielle.")
             return
         end
 
@@ -211,7 +211,7 @@ minetest.register_entity("gdo:gerard", {
 })
 
 local function ensure_gerard()
-    local pos = {x = 4, y = 1, z = 0}
+    local pos = {x = 3, y = 1, z = 35}
     local objects = minetest.get_objects_inside_radius(pos, 2)
     for _, object in ipairs(objects) do
         local entity = object:get_luaentity()
@@ -240,7 +240,7 @@ minetest.register_on_joinplayer(function(player)
     if meta:get_int("gdo_spawned") ~= 1 then
         minetest.after(0.2, function()
             if player and player:is_player() then
-                player:set_pos({x = 0, y = 1.5, z = -7})
+                player:set_pos({x = 0, y = 1.5, z = 43})
                 meta:set_int("gdo_spawned", 1)
                 minetest.chat_send_player(player:get_player_name(),
                     "Bienvenue dans le Royaume du Nawak ! Approche-toi de Gérard le Magnifique, puis fais un clic droit sur lui.")
@@ -253,7 +253,7 @@ minetest.register_chatcommand("gdo", {
     description = "Affiche les commandes et objectifs du prototype GDO",
     func = function(name)
         minetest.chat_send_player(name,
-            "GDO — Objectif : parle à Gérard (clic droit), récolte 3 navets héroïques dans le jardin à l'ouest, puis retourne le voir. Commande : /gdo")
+            "GDO — Objectif : parle à Gérard (clic droit), récolte 3 navets héroïques dans le jardin près de la grande porte, puis retourne le voir. Commande : /gdo")
         return true
     end,
 })
