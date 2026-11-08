@@ -196,6 +196,110 @@ local function build_keep()
     end
 end
 
+
+local function build_great_hall()
+    -- Grande salle de banquet : longues tables, bancs, estrade et lustres.
+    floor_rect(-32, -35, -22, -11, 2, nodes.marble)
+    for z = -32, -14, 6 do
+        cuboid(-31, 3, z, -23, 3, z + 1, nodes.wood)
+        cuboid(-31, 2, z - 1, -23, 2, z - 1, nodes.wood)
+        cuboid(-31, 2, z + 2, -23, 2, z + 2, nodes.wood)
+        for x = -30, -24, 2 do
+            put(x, 4, z, nodes.gold)
+        end
+    end
+    -- Estrade du maître de cérémonie.
+    cuboid(-31, 3, -34, -23, 4, -32, nodes.dark)
+    cuboid(-30, 5, -34, -24, 5, -33, nodes.wood)
+    -- Poutres et lustres lumineux.
+    for x = -31, -23, 4 do
+        cuboid(x, 12, -33, x, 12, -13, nodes.wood)
+    end
+    for z = -30, -14, 8 do
+        cuboid(-29, 11, z, -25, 11, z, nodes.copper)
+        for x = -29, -25, 2 do
+            put(x, 10, z, "gdo:castle_lantern")
+        end
+    end
+    -- Vitraux et bannières de la maison du Nawak.
+    for z = -30, -14, 8 do
+        put(-34, 7, z, nodes.glass)
+        put(-34, 8, z, "gdo:castle_banner")
+    end
+end
+
+local function build_library()
+    -- Bibliothèque à deux niveaux, rayonnages hauts et passerelles.
+    floor_rect(22, -35, 32, -11, 2, nodes.marble)
+    for z = -34, -13, 3 do
+        cuboid(22, 3, z, 22, 7, z + 1, "gdo:castle_books")
+        cuboid(32, 3, z, 32, 7, z + 1, "gdo:castle_books")
+    end
+    for x = 24, 30, 3 do
+        cuboid(x, 3, -34, x + 1, 7, -34, "gdo:castle_books")
+        cuboid(x, 3, -12, x + 1, 7, -12, "gdo:castle_books")
+    end
+    floor_rect(23, -33, 31, -13, 9, nodes.wood)
+    -- Tables de consultation au rez-de-chaussée.
+    for z = -29, -17, 6 do
+        cuboid(25, 3, z, 29, 3, z + 1, nodes.wood)
+        put(24, 2, z, nodes.wood)
+        put(30, 2, z, nodes.wood)
+    end
+    -- Échelle monumentale et lanternes.
+    for y = 3, 8 do
+        put(30 - (y - 3), y, -23, nodes.wood)
+    end
+    put(27, 10, -23, "gdo:castle_lantern")
+    put(27, 10, -18, "gdo:castle_lantern")
+    put(27, 10, -28, "gdo:castle_lantern")
+end
+
+local function build_keep_interior()
+    -- Escalier monumental en lacets reliant les trois niveaux du donjon.
+    for step = 0, 7 do
+        floor_rect(-12 + step, -37 + step, -9 + step, -35 + step, 3 + step, nodes.marble)
+        put(-13 + step, 3 + step, -36 + step, nodes.gold)
+    end
+    for step = 0, 7 do
+        floor_rect(9 - step, -19 - step, 12 - step, -17 - step, 11 + step, nodes.marble)
+        put(13 - step, 11 + step, -18 - step, nodes.gold)
+    end
+    -- Salle du conseil au niveau supérieur.
+    floor_rect(-12, -24, 12, -12, 17, nodes.marble)
+    cuboid(-5, 18, -22, 5, 18, -14, nodes.wood)
+    for x = -4, 4, 2 do put(x, 19, -18, nodes.gold) end
+    for x = -10, 10, 4 do
+        put(x, 18, -12, "gdo:castle_lantern")
+    end
+    -- Bannières monumentales dans le hall central.
+    for y = 4, 7 do
+        put(-15, y, -25, "gdo:castle_banner")
+        put(15, y, -25, "gdo:castle_banner")
+    end
+    -- Portes intérieures stylisées et éclairage des paliers.
+    put(-8, 4, -10, "gdo:castle_lantern")
+    put(8, 4, -10, "gdo:castle_lantern")
+    put(-8, 12, -10, "gdo:castle_lantern")
+    put(8, 12, -10, "gdo:castle_lantern")
+end
+
+local function build_training_room()
+    -- Petite salle de cours dans l'aile nord du donjon : pupitres et estrade.
+    floor_rect(-14, -40, 14, -28, 9, nodes.marble)
+    cuboid(-3, 10, -39, 3, 10, -38, nodes.dark)
+    for z = -36, -30, 3 do
+        for x = -10, 10, 5 do
+            cuboid(x, 10, z, x + 2, 10, z + 1, nodes.wood)
+            put(x, 9, z, nodes.wood)
+            put(x + 2, 9, z, nodes.wood)
+        end
+    end
+    put(0, 12, -39, "gdo:castle_lantern")
+    put(-12, 12, -34, "gdo:castle_banner")
+    put(12, 12, -34, "gdo:castle_banner")
+end
+
 local function build_outer_walls()
     -- Grande enceinte rectangulaire, avec chemin de ronde et créneaux.
     wall_x(-40, 40, 1, 12, -50, nodes.dark, 2)
@@ -306,9 +410,9 @@ end
 minetest.register_on_mods_loaded(function()
     minetest.after(2, function()
         local storage = minetest.get_mod_storage()
-        if storage:get_int("castle_generated") ~= 2 then
+        if storage:get_int("castle_generated") ~= 3 then
             generate_castle()
-            storage:set_int("castle_generated", 2)
+            storage:set_int("castle_generated", 3)
         end
     end)
 end)
