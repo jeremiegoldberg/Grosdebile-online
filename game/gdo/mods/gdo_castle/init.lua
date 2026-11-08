@@ -181,7 +181,7 @@ local function build_keep()
     floor_rect(22, -35, 32, -11, 8, nodes.floor)
     tower(27, -37, 4, 1, 26, nodes.dark, nodes.roof)
     tower(27, -9, 4, 1, 23, nodes.dark, nodes.roof)
-    tower(0, -26, 4, 1, 42, nodes.dark, nodes.roof)
+    tower(0, -26, 4, 26, 18, nodes.dark, nodes.roof)
 
     -- Pignons et ornements de façade.
     for y = 2, 15 do
@@ -265,32 +265,26 @@ local function build_courtyard()
 end
 
 local function build_ground()
-    -- Plateau de construction et dégagement du volume du château.
+    -- Plateau de construction en blocs du jeu, sans dépendance à un autre game.
     for x = -52, 52 do
         for z = -58, 52 do
-            put(x, -1, z, "default:dirt")
-            put(x, 0, z, "default:grass")
+            put(x, -1, z, "gdo:terre")
+            put(x, 0, z, "gdo:herbe")
         end
     end
 end
 
 local function generate_castle()
-    -- Le jeu est autonome : remplace les blocs default si aucun jeu de base ne les fournit.
-    if not minetest.registered_nodes["default:dirt"] then
-        for x = -52, 52 do
-            for z = -58, 52 do
-                put(x, -1, z, "gdo:terre")
-                put(x, 0, z, "gdo:herbe")
-            end
-        end
-    else
-        build_ground()
-    end
-
-    clear_box(-43, 1, -51, 43, 54, 49)
+    build_ground()
+    -- Les volumes intérieurs sont évidés pièce par pièce : pas de grand nettoyage
+    -- massif de plusieurs centaines de milliers de blocs au démarrage.
     build_outer_walls()
     build_keep()
     build_courtyard()
+    -- Le jardin de la quête est recréé après la construction du terrain.
+    put(-8, 1, 39, "gdo:navet_sur_pied")
+    put(-8, 1, 41, "gdo:navet_sur_pied")
+    put(-10, 1, 40, "gdo:navet_sur_pied")
 
     -- Deux longues galeries latérales à arcades.
     for _, side in ipairs({-1, 1}) do
@@ -309,9 +303,9 @@ end
 minetest.register_on_mods_loaded(function()
     minetest.after(2, function()
         local storage = minetest.get_mod_storage()
-        if storage:get_int("castle_generated") ~= 1 then
+        if storage:get_int("castle_generated") ~= 2 then
             generate_castle()
-            storage:set_int("castle_generated", 1)
+            storage:set_int("castle_generated", 2)
         end
     end)
 end)
