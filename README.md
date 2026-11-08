@@ -17,7 +17,9 @@ Gros Débile Online (GDO) est un projet communautaire de MMORPG fantasy humorist
 
 ## État du projet
 
-**Prototype 0.2 — première tranche jouable et Château des Brumes.** Le jeu Luanti autonome comprend une cour d'arrivée, un château-école gothique géant aux nombreuses tours, un grand donjon, des ailes de bibliothèque et de grande salle, une enceinte fortifiée, ainsi que Gérard le Magnifique et sa quête des trois navets. Architecture originale inspirée des grands châteaux fantastiques, sans reproduire un bâtiment existant. Le prototype n'a pas encore été validé sur une machine de test indépendante.
+**Prototype 0.3 — démonstrateur du Château des Brumes.** Le jeu Luanti autonome comprend une cour d'arrivée et un château-école gothique monumental : remparts et tours, donjon à plusieurs niveaux, grande salle de banquet avec tables et lustres, bibliothèque à rayonnages et passerelle, salle de cours, escalier intérieur et salle du conseil. Gérard le Magnifique et sa quête des trois navets servent de première interaction guidée. Architecture originale inspirée des grands châteaux fantastiques, sans reproduire un bâtiment existant.
+
+> **À savoir :** le château est construit en blocs procéduraux et utilise encore des textures provisoires. Le prototype doit être lancé et vérifié dans Luanti ; il ne s'agit pas encore d'une démo graphiquement finalisée ni d'un MMORPG complet.
 
 ## Démarrage rapide sous Linux
 
@@ -67,9 +69,9 @@ Le serveur Luanti reste autoritaire pour les actions de gameplay. Le service Fed
 
 - Démo locale, sans comptes web ni persistance centralisée.
 - Une zone de départ et un château monumental ; une seule quête pour le moment.
-- Textures de remplacement ; identité graphique à créer.
+- Textures de remplacement et mobilier en blocs ; modèles 3D, textures et éclairage artistiques à produire.
 - Pas encore de classes, combat, économie, guildes, donjons, multijoueur public ou fédération ActivityPub.
-- Pas de validation automatisée ni de test multi-client pour cette première ébauche.
+- Génération et parcours du château à valider en conditions réelles sur plusieurs machines.
 
 ## Licences
 
