@@ -611,7 +611,7 @@ local function build_ground()
     for x = -52, 52 do
         for z = -58, 52 do
             put(x, -1, z, "gdo_core:terre")
-            put(x, 0, z, "gdo_castle:herbe")
+            put(x, 0, z, "gdo_core:herbe")
         end
     end
 end
