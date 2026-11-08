@@ -259,17 +259,26 @@ minetest.register_on_joinplayer(function(player)
     local meta = player:get_meta()
     local first_spawn = meta:get_int("gdo_spawned") ~= 1
 
-    -- Attendre la fin des autres traitements de connexion et le chargement
-    -- de la zone avant de replacer le joueur.
+    -- Parvis de diagnostic isolé du château : il permet de vérifier le spawn
+    -- sans dépendre de la géométrie du bâtiment.
     minetest.after(2, function()
         if not player or not player:is_player() then
             return
         end
 
-        player:set_pos({x = 0, y = 3, z = 43})
+        for x = -6, 6 do
+            for z = 74, 86 do
+                minetest.set_node({x = x, y = 0, z = z}, {name = "gdo_core:pierre"})
+                for y = 1, 8 do
+                    minetest.set_node({x = x, y = y, z = z}, {name = "air"})
+                end
+            end
+        end
+
+        player:set_pos({x = 0, y = 1.5, z = 80})
         player:set_velocity({x = 0, y = 0, z = 0})
         if player.set_look_horizontal then
-            player:set_look_horizontal(0)
+            player:set_look_horizontal(math.pi)
         end
         if player.set_look_vertical then
             player:set_look_vertical(0)
@@ -279,8 +288,9 @@ minetest.register_on_joinplayer(function(player)
         end
         meta:set_int("gdo_spawned", 1)
 
+        local pos = player:get_pos()
         minetest.chat_send_player(player:get_player_name(),
-            "[GDO diagnostic] Position forcée : x=0, y=3, z=43 ; caméra réinitialisée.")
+            string.format("[GDO diagnostic] Parvis test actif. Position réelle : %.1f, %.1f, %.1f", pos.x, pos.y, pos.z))
 
         if first_spawn then
             minetest.chat_send_player(player:get_player_name(),
