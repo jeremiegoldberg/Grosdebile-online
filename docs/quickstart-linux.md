@@ -31,7 +31,7 @@ Dans le menu, crée un monde et sélectionne **Gros Débile Online** comme jeu. 
 - Visite l'aile gauche et sa grande salle de banquet. La table est prévue pour un roi ; le budget, pour trois navets.
 - Dans l'aile droite, la bibliothèque possède des rayonnages, une passerelle et des tables de lecture. Certains grimoires sont probablement maudits, mais correctement catalogués.
 - Rejoins la salle de cours et la galerie des trophées.
-- Clique droit sur les panneaux officiels pour découvrir les décrets absurdes de l'administration royale.
+- Clique droit sur les panneaux officiels pour découvrir les décrets absurdes de l’administration royale.\n- Visite les quatre pavillons de la cour : Bras Cassés, Mages du Dimanche, Rats de Bibliothèque et Seigneurs du Navet. Chaque blason est interactif : clique droit pour rejoindre la maison. Le choix est définitif dans cette version.\n- Utilise `/maisons` pour lire les devises et `/maison` pour consulter ton affectation. Si tu n’as pas encore choisi, `/maison` te rappelle comment faire.
 - Gérard le Magnifique t'attend près de l'entrée de la cour. Clique droit sur lui pour accepter sa quête.
 - Récolte les trois navets héroïques du jardin près de la grande porte, puis retourne voir Gérard.
 - Tu reçois le Badge officiel du Nawak. Il ne donne aucun pouvoir, mais il est officiellement officiel.
