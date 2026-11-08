@@ -34,17 +34,17 @@ end
 
 -- Textures autonomes : aucun fichier PNG externe n'est requis.
 local palette = {
-    refit_stone = "unknown_node.png^[colorize:#777f91:210",
-    refit_trim = "unknown_node.png^[colorize:#c4bda9:220",
-    refit_roof = "unknown_node.png^[colorize:#263b60:220",
-    refit_floor = "unknown_node.png^[colorize:#b7ad9a:220",
-    refit_wood = "unknown_node.png^[colorize:#795033:220",
-    refit_glass = "unknown_node.png^[colorize:#e6b95e:220",
-    refit_gold = "unknown_node.png^[colorize:#e2ad35:220",
-    refit_grass = "unknown_node.png^[colorize:#548747:220",
-    refit_path = "unknown_node.png^[colorize:#8d8981:220",
-    refit_leaves = "unknown_node.png^[colorize:#3d873f:220",
-    refit_water = "unknown_node.png^[colorize:#398fce:220",
+    refit_stone = "refit_stone.png",
+    refit_trim = "refit_trim.png",
+    refit_roof = "refit_roof.png",
+    refit_floor = "refit_floor.png",
+    refit_wood = "refit_wood.png",
+    refit_glass = "refit_glass.png",
+    refit_gold = "refit_gold.png",
+    refit_grass = "refit_grass.png",
+    refit_path = "refit_path.png",
+    refit_leaves = "refit_leaves.png",
+    refit_water = "refit_water.png",
 }
 local function register_texture_node(name, desc, groups, extra)
     local short = name:match(":(.+)$")
@@ -410,7 +410,8 @@ local function build_interiors()
         fill(x,2,-23,x,7,-23,M.trim)
         put(x,8,-43,M.gold); put(x,8,-23,M.gold)
     end
-    -- Estrade et trône au nord.\n    put(0,4,-44,"gdo_castle:throne")
+    -- Estrade et trône au nord.
+    put(0,4,-44,"gdo_castle:throne")
     fill(-5,2,-45,5,3,-41,M.trim)
     fill(-2,4,-45,2,5,-44,M.wood)
     fill(-2,6,-45,2,7,-45,M.gold)
@@ -435,7 +436,8 @@ local function build_interiors()
     clear(-2,10,-33,2,12,-33)
     wall_z(-32,-20,10,15,0,M.trim,1)
     clear(-2,10,-25,2,12,-20)
-    -- Bibliothèque : rayonnages, échelle et tables de lecture.\n    put(-8,11,-26,"gdo_castle:library_catalog")
+    -- Bibliothèque : rayonnages, échelle et tables de lecture.
+    put(-8,11,-26,"gdo_castle:library_catalog")
     for z=-43,-35,3 do
         fill(-13,10,z,-12,14,z+1,M.wood)
         fill(-10,10,z,-9,14,z+1,M.wood)
@@ -445,7 +447,9 @@ local function build_interiors()
     end
     table_block(-11,11,-26,-6,-25)
     lamp(-8,14,-28); lamp(-13,14,-38)
-    -- Armurerie : râteliers, coffres et mannequins stylisés.\n    put(11,10,-28,"gdo_castle:training_dummy")\n    put(8,10,-28,"gdo_castle:forge_station")
+    -- Armurerie : râteliers, coffres et mannequins stylisés.
+    put(11,10,-28,"gdo_castle:training_dummy")
+    put(8,10,-28,"gdo_castle:forge_station")
     for z=-43,-35,4 do
         fill(9,10,z,13,11,z,M.wood)
         for x=10,12 do put(x,12,z,M.gold) end
@@ -483,7 +487,8 @@ local function build_interiors()
     deck(-34,-37,-24,-14,1,M.floor)
     fill(-33,2,-36,-25,2,-35,M.wood)
     fill(-33,2,-19,-25,2,-18,M.wood)
-    -- Four et cheminée (lumière chaude).\n    put(-28,3,-30,"gdo_castle:kitchen_station")
+    -- Four et cheminée (lumière chaude).
+    put(-28,3,-30,"gdo_castle:kitchen_station")
     fill(-33,2,-33,-30,4,-30,M.trim)
     fill(-32,3,-32,-31,4,-31,M.roof)
     lamp(-31,5,-31)
@@ -548,8 +553,8 @@ local function build()
     minetest.log("action","[GDO] Château des Brumes v5 généré : donjon, tours rondes, porte monumentale et parvis.")
 end
 
-local storage = minetest.get_mod_storage and minetest.get_mod_storage() or nil
-local VERSION = 7
+local storage = nil -- stockage unique géré par le chargeur du mod
+local VERSION = 8
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
