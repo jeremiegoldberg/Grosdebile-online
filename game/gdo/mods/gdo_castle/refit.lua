@@ -59,7 +59,7 @@ register_texture_node(M.water,"Eau décorative",{cracky=3},{
     liquid_alternative_source="gdo_castle:refit_water",liquid_viscosity=1,
     liquid_renewable=false})
 minetest.register_node("gdo_castle:refit_water_flowing",{
-    description=S("Eau décorative"),tiles={"refit_water.png"},
+    description=S("Eau décorative"),tiles={palette.refit_water},
     drawtype="flowingliquid",paramtype="light",paramtype2="flowingliquid",
     groups={not_in_creative_inventory=1},walkable=false,pointable=false,
     buildable_to=true,drop="",liquidtype="flowing",
@@ -327,7 +327,7 @@ end
 minetest.register_node("gdo_castle:refit_lamp", {
     description = S("Lanterne du château"),
     drawtype = "glasslike",
-    tiles = {"refit_gold.png"},
+    tiles = {palette.refit_gold},
     paramtype = "light",
     sunlight_propagates = true,
     light_source = 14,
@@ -335,7 +335,7 @@ minetest.register_node("gdo_castle:refit_lamp", {
 })
 minetest.register_node("gdo_castle:refit_chandelier", {
     description = S("Lustre royal"),
-    tiles = {"refit_gold.png"},
+    tiles = {palette.refit_gold},
     paramtype = "light",
     sunlight_propagates = true,
     light_source = 15,
@@ -355,7 +355,35 @@ local function table_block(x1,y,z1,x2,z2)
         put(x,y-1,z1,M.trim); put(x,y-1,z2,M.trim)
     end
 end
-local function build_interiors()
+
+local function register_room_action(name, description, message, action)
+    minetest.register_node(name, {
+        description = S(description), tiles = {palette.refit_wood},
+        groups = {choppy = 2, oddly_breakable_by_hand = 2},
+        on_rightclick = function(pos, node, player)
+            if not player or not player:is_player() then return end
+            if action then action(player)
+            else minetest.chat_send_player(player:get_player_name(), message) end
+        end,
+    })
+end
+register_room_action("gdo_castle:library_catalog", "Catalogue de la bibliothèque",
+    "Catalogue : histoire du Royaume, bestiaire, recettes, cartes et grimoires. Les rayonnages sont encore en cours de classement.")
+register_room_action("gdo_castle:training_dummy", "Mannequin d'entraînement",
+    "Entraînement : frappe le mannequin pour t'exercer. Les compétences de combat seront reliées au système de progression.")
+register_room_action("gdo_castle:forge_station", "Enclume de l'armurerie",
+    "Forge : l'atelier est prêt à recevoir les recettes d'équipement. Pour l'instant, inspecte les râteliers et prépare tes matériaux.")
+register_room_action("gdo_castle:kitchen_station", "Comptoir des cuisines",
+    "Cuisine : le chef prépare le fameux ragoût de navet. Il soigne les aventuriers dès que le système de nourriture sera activé.")
+register_room_action("gdo_castle:throne", "Trône du Royaume",
+    "Le trône grince. Une voix murmure : « Le pouvoir, c'est surtout remplir des formulaires. »")
+register_room_action("gdo_castle:healing_fountain", "Fontaine de soin", "",
+    function(player)
+        local hp = player:get_hp()
+        player:set_hp(math.min(20, hp + 4), {type = "set_hp", from = "gdo_castle:healing_fountain"})
+        minetest.chat_send_player(player:get_player_name(), "La fontaine apaise tes blessures. +4 PV (dans la limite de 20).")
+    end)
+\nlocal function build_interiors()
     -- REZ-DE-CHAUSSÉE : vestibule, salle du trône et salle du conseil.
     deck(-14,-45,14,-20,1,M.floor)
     -- Tapis d'apparat menant au trône.
@@ -367,7 +395,7 @@ local function build_interiors()
         fill(x,2,-23,x,7,-23,M.trim)
         put(x,8,-43,M.gold); put(x,8,-23,M.gold)
     end
-    -- Estrade et trône au nord.
+    -- Estrade et trône au nord.\n    put(0,4,-44,"gdo_castle:throne")
     fill(-5,2,-45,5,3,-41,M.trim)
     fill(-2,4,-45,2,5,-44,M.wood)
     fill(-2,6,-45,2,7,-45,M.gold)
@@ -392,7 +420,7 @@ local function build_interiors()
     clear(-2,10,-33,2,12,-33)
     wall_z(-32,-20,10,15,0,M.trim,1)
     clear(-2,10,-25,2,12,-20)
-    -- Bibliothèque : rayonnages, échelle et tables de lecture.
+    -- Bibliothèque : rayonnages, échelle et tables de lecture.\n    put(-8,11,-26,"gdo_castle:library_catalog")
     for z=-43,-35,3 do
         fill(-13,10,z,-12,14,z+1,M.wood)
         fill(-10,10,z,-9,14,z+1,M.wood)
@@ -402,7 +430,7 @@ local function build_interiors()
     end
     table_block(-11,11,-26,-6,-25)
     lamp(-8,14,-28); lamp(-13,14,-38)
-    -- Armurerie : râteliers, coffres et mannequins stylisés.
+    -- Armurerie : râteliers, coffres et mannequins stylisés.\n    put(11,10,-28,"gdo_castle:training_dummy")\n    put(8,10,-28,"gdo_castle:forge_station")
     for z=-43,-35,4 do
         fill(9,10,z,13,11,z,M.wood)
         for x=10,12 do put(x,12,z,M.gold) end
@@ -440,7 +468,7 @@ local function build_interiors()
     deck(-34,-37,-24,-14,1,M.floor)
     fill(-33,2,-36,-25,2,-35,M.wood)
     fill(-33,2,-19,-25,2,-18,M.wood)
-    -- Four et cheminée (lumière chaude).
+    -- Four et cheminée (lumière chaude).\n    put(-28,3,-30,"gdo_castle:kitchen_station")
     fill(-33,2,-33,-30,4,-30,M.trim)
     fill(-32,3,-32,-31,4,-31,M.roof)
     lamp(-31,5,-31)
@@ -502,11 +530,11 @@ local function build()
         minetest.fix_light({x=-40,y=OFFSET+1,z=-52},{x=40,y=OFFSET+60,z=64})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Château des Brumes v4 généré : donjon, tours rondes, porte monumentale et parvis.")
+    minetest.log("action","[GDO] Château des Brumes v5 généré : donjon, tours rondes, porte monumentale et parvis.")
 end
 
 local storage = minetest.get_mod_storage and minetest.get_mod_storage() or nil
-local VERSION = 5
+local VERSION = 6
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
@@ -519,11 +547,11 @@ minetest.register_on_mods_loaded(function()
 end)
 
 minetest.register_chatcommand("refairechateau",{
-    description="Reconstruit le Château des Brumes (version architecturale 4)",
+    description="Reconstruit le Château des Brumes (version architecturale 5)",
     privs={server=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
-        return true,"Château des Brumes v4 reconstruit. Retourne sur le parvis sud."
+        return true,"Château des Brumes v5 reconstruit. Retourne sur le parvis sud."
     end,
 })
