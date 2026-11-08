@@ -251,6 +251,115 @@ local function build()
     put(-9,1,40,"gdo_core:navet_sur_pied")
     put(-11,1,39,"gdo_core:navet_sur_pied")
 
+    -- Détails architecturaux : contreforts, bandeaux, fenêtres profondes,
+    -- balcons, enseignes et éclairage régulier pour casser les grands aplats.
+    -- Donjon : soubassement, corniches et pilastres verticaux.
+    for x=-16,16,8 do
+        fill(x,1,-45,x+1,4,-14,M.trim)
+        fill(x,19,-45,x+1,20,-14,M.trim)
+        for y=5,15,5 do
+            put(x,y,-14,M.gold)
+        end
+    end
+    for z=-40,-18,6 do
+        fill(-16,8,z,-16,9,z+2,M.trim)
+        fill(16,8,z,16,9,z+2,M.trim)
+    end
+    -- Fenêtres en alcôve avec linteaux et appuis.
+    for x=-12,12,4 do
+        for _,y in ipairs({5,12}) do
+            fill(x-1,y-1,-15,x+1,y-1,-15,M.trim)
+            fill(x-1,y+1,-15,x+1,y+1,-15,M.trim)
+            put(x,y,-15,M.glass)
+        end
+    end
+    -- Balcon royal au-dessus de l'entrée du donjon.
+    fill(-7,10,-12,7,10,-10,M.trim)
+    for x=-7,7,2 do
+        put(x,11,-10,M.wood)
+        put(x,12,-10,M.trim)
+    end
+    fill(-8,13,-12,8,13,-10,M.roof)
+    -- Pignons et lucarnes du toit.
+    for _,x in ipairs({-9,0,9}) do
+        fill(x-2,22,-30,x+2,22,-26,M.trim)
+        fill(x-1,23,-29,x+1,24,-27,M.roof)
+        put(x,25,-28,M.gold)
+    end
+
+    -- Remparts : merlons alternés et chemins de ronde lisibles.
+    for x=-36,36,2 do
+        if x < -5 or x > 5 then
+            fill(x,12,30,x,13,31,M.trim)
+            if x%6==0 then put(x,14,30,M.gold) end
+        end
+    end
+    for z=-44,28,4 do
+        fill(-37,12,z,-37,13,z,M.trim)
+        fill(37,12,z,37,13,z,M.trim)
+    end
+
+    -- Porte monumentale : voussoirs contrastés et deux lanternes.
+    for x=-5,5 do
+        local arch_y = 8 + math.floor(3 * (1 - math.abs(x)/5))
+        put(x,arch_y,28,M.trim)
+        put(x,arch_y,33,M.trim)
+    end
+    for _,x in ipairs({-9,9}) do
+        fill(x-1,1,29,x+1,15,32,M.trim)
+        for y=4,12,4 do put(x,y,28,M.glass) end
+        put(x,16,30,M.gold)
+        put(x,17,30,"gdo_castle:castle_lantern")
+    end
+
+    -- Cour : bandes de pavés, bancs, jardinières et lanternes.
+    for z=-30,24,6 do
+        for x=-34,34 do
+            if math.abs(x)>10 and x%2==0 then put(x,1,z,M.path) end
+        end
+    end
+    for _,p in ipairs({{-16,-4},{16,-4},{-16,17},{16,17}}) do
+        local x,z=p[1],p[2]
+        fill(x-2,1,z-2,x+2,1,z+2,M.trim)
+        fill(x-1,2,z-1,x+1,2,z+1,M.leaves)
+        put(x,3,z,"gdo_castle:castle_lantern")
+    end
+    -- Bancs près de la fontaine.
+    for _,x in ipairs({-11,11}) do
+        fill(x-2,1,-2,x+2,1,-2,M.wood)
+        put(x-2,2,-2,M.trim); put(x+2,2,-2,M.trim)
+    end
+
+    -- Façades des pavillons : colombages, enseignes et petites toitures à pignons.
+    for _,p in ipairs({{-25,-3},{25,-3},{-25,15},{25,15}}) do
+        local x,z=p[1],p[2]
+        for dx=-4,4,4 do
+            fill(x+dx,2,z-4,x+dx,6,z-4,M.wood)
+        end
+        fill(x-5,6,z-5,x+5,6,z-4,M.trim)
+        fill(x-3,8,z-3,x+3,8,z+3,M.roof)
+        fill(x-2,9,z-2,x+2,9,z+2,M.roof)
+        put(x,10,z,M.gold)
+        put(x,4,z-5,M.glass)
+        put(x,5,z-5,M.gold)
+        put(x,3,z+5,"gdo_castle:castle_lantern")
+    end
+
+    -- Jardins d'entrée : haies, fleurs stylisées et lampadaires.
+    for _,z in ipairs({57,73}) do
+        for x=-8,8,4 do
+            put(x,1,z,M.leaves)
+            put(x,2,z,M.leaves)
+            put(x,3,z,"gdo_castle:castle_lantern")
+        end
+    end
+    for _,p in ipairs({{-11,55},{11,55},{-11,74},{11,74}}) do
+        put(p[1],1,p[2],M.gold)
+        put(p[1],2,p[2],"gdo_castle:castle_lantern")
+    end
+
+    -- Le terrain autour du château reste horizontal et dégagé.
+    fill(-52,-1,-58,52,-1,85,"gdo_core:terre")
     if minetest.fix_light then
         minetest.fix_light({x=-52,y=-8,z=-58},{x=52,y=70,z=85})
     end
@@ -261,9 +370,9 @@ end
 local storage = minetest.get_mod_storage and minetest.get_mod_storage() or nil
 minetest.register_on_mods_loaded(function()
     minetest.after(5,function()
-        if not storage or storage:get_int("refit_version") < 1 then
+        if not storage or storage:get_int("refit_version") < 2 then
             build()
-            if storage then storage:set_int("refit_version",1) end
+            if storage then storage:set_int("refit_version",2) end
         end
     end)
 end)
