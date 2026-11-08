@@ -251,7 +251,6 @@ minetest.register_on_mods_loaded(function()
 end)
 
 minetest.register_on_joinplayer(function(player)
-    -- Pleine luminosité pendant le prototype.
     if player.override_day_night_ratio then
         player:override_day_night_ratio(1)
     end
@@ -264,10 +263,11 @@ minetest.register_on_joinplayer(function(player)
             return
         end
 
-        -- Arrivée directement dans la cour intérieure, sur le dallage existant.
-        -- Le spawn précédent (z=51) était à l'extérieur de l'enceinte, dans le fossé.
+        -- Point d'arrivée au centre de la cour, loin du portail et de ses fossés.
+        -- On garantit une plateforme plane de 7 x 7 blocs et un volume libre.
         for x = -3, 3 do
-            for z = 17, 23 do
+            for z = 7, 13 do
+                minetest.set_node({x = x, y = 0, z = z}, {name = "gdo_castle:castle_floor"})
                 for y = 1, 8 do
                     minetest.set_node({x = x, y = y, z = z}, {name = "air"})
                 end
@@ -276,12 +276,12 @@ minetest.register_on_joinplayer(function(player)
 
         if minetest.fix_light then
             minetest.fix_light(
-                {x = -5, y = 0, z = 15},
-                {x = 5, y = 10, z = 25}
+                {x = -5, y = 0, z = 5},
+                {x = 5, y = 10, z = 15}
             )
         end
 
-        player:set_pos({x = 0, y = 1.5, z = 20})
+        player:set_pos({x = 0, y = 1.5, z = 10})
         player:set_velocity({x = 0, y = 0, z = 0})
         if player.set_look_horizontal then
             player:set_look_horizontal(0)
@@ -294,15 +294,15 @@ minetest.register_on_joinplayer(function(player)
         end
         meta:set_int("gdo_spawned", 1)
 
-        local feet = minetest.get_node({x = 0, y = 0, z = 20}).name
-        local body = minetest.get_node({x = 0, y = 2, z = 20}).name
+        local feet = minetest.get_node({x = 0, y = 0, z = 10}).name
+        local body = minetest.get_node({x = 0, y = 2, z = 10}).name
         minetest.chat_send_player(player:get_player_name(),
-            string.format("[GDO] Spawn dans la cour | sol=%s | espace=%s",
+            string.format("[GDO] Spawn sur la plateforme centrale | sol=%s | espace=%s",
                 feet, body))
 
         if first_spawn then
             minetest.chat_send_player(player:get_player_name(),
-                "Bienvenue dans le Royaume du Nawak ! Le portail est devant toi.")
+                "Bienvenue dans le Royaume du Nawak ! Tu es au centre de la cour du château.")
         end
     end)
 end)
