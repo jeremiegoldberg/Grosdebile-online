@@ -11,7 +11,7 @@ gdo_zones.register_readonly_zone({
     name = "Château des Brumes",
     description = "Château, cour, pavillons des maisons, jardin des navets et parcours d'initiation",
     min = {x = -52, y = -10, z = -58},
-    max = {x = 52, y = 100, z = 52},
+    max = {x = 52, y = 100, z = 85},
 })
 
 local nodes = {
@@ -626,7 +626,7 @@ end
 local function build_ground()
     -- Plateau de construction en blocs du jeu, sans dépendance à un autre game.
     for x = -52, 52 do
-        for z = -58, 52 do
+        for z = -58, 85 do
             put(x, -1, z, "gdo_core:terre")
             put(x, 0, z, "gdo_core:herbe")
         end
@@ -634,28 +634,29 @@ local function build_ground()
 end
 
 local function build_arrival_area()
-    -- Parvis d'arrivée clairement identifiable, aligné sur le portail sud.
-    floor_rect(-7, 32, 7, 49, 0, nodes.marble)
-    floor_rect(-2, 27, 2, 32, 0, nodes.gold)
+    -- Parvis extérieur : une place ouverte, au niveau du terrain, avant le pont.
+    floor_rect(-12, 55, 12, 73, 0, nodes.marble)
+    floor_rect(-3, 29, 3, 56, 0, nodes.floor)
+    floor_rect(-5, 49, 5, 56, 0, nodes.gold)
 
-    -- Chemin axial vers le portail du château.
-    floor_rect(-2, 25, 2, 32, 0, nodes.floor)
-    for z = 27, 32 do
-        put(-3, 0, z, nodes.gold)
-        put(3, 0, z, nodes.gold)
+    -- Bordures basses et motifs de dallage pour rendre l'entrée lisible.
+    for z = 57, 71, 2 do
+        put(-11, 0, z, nodes.dark)
+        put(11, 0, z, nodes.dark)
+    end
+    for x = -8, 8, 4 do
+        for z = 58, 70, 4 do
+            put(x, 1, z, nodes.gold)
+        end
     end
 
-    -- Quatre bornes lumineuses encadrent le point d'apparition.
-    for _, p in ipairs({
-        {x = -6, z = 34}, {x = 6, z = 34},
-        {x = -6, z = 47}, {x = 6, z = 47},
-    }) do
-        cuboid(p.x - 1, 2, p.z - 1, p.x + 1, 3, p.z + 1, nodes.dark)
-        put(p.x, 4, p.z, "gdo_castle:castle_lantern")
-        put(p.x, 5, p.z, nodes.gold)
+    -- Deux lanternes monumentales marquent la place sans enfermer le joueur.
+    for _, x in ipairs({-9, 9}) do
+        cuboid(x - 1, 1, 60, x + 1, 4, 62, nodes.dark)
+        put(x, 5, 61, "gdo_castle:castle_lantern")
+        put(x, 6, 61, nodes.gold)
     end
-
-    put(0, 2, 48, "gdo_castle:arrival_sign")
+    put(0, 1, 71, "gdo_castle:arrival_sign")
 end
 
 local function generate_castle()
@@ -718,12 +719,12 @@ local castle_storage = minetest.get_mod_storage and minetest.get_mod_storage() o
 minetest.register_on_mods_loaded(function()
     minetest.after(2, function()
         local already_generated = castle_storage
-            and castle_storage:get_int("castle_generated") == 8
+            and castle_storage:get_int("castle_generated") == 9
 
         if not already_generated then
             generate_castle()
             if castle_storage then
-                castle_storage:set_int("castle_generated", 8)
+                castle_storage:set_int("castle_generated", 9)
             else
                 minetest.log("warning", "[GDO] Stockage du château indisponible : génération sans mémorisation.")
             end
