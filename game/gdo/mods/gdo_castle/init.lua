@@ -155,10 +155,14 @@ local function build_keep()
         put(18, 14, z, nodes.glass)
     end
 
-    -- Toiture centrale et lucarnes.
-    for layer = 0, 10 do
+    -- Toiture centrale en ardoise, étagée pour former un grand toit pentu.
+    for layer = 0, 8 do
         local inset = layer * 2
-        wall_x(-18 + inset, 18 - inset, 25 + layer, 25 + layer, -43 + inset, nodes.roof, 36 - inset * 2)
+        for x = -18 + inset, 18 - inset do
+            for z = -43 + inset, -8 - inset do
+                put(x, 25 + layer, z, nodes.roof)
+            end
+        end
     end
 
     -- Quatre tours du donjon.
