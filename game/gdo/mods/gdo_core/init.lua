@@ -251,7 +251,7 @@ minetest.register_on_mods_loaded(function()
 end)
 
 minetest.register_on_joinplayer(function(player)
-    -- Évite l'obscurité du cycle jour/nuit pendant le prototype.
+    -- Pleine luminosité pendant le prototype.
     if player.override_day_night_ratio then
         player:override_day_night_ratio(1)
     end
@@ -259,25 +259,35 @@ minetest.register_on_joinplayer(function(player)
     local meta = player:get_meta()
     local first_spawn = meta:get_int("gdo_spawned") ~= 1
 
-    -- Parvis de diagnostic isolé du château : il permet de vérifier le spawn
-    -- sans dépendre de la géométrie du bâtiment.
     minetest.after(2, function()
         if not player or not player:is_player() then
             return
         end
 
-        -- Grande clairière temporaire, loin des structures du château.
-        -- On retire le relief préexistant dans un volume suffisamment large.
+        -- Nettoyer l'ancienne plateforme de diagnostic et remettre un sol
+        -- naturel simple dans cette zone temporaire.
         for x = -16, 16 do
             for z = 64, 96 do
-                for y = 32, 56 do
+                for y = 1, 56 do
                     minetest.set_node({x = x, y = y, z = z}, {name = "air"})
                 end
-                minetest.set_node({x = x, y = 31, z = z}, {name = "gdo_core:pierre"})
+                minetest.set_node({x = x, y = 0, z = z}, {name = "gdo_core:herbe"})
+                minetest.set_node({x = x, y = -1, z = z}, {name = "gdo_core:terre"})
             end
         end
 
-        player:set_pos({x = 0, y = 32.5, z = 80})
+        -- Dégager le passage au-dessus du parvis d'arrivée existant.
+        for x = -3, 3 do
+            for z = 39, 47 do
+                for y = 1, 6 do
+                    minetest.set_node({x = x, y = y, z = z}, {name = "air"})
+                end
+            end
+        end
+
+        -- Le dallage du château est à y=0 : le joueur apparaît juste dessus,
+        -- face au portail sud (situé vers z=27).
+        player:set_pos({x = 0, y = 1.5, z = 43})
         player:set_velocity({x = 0, y = 0, z = 0})
         if player.set_look_horizontal then
             player:set_look_horizontal(math.pi)
@@ -290,17 +300,15 @@ minetest.register_on_joinplayer(function(player)
         end
         meta:set_int("gdo_spawned", 1)
 
-        local pos = player:get_pos()
         minetest.chat_send_player(player:get_player_name(),
-            string.format("[GDO diagnostic] Parvis test actif. Position réelle : %.1f, %.1f, %.1f", pos.x, pos.y, pos.z))
+            "[GDO] Bienvenue sur le parvis du Château des Brumes. Tu es face au portail principal.")
 
         if first_spawn then
             minetest.chat_send_player(player:get_player_name(),
-                "Bienvenue dans le Royaume du Nawak ! Parle à Gérard le Magnifique, puis choisis ta maison en cliquant sur un blason dans la cour. Utilise /maisons pour découvrir les quatre maisons.")
+                "Parle à Gérard le Magnifique, puis choisis ta maison en cliquant sur un blason dans la cour. Utilise /maisons pour découvrir les quatre maisons.")
         end
     end)
 end)
-
 minetest.register_chatcommand("gdo", {
     description = "Affiche les commandes et objectifs du prototype GDO",
     func = function(name)
