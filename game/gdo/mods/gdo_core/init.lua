@@ -45,6 +45,13 @@ minetest.register_node("gdo_core:pierre", {
     groups = {cracky = 3, oddly_breakable_by_hand = 3},
 })
 
+-- Nœuds de base attendus par le mapgen. Le monde prototype est plat :
+-- l'eau est volontairement remplacée par de l'air tant que le terrain aquatique
+-- n'est pas implémenté.
+minetest.register_alias("mapgen_stone", "gdo_core:pierre")
+minetest.register_alias("mapgen_water_source", "air")
+minetest.register_alias("mapgen_river_water_source", "air")
+
 minetest.register_craftitem("gdo_core:navet", {
     description = S("Navet héroïque"),
     inventory_image = C.navet,
