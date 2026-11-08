@@ -259,11 +259,28 @@ minetest.register_on_joinplayer(function(player)
     local meta = player:get_meta()
     local first_spawn = meta:get_int("gdo_spawned") ~= 1
 
-    -- Le spawn ne modifie jamais la carte : il ne fait que positionner
-    -- le joueur devant le parvis, dans la zone dégagée au sud du château.
     minetest.after(2, function()
         if not player or not player:is_player() then
             return
+        end
+
+        -- Le terrain naturel de la carte peut subsister au-dessus du plateau
+        -- construit par le château. On ne nettoie que le volume du parvis sud.
+        for x = -5, 5 do
+            for z = 49, 61 do
+                for y = 1, 12 do
+                    minetest.set_node({x = x, y = y, z = z}, {name = "air"})
+                end
+                minetest.set_node({x = x, y = 0, z = z}, {name = "gdo_core:herbe"})
+                minetest.set_node({x = x, y = -1, z = z}, {name = "gdo_core:terre"})
+            end
+        end
+
+        if minetest.fix_light then
+            minetest.fix_light(
+                {x = -7, y = -1, z = 47},
+                {x = 7, y = 14, z = 63}
+            )
         end
 
         player:set_pos({x = 0, y = 1.5, z = 51})
@@ -279,12 +296,11 @@ minetest.register_on_joinplayer(function(player)
         end
         meta:set_int("gdo_spawned", 1)
 
-        local pos = player:get_pos()
         local feet = minetest.get_node({x = 0, y = 0, z = 51}).name
-        local head = minetest.get_node({x = 0, y = 3, z = 51}).name
+        local body = minetest.get_node({x = 0, y = 2, z = 51}).name
         minetest.chat_send_player(player:get_player_name(),
-            string.format("[GDO] Spawn %.1f, %.1f, %.1f | sol=%s | espace=%s",
-                pos.x, pos.y, pos.z, feet, head))
+            string.format("[GDO] Arrivée au parvis | sol=%s | bloc à hauteur du corps=%s",
+                feet, body))
 
         if first_spawn then
             minetest.chat_send_player(player:get_player_name(),
