@@ -46,10 +46,11 @@ Si la commande `luanti` n'existe pas, essaie `minetest` selon le nom du paquet i
 
 ## 5. Première quête
 
-- Tu apparais dans une petite clairière.
-- Gérard le Magnifique se trouve près de l'allée centrale.
+- Tu apparais devant le Château des Brumes, une immense forteresse-école gothique.
+- Passe la grande porte pour rejoindre la cour intérieure.
+- Gérard le Magnifique t'attend près de l'entrée de la cour.
 - Fais un **clic droit** sur Gérard pour accepter sa quête.
-- Le jardin avec les trois navets se trouve à l'ouest (sur ta gauche en regardant Gérard depuis le point d'apparition).
+- Le jardin avec les trois navets se trouve près de la grande porte.
 - Fais un **clic droit** sur chaque navet pour le récolter.
 - Retourne voir Gérard et fais un nouveau clic droit.
 - Tu reçois le Badge officiel du Nawak.
@@ -69,6 +70,7 @@ Les touches sont celles configurées dans Luanti :
 ## 7. Limites connues de cette ébauche
 
 - C'est une démo locale mono-monde, pas encore un MMORPG.
+- Le Château des Brumes est généré automatiquement une seule fois par monde. Le module construit les remparts, les tours, le donjon, les ailes et la cour au premier chargement.
 - Le personnage de Gérard et les blocs utilisent des textures de remplacement intégrées au moteur ; les modèles et graphismes originaux viendront ensuite.
 - La quête est volontairement simple et son état est conservé dans les métadonnées du joueur.
 - Pas encore de compte web, classes, combat, sauvegarde centralisée, multijoueur public ou fédération ActivityPub.
