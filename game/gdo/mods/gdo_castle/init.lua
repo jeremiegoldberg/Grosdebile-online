@@ -761,5 +761,8 @@ minetest.register_chatcommand("chateau", {
 
 minetest.log("action", "[GDO] Le module du Château des Brumes est chargé.")
 
+-- Stockage unique partagé avec la refonte (Luanti interdit deux instances du même mod storage).
+gdo_castle_storage = minetest.get_mod_storage()
+
 -- Refonte visuelle et remise à niveau du terrain de départ.
 dofile(minetest.get_modpath(modname) .. "/refit.lua")
