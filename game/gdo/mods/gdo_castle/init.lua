@@ -131,7 +131,6 @@ local function build_keep()
 
     -- Façade sud : porche monumental.
     clear_box(-4, 2, -9, 4, 11, -8)
-    wall_x(-6, 6, 2, 3, -8, nodes.dark, 2)
     wall_x(-6, 6, 11, 12, -8, nodes.dark, 2)
     for x = -6, 6 do
         if math.abs(x) >= 5 then put(x, 4, -8, nodes.gold) end
