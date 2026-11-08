@@ -718,8 +718,7 @@ local castle_storage = minetest.get_mod_storage and minetest.get_mod_storage() o
 
 minetest.register_on_mods_loaded(function()
     minetest.after(2, function()
-        local already_generated = castle_storage
-            and castle_storage:get_int("castle_generated") == 9
+        local already_generated = true -- génération historique désactivée : refit.lua construit le château sur le plateau surélevé
 
         if not already_generated then
             generate_castle()
