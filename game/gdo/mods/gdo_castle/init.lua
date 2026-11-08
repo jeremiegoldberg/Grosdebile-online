@@ -457,6 +457,11 @@ local houses = {
 
 for _, definition in ipairs(houses) do
     local house = definition
+    minetest.register_node("gdo:house_wall_" .. house.id, {
+        description = "Pierre aux couleurs — " .. house.title,
+        tiles = {house.emblem},
+        groups = {cracky = 2},
+    })
     minetest.register_node("gdo:house_crest_" .. house.id, {
         description = "Blason — " .. house.title,
         tiles = {house.emblem},
@@ -487,10 +492,10 @@ local function build_house_common_room(house)
     local x1, x2, z1, z2 = cx - 4, cx + 4, cz - 4, cz + 4
     -- Pavillon compact : façade tournée vers le centre de la cour.
     floor_rect(x1, z1, x2, z2, 1, nodes.marble)
-    cuboid(x1, 2, z1, x2, 6, z1, nodes.dark)
-    cuboid(x1, 2, z2, x2, 6, z2, nodes.dark)
-    cuboid(x1, 2, z1 + 1, x1, 6, z2 - 1, nodes.dark)
-    cuboid(x2, 2, z1 + 1, x2, 6, z2 - 1, nodes.dark)
+    cuboid(x1, 2, z1, x2, 6, z1, "gdo:house_wall_" .. house.id)
+    cuboid(x1, 2, z2, x2, 6, z2, "gdo:house_wall_" .. house.id)
+    cuboid(x1, 2, z1 + 1, x1, 6, z2 - 1, "gdo:house_wall_" .. house.id)
+    cuboid(x2, 2, z1 + 1, x2, 6, z2 - 1, "gdo:house_wall_" .. house.id)
     -- Porte ouverte sur la cour, côté sud pour les pavillons nord et inversement.
     local front_z = cz < 5 and z2 or z1
     clear_box(cx - 1, 2, front_z, cx + 1, 4, front_z)
