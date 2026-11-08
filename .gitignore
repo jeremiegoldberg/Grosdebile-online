@@ -1,0 +1,32 @@
+# Editors and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Go
+/backend/bin/
+/backend/vendor/
+
+# Luanti runtime data (never commit player data or live worlds)
+worlds/
+world/
+*.sqlite
+*.sqlite3
+*.db
+auth.txt
+accounts.txt
+env_meta.txt
+ipban.txt
+debug.txt
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+kubeconfig
