@@ -634,7 +634,7 @@ local function generate_castle()
     put(-8, 1, 41, "gdo_core:navet_sur_pied")
     put(-10, 1, 40, "gdo_core:navet_sur_pied")
 
-    -- Deux longues galeries latérales à arcades.
+    -- Deux longues galeries latérales à arcades, éclairées régulièrement.
     for _, side in ipairs({-1, 1}) do
         local x1, x2 = side == -1 and -35 or 30, side == -1 and -30 or 35
         cuboid(x1, 2, -5, x2, 8, 20, nodes.stone)
@@ -643,6 +643,18 @@ local function generate_castle()
             cuboid(x1, 3, z, x2, 7, z, nodes.dark)
         end
         floor_rect(x1, -5, x2, 20, 1, nodes.floor)
+        local lamp_x = side == -1 and -32 or 32
+        for z = 0, 15, 5 do
+            put(lamp_x, 6, z, "gdo_castle:castle_lantern")
+        end
+    end
+
+    -- Recalculer l'éclairage après la pose massive des blocs.
+    if minetest.fix_light then
+        minetest.fix_light(
+            {x = -52, y = -10, z = -58},
+            {x = 52, y = 100, z = 52}
+        )
     end
 
     minetest.log("action", "[GDO] Le Château des Brumes a été construit.")
