@@ -264,29 +264,27 @@ minetest.register_on_joinplayer(function(player)
             return
         end
 
-        -- Le terrain naturel de la carte peut subsister au-dessus du plateau
-        -- construit par le château. On ne nettoie que le volume du parvis sud.
-        for x = -5, 5 do
-            for z = 49, 61 do
-                for y = 1, 12 do
+        -- Arrivée directement dans la cour intérieure, sur le dallage existant.
+        -- Le spawn précédent (z=51) était à l'extérieur de l'enceinte, dans le fossé.
+        for x = -3, 3 do
+            for z = 17, 23 do
+                for y = 1, 8 do
                     minetest.set_node({x = x, y = y, z = z}, {name = "air"})
                 end
-                minetest.set_node({x = x, y = 0, z = z}, {name = "gdo_core:herbe"})
-                minetest.set_node({x = x, y = -1, z = z}, {name = "gdo_core:terre"})
             end
         end
 
         if minetest.fix_light then
             minetest.fix_light(
-                {x = -7, y = -1, z = 47},
-                {x = 7, y = 14, z = 63}
+                {x = -5, y = 0, z = 15},
+                {x = 5, y = 10, z = 25}
             )
         end
 
-        player:set_pos({x = 0, y = 1.5, z = 51})
+        player:set_pos({x = 0, y = 1.5, z = 20})
         player:set_velocity({x = 0, y = 0, z = 0})
         if player.set_look_horizontal then
-            player:set_look_horizontal(math.pi)
+            player:set_look_horizontal(0)
         end
         if player.set_look_vertical then
             player:set_look_vertical(0)
@@ -296,18 +294,19 @@ minetest.register_on_joinplayer(function(player)
         end
         meta:set_int("gdo_spawned", 1)
 
-        local feet = minetest.get_node({x = 0, y = 0, z = 51}).name
-        local body = minetest.get_node({x = 0, y = 2, z = 51}).name
+        local feet = minetest.get_node({x = 0, y = 0, z = 20}).name
+        local body = minetest.get_node({x = 0, y = 2, z = 20}).name
         minetest.chat_send_player(player:get_player_name(),
-            string.format("[GDO] Arrivée au parvis | sol=%s | bloc à hauteur du corps=%s",
+            string.format("[GDO] Spawn dans la cour | sol=%s | espace=%s",
                 feet, body))
 
         if first_spawn then
             minetest.chat_send_player(player:get_player_name(),
-                "Bienvenue dans le Royaume du Nawak ! Avance vers le portail du Château des Brumes.")
+                "Bienvenue dans le Royaume du Nawak ! Le portail est devant toi.")
         end
     end)
 end)
+
 minetest.register_chatcommand("gdo", {
     description = "Affiche les commandes et objectifs du prototype GDO",
     func = function(name)
