@@ -639,9 +639,9 @@ end
 minetest.register_on_mods_loaded(function()
     minetest.after(2, function()
         local storage = minetest.get_mod_storage()
-        if storage:get_int("castle_generated") ~= 5 then
+        if storage:get_int("castle_generated") ~= 6 then
             generate_castle()
-            storage:set_int("castle_generated", 5)
+            storage:set_int("castle_generated", 6)
         end
     end)
 end)
