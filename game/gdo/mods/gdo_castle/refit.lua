@@ -32,9 +32,23 @@ local function wall_z(z1,z2,y1,y2,x,n,t)
     fill(x,y1,z1,x+(t or 1)-1,y2,z2,n)
 end
 
+-- Textures autonomes : aucun fichier PNG externe n'est requis.
+local palette = {
+    refit_stone = "unknown_node.png^[colorize:#777f91:210",
+    refit_trim = "unknown_node.png^[colorize:#c4bda9:220",
+    refit_roof = "unknown_node.png^[colorize:#263b60:220",
+    refit_floor = "unknown_node.png^[colorize:#b7ad9a:220",
+    refit_wood = "unknown_node.png^[colorize:#795033:220",
+    refit_glass = "unknown_node.png^[colorize:#e6b95e:220",
+    refit_gold = "unknown_node.png^[colorize:#e2ad35:220",
+    refit_grass = "unknown_node.png^[colorize:#548747:220",
+    refit_path = "unknown_node.png^[colorize:#8d8981:220",
+    refit_leaves = "unknown_node.png^[colorize:#3d873f:220",
+    refit_water = "unknown_node.png^[colorize:#398fce:220",
+}
 local function register_texture_node(name, desc, groups, extra)
     local short = name:match(":(.+)$")
-    local def = {description=S(desc), tiles={short .. ".png"}, groups=groups or {cracky=2}}
+    local def = {description=S(desc), tiles={palette[short] or "unknown_node.png"}, groups=groups or {cracky=2}}
     if extra then for k,v in pairs(extra) do def[k]=v end end
     minetest.register_node(name, def)
 end
