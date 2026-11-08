@@ -4,7 +4,16 @@
 
 local modname = minetest.get_current_modname()
 local S = minetest.get_translator and minetest.get_translator(modname) or function(s) return s end
-\n-- Toute l'emprise du Château des Brumes, de ses jardins et de la zone tutorielle\n-- est réservée au scénario. Les constructions des joueurs commencent au-delà.\ngdo_zones.register_readonly_zone({\n    name = "Château des Brumes",\n    description = "Château, cour, pavillons des maisons, jardin des navets et parcours d'initiation",\n    min = {x = -52, y = -10, z = -58},\n    max = {x = 52, y = 100, z = 52},\n})\n
+
+-- Toute l'emprise du Château des Brumes, de ses jardins et de la zone tutorielle
+-- est réservée au scénario. Les constructions des joueurs commencent au-delà.
+gdo_zones.register_readonly_zone({
+    name = "Château des Brumes",
+    description = "Château, cour, pavillons des maisons, jardin des navets et parcours d'initiation",
+    min = {x = -52, y = -10, z = -58},
+    max = {x = 52, y = 100, z = 52},
+})
+
 local nodes = {
     stone = "gdo:castle_stone",
     dark = "gdo:castle_dark_stone",
