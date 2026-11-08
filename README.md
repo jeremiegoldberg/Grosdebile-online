@@ -17,9 +17,9 @@ Gros Débile Online (GDO) est un projet communautaire de MMORPG fantasy humorist
 
 ## État du projet
 
-**Prototype 0.4 — le Château des Brumes prend vie.** Le démonstrateur comprend désormais une grande salle de banquet, une bibliothèque à rayonnages et passerelle, une salle de cours, un bureau des quêtes, une galerie des trophées et des panneaux interactifs chargés de rappeler que l'administration royale est le vrai boss final. Le château conserve son donjon, ses remparts, ses tours et sa cour.
+**Prototype 0.5 — les quatre maisons du Château des Brumes.** Le démonstrateur comprend désormais une grande salle de banquet, une bibliothèque à rayonnages et passerelle, une salle de cours, un bureau des quêtes, une galerie des trophées, quatre pavillons avec salles communes et blasons interactifs, ainsi qu’un système d’affectation des joueurs à une maison. Le château conserve son donjon, ses remparts, ses tours et sa cour.
 
-L'identité humoristique est volontairement intégrée au décor : le banquet est plus grand que le budget nourriture, les grimoires sont classés selon des critères douteux, et toute aventure nécessite plusieurs formulaires. L'ensemble reste une architecture fantasy originale, sans reproduire un bâtiment existant.
+Les quatre maisons sont les **Bras Cassés** (courage avant compétence), les **Mages du Dimanche** (magie et effets secondaires), les **Rats de Bibliothèque** (érudition et phobie du grand air) et les **Seigneurs du Navet** (noblesse agricole). Le joueur choisit sa maison en cliquant sur son blason ; son choix est conservé dans ses métadonnées. Les commandes `/maisons` et `/maison` présentent les maisons et son affectation.\n\nL’identité humoristique est volontairement intégrée au décor : le banquet est plus grand que le budget nourriture, les grimoires sont classés selon des critères douteux, et toute aventure nécessite plusieurs formulaires. L'ensemble reste une architecture fantasy originale, sans reproduire un bâtiment existant.
 
 > **À savoir :** la construction est procédurale et utilise encore des textures provisoires. Le prototype doit être lancé et vérifié dans Luanti ; il ne s'agit pas encore d'une démo graphiquement finalisée ni d'un MMORPG complet.
 
