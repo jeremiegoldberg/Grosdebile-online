@@ -78,6 +78,18 @@ minetest.register_node("gdo_castle:castle_noticeboard", {
     end,
 })
 
+minetest.register_node("gdo_castle:arrival_sign", {
+    description = S("Panneau d'accueil du Royaume"),
+    tiles = {"unknown_node.png^[colorize:#b58a4a:220"},
+    groups = {choppy = 2},
+    on_rightclick = function(pos, node, clicker)
+        if clicker and clicker:is_player() then
+            minetest.chat_send_player(clicker:get_player_name(),
+                "BIENVENUE AU ROYAUME DU NAWAK ! Le grand portail devant toi mène à la cour du Château des Brumes. Gérard le Magnifique t'attend près du jardin des navets. Clic droit sur Gérard pour commencer, puis choisis ta maison grâce aux blasons dans la cour. Commandes : /gdo, /maisons, /maison.")
+        end
+    end,
+})
+
 local function put(x, y, z, name)
     minetest.set_node({x = x, y = y, z = z}, {name = name})
 end
@@ -616,8 +628,34 @@ local function build_ground()
     end
 end
 
+local function build_arrival_area()
+    -- Parvis d'arrivée clairement identifiable, aligné sur le portail sud.
+    floor_rect(-7, 32, 7, 49, 1, nodes.marble)
+    floor_rect(-2, 27, 2, 32, 1, nodes.gold)
+
+    -- Chemin axial vers le portail du château.
+    floor_rect(-2, 25, 2, 32, 1, nodes.floor)
+    for z = 27, 32 do
+        put(-3, 1, z, nodes.gold)
+        put(3, 1, z, nodes.gold)
+    end
+
+    -- Quatre bornes lumineuses encadrent le point d'apparition.
+    for _, p in ipairs({
+        {x = -6, z = 34}, {x = 6, z = 34},
+        {x = -6, z = 47}, {x = 6, z = 47},
+    }) do
+        cuboid(p.x - 1, 2, p.z - 1, p.x + 1, 3, p.z + 1, nodes.dark)
+        put(p.x, 4, p.z, "gdo_castle:castle_lantern")
+        put(p.x, 5, p.z, nodes.gold)
+    end
+
+    put(0, 2, 48, "gdo_castle:arrival_sign")
+end
+
 local function generate_castle()
     build_ground()
+    build_arrival_area()
     -- Les volumes intérieurs sont évidés pièce par pièce : pas de grand nettoyage
     -- massif de plusieurs centaines de milliers de blocs au démarrage.
     build_outer_walls()
