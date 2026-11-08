@@ -37,6 +37,17 @@ luanti
 
 Dans Luanti, crée un monde et sélectionne **Gros Débile Online** comme jeu.
 
+## Règles de construction et protection des zones
+
+Le monde suit un modèle volontairement simple :
+
+- **Zones de scénario en lecture seule** : le Château des Brumes, sa cour, ses quatre pavillons, le jardin des navets et le parcours tutoriel sont protégés. Les joueurs ne peuvent ni y poser ni y retirer de blocs.
+- **Monde libre en dehors** : aucun claim et aucune propriété privée des terrains. Chaque joueur peut construire de zéro, modifier le paysage, creuser et démolir les constructions des autres.
+- **Pas de protection automatique des bases** : construire quelque part ne confère aucun droit exclusif sur cet endroit. C'est un choix de gameplay assumé ; les joueurs devront coopérer ou défendre physiquement leurs créations.
+- Les prochaines zones scénarisées pourront être déclarées dans le registre `gdo_zones`, sans changer les règles du monde libre.
+
+La commande `/gdo_zones` affiche les zones protégées et rappelle les règles.
+
 ## Architecture cible
 
 | Composant | Responsabilité |
