@@ -491,6 +491,9 @@ for _, definition in ipairs(houses) do
             end
             meta:set_string("gdo_house", house.id)
             meta:set_string("gdo_house_title", house.title)
+            if gdo_society and gdo_society.join_founder_guild then
+                gdo_society.join_founder_guild(clicker, house.id)
+            end
             minetest.chat_send_all(clicker:get_player_name() .. " rejoint " .. house.title .. " ! " .. house.motto)
         end,
     })
