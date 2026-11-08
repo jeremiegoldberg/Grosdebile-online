@@ -14,50 +14,50 @@ local C = {
     npc = "unknown_node.png^[colorize:#d9a06b:220",
 }
 
-minetest.register_node("gdo:herbe", {
+minetest.register_node("gdo_core:herbe", {
     description = S("Herbe du Royaume"),
     tiles = {C.grass},
     groups = {crumbly = 3, soil = 1, oddly_breakable_by_hand = 3},
     sounds = {},
 })
 
-minetest.register_node("gdo:terre", {
+minetest.register_node("gdo_core:terre", {
     description = S("Terre du Royaume"),
     tiles = {C.dirt},
     groups = {crumbly = 3, soil = 1, oddly_breakable_by_hand = 3},
 })
 
-minetest.register_node("gdo:chemin", {
+minetest.register_node("gdo_core:chemin", {
     description = S("Chemin poussiéreux"),
     tiles = {C.path},
     groups = {crumbly = 2, oddly_breakable_by_hand = 2},
 })
 
-minetest.register_node("gdo:bois", {
+minetest.register_node("gdo_core:bois", {
     description = S("Bois rustique"),
     tiles = {C.wood},
     groups = {choppy = 3, oddly_breakable_by_hand = 2},
 })
 
-minetest.register_node("gdo:pierre", {
+minetest.register_node("gdo_core:pierre", {
     description = S("Pierre grise"),
     tiles = {C.stone},
     groups = {cracky = 3, oddly_breakable_by_hand = 3},
 })
 
-minetest.register_craftitem("gdo:navet", {
+minetest.register_craftitem("gdo_core:navet", {
     description = S("Navet héroïque"),
     inventory_image = C.navet,
     stack_max = 99,
 })
 
-minetest.register_craftitem("gdo:badge_du_nawak", {
+minetest.register_craftitem("gdo_core:badge_du_nawak", {
     description = S("Badge officiel du Nawak"),
     inventory_image = C.navet .. "^[brighten",
     stack_max = 1,
 })
 
-minetest.register_node("gdo:navet_sur_pied", {
+minetest.register_node("gdo_core:navet_sur_pied", {
     description = S("Navet héroïque (à récolter)"),
     drawtype = "plantlike",
     tiles = {C.navet},
@@ -80,7 +80,7 @@ minetest.register_node("gdo:navet_sur_pied", {
                 "Ce navet a l'air important. Gérard devrait d'abord t'expliquer pourquoi.")
             return
         end
-        local leftover = clicker:get_inventory():add_item("main", "gdo:navet")
+        local leftover = clicker:get_inventory():add_item("main", "gdo_core:navet")
         if not leftover:is_empty() then
             minetest.chat_send_player(clicker:get_player_name(),
                 "Ton sac est plein. Fais un peu de place avant de récolter.")
@@ -96,8 +96,8 @@ local function build_starting_area()
     -- Petite clairière plate, construite sans dépendre d'un autre jeu.
     for x = -12, 12 do
         for z = -12, 12 do
-            minetest.set_node({x = x, y = -1, z = z}, {name = "gdo:terre"})
-            minetest.set_node({x = x, y = 0, z = z}, {name = "gdo:herbe"})
+            minetest.set_node({x = x, y = -1, z = z}, {name = "gdo_core:terre"})
+            minetest.set_node({x = x, y = 0, z = z}, {name = "gdo_core:herbe"})
             for y = 1, 5 do
                 minetest.set_node({x = x, y = y, z = z}, {name = "air"})
             end
@@ -110,19 +110,19 @@ local function build_starting_area()
             {x = n, y = 1, z = -12}, {x = n, y = 1, z = 12},
             {x = -12, y = 1, z = n}, {x = 12, y = 1, z = n},
         }) do
-            minetest.set_node(p, {name = "gdo:bois"})
+            minetest.set_node(p, {name = "gdo_core:bois"})
         end
     end
 
     -- Allée centrale et petite place.
     for x = -1, 1 do
         for z = -8, 5 do
-            minetest.set_node({x = x, y = 1, z = z}, {name = "gdo:chemin"})
+            minetest.set_node({x = x, y = 1, z = z}, {name = "gdo_core:chemin"})
         end
     end
     for x = 2, 6 do
         for z = -2, 2 do
-            minetest.set_node({x = x, y = 1, z = z}, {name = "gdo:chemin"})
+            minetest.set_node({x = x, y = 1, z = z}, {name = "gdo_core:chemin"})
         end
     end
 
@@ -132,17 +132,17 @@ local function build_starting_area()
         {x = -8, y = 1, z = 41},
         {x = -10, y = 1, z = 40},
     }) do
-        minetest.set_node(p, {name = "gdo:navet_sur_pied"})
+        minetest.set_node(p, {name = "gdo_core:navet_sur_pied"})
     end
 
     -- Quelques éléments de décor très rudimentaires.
     for x = 4, 6 do
-        minetest.set_node({x = x, y = 1, z = 5}, {name = "gdo:bois"})
-        minetest.set_node({x = x, y = 2, z = 5}, {name = "gdo:bois"})
+        minetest.set_node({x = x, y = 1, z = 5}, {name = "gdo_core:bois"})
+        minetest.set_node({x = x, y = 2, z = 5}, {name = "gdo_core:bois"})
     end
 end
 
-minetest.register_entity("gdo:gerard", {
+minetest.register_entity("gdo_core:gerard", {
     static_save = false,
     initial_properties = {
         physical = true,
@@ -190,9 +190,9 @@ minetest.register_entity("gdo:gerard", {
             return
         end
 
-        if inventory:contains_item("main", "gdo:navet 3") then
-            inventory:remove_item("main", "gdo:navet 3")
-            inventory:add_item("main", "gdo:badge_du_nawak")
+        if inventory:contains_item("main", "gdo_core:navet 3") then
+            inventory:remove_item("main", "gdo_core:navet 3")
+            inventory:add_item("main", "gdo_core:badge_du_nawak")
             meta:set_int("gdo_quest_done", 1)
             if gdo_society and gdo_society.add_experience then
                 gdo_society.add_experience(clicker, 100)
@@ -203,7 +203,7 @@ minetest.register_entity("gdo:gerard", {
             local count = inventory:get_stack("main", 1):get_count()
             local total = 0
             for _, stack in ipairs(inventory:get_list("main") or {}) do
-                if stack:get_name() == "gdo:navet" then
+                if stack:get_name() == "gdo_core:navet" then
                     total = total + stack:get_count()
                 end
             end
@@ -218,11 +218,11 @@ local function ensure_gerard()
     local objects = minetest.get_objects_inside_radius(pos, 2)
     for _, object in ipairs(objects) do
         local entity = object:get_luaentity()
-        if entity and entity.name == "gdo:gerard" then
+        if entity and entity.name == "gdo_core:gerard" then
             return
         end
     end
-    minetest.add_entity(pos, "gdo:gerard")
+    minetest.add_entity(pos, "gdo_core:gerard")
 end
 
 minetest.register_on_mods_loaded(function()
