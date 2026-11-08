@@ -263,11 +263,11 @@ minetest.register_on_joinplayer(function(player)
             return
         end
 
-        -- Spawn sur le parvis sud, hors de l'emprise des bâtiments et des remparts.
+        -- Spawn sur la place extérieure, hors de l'emprise des bâtiments et des remparts.
         -- La zone d'arrivée du château se trouve en z=32..49 ; on utilise z=45,
         -- au-delà du mur transversal situé en z=39.
         for x = -4, 4 do
-            for z = 41, 49 do
+            for z = 60, 68 do
                 minetest.set_node({x = x, y = 0, z = z}, {name = "gdo_castle:castle_marble"})
                 for y = 1, 12 do
                     minetest.set_node({x = x, y = y, z = z}, {name = "air"})
@@ -283,7 +283,7 @@ minetest.register_on_joinplayer(function(player)
         end
 
         -- Position du joueur au-dessus du sol, avec une grande hauteur libre.
-        player:set_pos({x = 0, y = 2, z = 45})
+        player:set_pos({x = 0, y = 2, z = 64})
         player:set_velocity({x = 0, y = 0, z = 0})
         if player.set_look_horizontal then
             player:set_look_horizontal(0)
@@ -296,8 +296,8 @@ minetest.register_on_joinplayer(function(player)
         end
         meta:set_int("gdo_spawned", 1)
 
-        local feet = minetest.get_node({x = 0, y = 0, z = 45}).name
-        local body = minetest.get_node({x = 0, y = 2, z = 45}).name
+        local feet = minetest.get_node({x = 0, y = 0, z = 64}).name
+        local body = minetest.get_node({x = 0, y = 2, z = 64}).name
         minetest.chat_send_player(player:get_player_name(),
             string.format("[GDO] Spawn sur le parvis sud | sol=%s | espace=%s",
                 feet, body))
