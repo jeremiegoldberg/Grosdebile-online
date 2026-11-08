@@ -534,7 +534,7 @@ local function build()
 end
 
 local storage = minetest.get_mod_storage and minetest.get_mod_storage() or nil
-local VERSION = 6
+local VERSION = 7
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
