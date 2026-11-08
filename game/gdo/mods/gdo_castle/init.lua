@@ -687,12 +687,20 @@ local function generate_castle()
         end
     end
 
-    -- Recalculer l'éclairage après la pose massive des blocs.
+    -- Forcer un recalcul de lumière sur le château et le point d'arrivée.
     if minetest.fix_light then
         minetest.fix_light(
             {x = -52, y = -10, z = -58},
             {x = 52, y = 100, z = 52}
         )
+        minetest.fix_light(
+            {x = -16, y = -4, z = 24},
+            {x = 16, y = 12, z = 56}
+        )
+    end
+    -- Le prototype démarre en plein jour pour rendre le parcours immédiatement lisible.
+    if minetest.set_timeofday then
+        minetest.set_timeofday(0.5)
     end
 
     minetest.log("action", "[GDO] Le Château des Brumes a été construit.")
