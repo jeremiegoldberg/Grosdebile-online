@@ -17,7 +17,7 @@ Gros Débile Online (GDO) est un projet communautaire de MMORPG fantasy humorist
 
 ## État du projet
 
-**Prototype 0.6 — guildes fondatrices et villages persistants.** Le choix d'une des quatre maisons affecte le joueur à sa guilde historique, lui attribue une parcelle protégée et construit une petite maison standardisée. Les quatre villages disposent de bâtiments communs. Les joueurs peuvent quitter une guilde (sauf le responsable d'une guilde fondatrice), fonder une nouvelle guilde au niveau 10, inviter des membres et attribuer des rôles de construction. Le village d'une guilde de joueurs s'étend automatiquement à mesure que ses effectifs augmentent. Le démonstrateur comprend désormais une grande salle de banquet, une bibliothèque à rayonnages et passerelle, une salle de cours, un bureau des quêtes, une galerie des trophées, quatre pavillons avec salles communes et blasons interactifs, ainsi qu’un système d’affectation des joueurs à une maison. Le château conserve son donjon, ses remparts, ses tours et sa cour.
+**Prototype 0.6 — guildes fondatrices et villages persistants.** Le choix d'une des quatre maisons affecte le joueur à sa guilde historique, lui attribue une parcelle protégée et construit une petite maison standardisée. Les quatre villages disposent de bâtiments communs. Les joueurs peuvent quitter une guilde (sauf le responsable d'une guilde fondatrice), fonder une nouvelle guilde au niveau 2, inviter des membres et attribuer des rôles de construction. Le village d'une guilde de joueurs s'étend automatiquement à mesure que ses effectifs augmentent. Le démonstrateur comprend désormais une grande salle de banquet, une bibliothèque à rayonnages et passerelle, une salle de cours, un bureau des quêtes, une galerie des trophées, quatre pavillons avec salles communes et blasons interactifs, ainsi qu’un système d’affectation des joueurs à une maison. Le château conserve son donjon, ses remparts, ses tours et sa cour.
 
 Les quatre maisons sont les **Bras Cassés** (courage avant compétence), les **Mages du Dimanche** (magie et effets secondaires), les **Rats de Bibliothèque** (érudition et phobie du grand air) et les **Seigneurs du Navet** (noblesse agricole). Le joueur choisit sa maison en cliquant sur son blason ; son choix est conservé dans ses métadonnées. Les commandes `/maisons` et `/maison` présentent les maisons et son affectation.
 
@@ -48,7 +48,7 @@ Le monde suit un modèle volontairement simple :
 - **Pas de protection automatique des bases** : construire quelque part ne confère aucun droit exclusif sur cet endroit. C'est un choix de gameplay assumé ; les joueurs devront coopérer ou défendre physiquement leurs créations.
 - Les prochaines zones scénarisées pourront être déclarées dans le registre `gdo_zones`, sans changer les règles du monde libre.
 
-Les commandes `/gdo_zones`, `/gdo_guild`, `/gdo_plot` et `/gdo_progression` affichent les règles, la guilde, la parcelle et le niveau. Pour fonder une guilde : atteindre le niveau 10, quitter sa guilde actuelle, puis utiliser `/gdo_guild_create <nom>`. Les invitations passent par `/gdo_guild_invite`, `/gdo_guild_join` et les rôles par `/gdo_guild_role`.
+Les commandes `/gdo_zones`, `/gdo_guild`, `/gdo_plot` et `/gdo_progression` affichent les règles, la guilde, la parcelle et le niveau. Pour fonder une guilde : atteindre le niveau 2, quitter sa guilde actuelle, puis utiliser `/gdo_guild_create <nom>`. Les invitations passent par `/gdo_guild_invite`, `/gdo_guild_join` et les rôles par `/gdo_guild_role`.
 
 ## Architecture cible
 
