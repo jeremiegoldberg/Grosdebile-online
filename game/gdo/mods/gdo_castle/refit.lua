@@ -397,7 +397,8 @@ register_room_action("gdo_castle:healing_fountain", "Fontaine de soin", "",
         player:set_hp(math.min(20, hp + 4), {type = "set_hp", from = "gdo_castle:healing_fountain"})
         minetest.chat_send_player(player:get_player_name(), "La fontaine apaise tes blessures. +4 PV (dans la limite de 20).")
     end)
-\nlocal function build_interiors()
+
+local function build_interiors()
     -- REZ-DE-CHAUSSÉE : vestibule, salle du trône et salle du conseil.
     deck(-14,-45,14,-20,1,M.floor)
     -- Tapis d'apparat menant au trône.
