@@ -32,7 +32,7 @@ Les bâtiments communs sont construits avec le village et appartiennent à la gu
 
 ### Guildes créées par les joueurs
 
-- Le niveau 10 débloque la fondation d'une guilde.
+- Le niveau 2 débloque la fondation d'une guilde (seuil provisoire du prototype, à rééquilibrer lorsque davantage de quêtes fourniront de l'expérience).
 - Le joueur doit quitter sa guilde actuelle.
 - Le fondateur devient chef et reçoit un nouveau village rudimentaire, avec bâtiments communs et sa propre parcelle.
 - Les invitations sont envoyées à des joueurs connectés.
@@ -66,7 +66,7 @@ Les futures étapes ajouteront des ressources, des coûts de construction, des n
 | `/gdo_plot` | Coordonnées de sa parcelle |
 | `/gdo_progression` | Niveau et expérience |
 | `/gdo_guild_leave` | Quitter sa guilde |
-| `/gdo_guild_create <nom>` | Fonder une guilde au niveau 10 |
+| `/gdo_guild_create <nom>` | Fonder une guilde au niveau 2 |
 | `/gdo_guild_invite <joueur>` | Inviter un joueur connecté |
 | `/gdo_guild_join` | Accepter une invitation |
 | `/gdo_guild_role <joueur> <member|builder|officer>` | Attribuer un rôle (chef uniquement) |
