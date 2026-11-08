@@ -13,6 +13,8 @@ local nodes = {
     glass = "gdo:castle_glass",
     floor = "gdo:castle_floor",
     gold = "gdo:castle_gold",
+    marble = "gdo:castle_marble",
+    copper = "gdo:castle_copper",
 }
 
 local function register_block(name, description, texture, groups, paramtype)
@@ -39,6 +41,33 @@ register_block(nodes.floor, "Dallage du château",
     "unknown_node.png^[colorize:#777b83:220", {cracky = 2})
 register_block(nodes.gold, "Ornement doré",
     "unknown_node.png^[colorize:#d5a52d:220", {cracky = 2})
+register_block(nodes.marble, "Marbre de cérémonie",
+    "unknown_node.png^[colorize:#d9d0b8:220", {cracky = 2})
+register_block(nodes.copper, "Cuivre patiné",
+    "unknown_node.png^[colorize:#9b6846:220", {cracky = 2})
+register_block("gdo:castle_books", "Rayonnage de grimoires",
+    "unknown_node.png^[colorize:#70452e:220", {choppy = 2})
+register_block("gdo:castle_banner", "Bannière du Nawak",
+    "unknown_node.png^[colorize:#8c2638:220", {choppy = 2})
+minetest.register_node("gdo:castle_lantern", {
+    description = S("Lanterne enchantée"),
+    tiles = {"unknown_node.png^[colorize:#ffd36a:220"},
+    groups = {cracky = 2},
+    light_source = 12,
+    paramtype = "light",
+    sunlight_propagates = true,
+})
+minetest.register_node("gdo:castle_noticeboard", {
+    description = S("Panneau officiel du château"),
+    tiles = {"unknown_node.png^[colorize:#8b623e:220"},
+    groups = {choppy = 2},
+    on_rightclick = function(pos, node, clicker)
+        if clicker and clicker:is_player() then
+            minetest.chat_send_player(clicker:get_player_name(),
+                "DÉCRET ROYAL N° 404 : le dragon a été prié de patienter. Votre formulaire de quête est en cours de traitement. Délai estimé : 3 à 5 ères géologiques.")
+        end
+    end,
+})
 
 local function put(x, y, z, name)
     minetest.set_node({x = x, y = y, z = z}, {name = name})
@@ -300,6 +329,99 @@ local function build_training_room()
     put(12, 12, -34, "gdo:castle_banner")
 end
 
+
+local function build_great_hall()
+    -- Salle de banquet : la table est longue, le budget nourriture beaucoup moins.
+    floor_rect(-32, -35, -22, -11, 2, nodes.marble)
+    for z = -32, -14, 6 do
+        cuboid(-31, 3, z, -23, 3, z + 1, nodes.wood)
+        cuboid(-31, 2, z - 1, -23, 2, z - 1, nodes.wood)
+        cuboid(-31, 2, z + 2, -23, 2, z + 2, nodes.wood)
+        for x = -30, -24, 2 do put(x, 4, z, nodes.gold) end
+    end
+    cuboid(-31, 3, -34, -23, 4, -32, nodes.dark)
+    cuboid(-30, 5, -34, -24, 5, -33, nodes.wood)
+    for x = -31, -23, 4 do cuboid(x, 12, -33, x, 12, -13, nodes.wood) end
+    for z = -30, -14, 8 do
+        cuboid(-29, 11, z, -25, 11, z, nodes.copper)
+        for x = -29, -25, 2 do put(x, 10, z, "gdo:castle_lantern") end
+    end
+    for z = -30, -14, 8 do
+        put(-34, 7, z, nodes.glass)
+        put(-34, 8, z, "gdo:castle_banner")
+    end
+    put(-27, 3, -12, "gdo:castle_noticeboard")
+end
+
+local function build_library()
+    -- Bibliothèque à deux niveaux : les livres sont classés par ordre alphabétique,
+    -- sauf ceux dont le titre commence par « probablement maudit ».
+    floor_rect(22, -35, 32, -11, 2, nodes.marble)
+    for z = -34, -13, 3 do
+        cuboid(22, 3, z, 22, 7, z + 1, "gdo:castle_books")
+        cuboid(32, 3, z, 32, 7, z + 1, "gdo:castle_books")
+    end
+    for x = 24, 30, 3 do
+        cuboid(x, 3, -34, x + 1, 7, -34, "gdo:castle_books")
+        cuboid(x, 3, -12, x + 1, 7, -12, "gdo:castle_books")
+    end
+    floor_rect(23, -33, 31, -13, 9, nodes.wood)
+    for z = -29, -17, 6 do
+        cuboid(25, 3, z, 29, 3, z + 1, nodes.wood)
+        put(24, 2, z, nodes.wood)
+        put(30, 2, z, nodes.wood)
+    end
+    for y = 3, 8 do put(30 - (y - 3), y, -23, nodes.wood) end
+    put(27, 10, -23, "gdo:castle_lantern")
+    put(27, 10, -18, "gdo:castle_lantern")
+    put(27, 10, -28, "gdo:castle_lantern")
+    put(27, 3, -12, "gdo:castle_noticeboard")
+end
+
+local function build_school_of_nawak()
+    -- Salle de cours : l'ardoise magique n'a pas encore reçu son permis d'enseignement.
+    floor_rect(-14, -40, 14, -28, 9, nodes.marble)
+    cuboid(-3, 10, -39, 3, 10, -38, nodes.dark)
+    for z = -36, -30, 3 do
+        for x = -10, 10, 5 do
+            cuboid(x, 10, z, x + 2, 10, z + 1, nodes.wood)
+            put(x, 9, z, nodes.wood)
+            put(x + 2, 9, z, nodes.wood)
+        end
+    end
+    put(0, 12, -39, "gdo:castle_lantern")
+    put(-12, 12, -34, "gdo:castle_banner")
+    put(12, 12, -34, "gdo:castle_banner")
+    put(0, 10, -29, "gdo:castle_noticeboard")
+end
+
+local function build_bureau_des_quetes()
+    -- Guichet officiel : une aventure commence toujours par trois exemplaires.
+    floor_rect(-8, -6, 8, 5, 2, nodes.marble)
+    cuboid(-6, 3, -4, 6, 4, -3, nodes.wood)
+    for x = -5, 5, 2 do
+        put(x, 5, -3, nodes.gold)
+        put(x, 3, 1, nodes.wood)
+    end
+    put(0, 5, -5, "gdo:castle_lantern")
+    put(0, 3, 4, "gdo:castle_noticeboard")
+    put(-7, 3, 0, "gdo:castle_banner")
+    put(7, 3, 0, "gdo:castle_banner")
+end
+
+local function build_trophy_gallery()
+    -- Galerie des exploits : le premier trophée est volontairement un navet.
+    for x = -16, 16 do
+        put(x, 2, 20, nodes.marble)
+        put(x, 6, 20, nodes.wood)
+    end
+    for x = -12, 12, 6 do
+        cuboid(x - 1, 3, 19, x + 1, 4, 19, nodes.gold)
+        put(x, 5, 19, "gdo:castle_lantern")
+    end
+    put(0, 3, 18, "gdo:castle_noticeboard")
+end
+
 local function build_outer_walls()
     -- Grande enceinte rectangulaire, avec chemin de ronde et créneaux.
     wall_x(-40, 40, 1, 12, -50, nodes.dark, 2)
@@ -387,6 +509,11 @@ local function generate_castle()
     -- massif de plusieurs centaines de milliers de blocs au démarrage.
     build_outer_walls()
     build_keep()
+    build_great_hall()
+    build_library()
+    build_school_of_nawak()
+    build_bureau_des_quetes()
+    build_trophy_gallery()
     build_courtyard()
     -- Le jardin de la quête est recréé après la construction du terrain.
     put(-8, 1, 39, "gdo:navet_sur_pied")
@@ -410,9 +537,9 @@ end
 minetest.register_on_mods_loaded(function()
     minetest.after(2, function()
         local storage = minetest.get_mod_storage()
-        if storage:get_int("castle_generated") ~= 3 then
+        if storage:get_int("castle_generated") ~= 4 then
             generate_castle()
-            storage:set_int("castle_generated", 3)
+            storage:set_int("castle_generated", 4)
         end
     end)
 end)
