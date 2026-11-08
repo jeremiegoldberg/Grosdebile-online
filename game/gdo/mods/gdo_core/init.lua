@@ -266,16 +266,18 @@ minetest.register_on_joinplayer(function(player)
             return
         end
 
-        for x = -6, 6 do
-            for z = 74, 86 do
-                minetest.set_node({x = x, y = 0, z = z}, {name = "gdo_core:pierre"})
-                for y = 1, 8 do
+        -- Grande clairière temporaire, loin des structures du château.
+        -- On retire le relief préexistant dans un volume suffisamment large.
+        for x = -16, 16 do
+            for z = 64, 96 do
+                for y = 32, 56 do
                     minetest.set_node({x = x, y = y, z = z}, {name = "air"})
                 end
+                minetest.set_node({x = x, y = 31, z = z}, {name = "gdo_core:pierre"})
             end
         end
 
-        player:set_pos({x = 0, y = 1.5, z = 80})
+        player:set_pos({x = 0, y = 32.5, z = 80})
         player:set_velocity({x = 0, y = 0, z = 0})
         if player.set_look_horizontal then
             player:set_look_horizontal(math.pi)
