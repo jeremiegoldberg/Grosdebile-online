@@ -549,124 +549,151 @@ local function square_tower(cx, cz, w, h)
 end
 
 local function new_keep()
-    -- Grand corps rectangulaire, façade sud, trois étages réellement accessibles.
-    fill(-19,1,-49,19,27,-13,M.stone)
-    clear(-17,2,-47,17,25,-15)
-    deck(-17,-47,17,-15,1,M.floor)
-    deck(-17,-47,17,-15,9,M.wood)
-    deck(-17,-47,17,-15,17,M.wood)
-    -- Façade sud avec entrée monumentale et baies verticales.
-    clear(-4,2,-13,4,11,-13)
-    fill(-6,11,-14,6,12,-13,M.trim)
-    fill(-5,13,-14,5,14,-13,M.roof)
-    for x=-14,14,4 do
+    -- Donjon médiéval : corps de pierre, toiture à forte pente et tours rondes.
+    fill(-17,1,-49,17,26,-13,M.stone)
+    clear(-15,2,-47,15,24,-15)
+    deck(-15,-47,15,-15,1,M.floor)
+    deck(-15,-47,15,-15,9,M.wood)
+    deck(-15,-47,15,-15,17,M.wood)
+
+    -- Façade sud : portail en retrait, arc de pierre et fenêtres élancées.
+    clear(-3,2,-13,3,10,-13)
+    fill(-5,10,-14,5,11,-13,M.trim)
+    fill(-4,12,-14,4,13,-13,M.roof)
+    for x=-12,12,4 do
         for y=5,21,8 do
-            clear(x,y,-13,x,y+2,-13)
+            clear(x,y,-13,x,y+3,-13)
             put(x,y+1,-13,M.glass)
             fill(x-1,y+3,-14,x+1,y+3,-13,M.trim)
+            put(x,y+4,-13,M.gold)
         end
     end
-    -- Pilastres et corniches soulignent les étages.
-    for x=-18,18,6 do
-        fill(x,2,-14,x+1,26,-14,M.trim)
+    -- Contreforts verticaux et corniches sculptées.
+    for x=-16,16,8 do
+        fill(x,2,-14,x+1,24,-14,M.trim)
+        fill(x-1,2,-14,x+2,3,-14,M.roof)
+        fill(x-1,23,-14,x+2,24,-14,M.trim)
     end
-    for y=9,17,8 do
-        fill(-19,y,-14,19,y,-13,M.trim)
+    for y=8,16,8 do
+        fill(-17,y,-14,17,y,-13,M.trim)
     end
-    -- Toiture monumentale à deux pentes et lucarnes.
-    for layer=0,8 do
-        fill(-21+layer,28+layer,-51+layer,21-layer,28+layer,-11-layer,M.roof)
+
+    -- Toit à deux pans très pentu, avec faîtage et pignons.
+    for layer=0,9 do
+        fill(-19+layer,27+layer,-51+layer,19-layer,27+layer,-11-layer,M.roof)
     end
-    for x=-12,-4,8 do
-        gable(x,29,-14,7,5,5); put(x,31,-14,M.glass)
+    gable(0,27,-13,21,10,4)
+    gable(0,27,-49,21,10,4)
+    for x=-10,10,10 do
+        fill(x-2,31,-14,x+2,34,-14,M.trim)
+        put(x,32,-14,M.glass)
+        put(x,35,-14,M.gold)
     end
-    -- Quatre tours carrées d'angle, nettement plus massives que les tourelles.
-    square_tower(-19,-49,11,37)
-    square_tower(19,-49,11,41)
-    square_tower(-19,-13,11,33)
-    square_tower(19,-13,11,35)
-    -- Grande salle du trône au rez-de-chaussée.
-    fill(-12,2,-43,12,2,-18,M.roof)
-    fill(-2,3,-46,2,3,-46,M.gold)
+
+    -- Tours d'angle cylindriques de hauteurs différentes et toits coniques.
+    round_tower(-17,-49,6,35)
+    round_tower(17,-49,6,40)
+    round_tower(-17,-13,5,30)
+    round_tower(17,-13,5,33)
+    -- Tourelle de guet sur le faîtage.
+    round_tower(0,-31,3,37)
+
+    -- Galerie d'apparat et balcon en pierre sculptée.
+    fill(-9,14,-12,9,14,-10,M.trim)
+    for x=-8,8,2 do
+        fill(x,15,-10,x,17,-10,M.wood)
+        put(x,18,-10,M.trim)
+    end
+    fill(-10,19,-13,10,19,-10,M.roof)
+    -- Bannières et blasons.
+    for x=-11,11,22 do
+        fill(x-1,12,-13,x+1,16,-13,M.roof)
+        fill(x-2,16,-13,x+2,17,-13,M.gold)
+        put(x,11,-13,M.gold)
+    end
+
+    -- Salle du trône : estrade, dais, colonnes et lustres.
+    fill(-10,2,-43,10,2,-18,M.roof)
     fill(-4,2,-46,4,3,-43,M.trim)
     fill(-2,4,-46,2,7,-45,M.wood)
     fill(-2,8,-46,2,8,-45,M.gold)
-    for x=-14,14,7 do
+    for x=-12,12,8 do
         fill(x,2,-42,x,8,-42,M.trim)
         fill(x,2,-20,x,8,-20,M.trim)
     end
     chandelier(0,13,-31)
     chandelier(-9,13,-31)
     chandelier(9,13,-31)
-    -- Étage 1 : bibliothèque ouest, conseil est, galerie centrale.
+
+    -- Étage noble : bibliothèque, armurerie et salle du conseil.
     wall_z(-46,-16,10,15,0,M.trim,1)
     clear(-2,10,-31,2,13,-31)
-    wall_x(-17,-1,10,15,-31,M.trim,1)
-    wall_x(1,17,10,15,-31,M.trim,1)
+    wall_x(-15,-1,10,15,-31,M.trim,1)
+    wall_x(1,15,10,15,-31,M.trim,1)
     clear(-9,10,-31,-6,13,-31)
     clear(6,10,-31,9,13,-31)
     for z=-43,-35,3 do
-        fill(-15,10,z,-14,14,z+1,M.wood)
-        fill(-12,10,z,-11,14,z+1,M.wood)
+        fill(-13,10,z,-12,14,z+1,M.wood)
+        fill(-10,10,z,-9,14,z+1,M.wood)
     end
-    put(-9,11,-26,"gdo_castle:library_catalog")
-    table_block(-13,11,-25,-7,-24)
-    lamp(-15,14,-40); lamp(-8,14,-28)
+    put(-8,11,-26,"gdo_castle:library_catalog")
+    table_block(-12,11,-25,-7,-24)
+    lamp(-14,14,-40); lamp(-8,14,-28)
     put(10,11,-26,"gdo_castle:training_dummy")
     put(13,11,-26,"gdo_castle:forge_station")
     table_block(7,11,-40,14,-39)
-    lamp(15,14,-40); lamp(8,14,-28)
-    -- Étage 2 : observatoire et chapelle.
-    wall_x(-17,17,18,22,-31,M.trim,1)
+    lamp(14,14,-40); lamp(8,14,-28)
+
+    -- Dernier étage : chapelle et observatoire sous les combles.
+    wall_x(-15,15,18,22,-31,M.trim,1)
     clear(-2,18,-31,2,21,-31)
-    fill(-12,18,-44,12,19,-42,M.trim)
+    fill(-10,18,-44,10,19,-42,M.trim)
     fill(-3,20,-44,3,21,-43,M.gold)
     for z=-38,-34,2 do
-        fill(-10,18,z,-6,18,z,M.wood)
-        fill(6,18,z,10,18,z,M.wood)
+        fill(-9,18,z,-5,18,z,M.wood)
+        fill(5,18,z,9,18,z,M.wood)
     end
     chandelier(0,23,-32)
-    lamp(-14,22,-25); lamp(14,22,-25)
-end
-
-local function new_gatehouse()
-    -- Porte fortifiée au sud, avec passage couvert traversant.
-    fill(-13,1,25,13,18,39,M.stone)
-    clear(-5,1,24,5,12,40)
-    clear(-4,13,24,4,16,40)
-    fill(-14,18,24,14,19,40,M.trim)
-    for x=-12,12,4 do
-        fill(x,2,25,x+1,17,25,M.trim)
-        fill(x,2,39,x+1,17,39,M.trim)
+    lamp(-13,22,-25); lamp(13,22,-25)
+endlocal function new_gatehouse()
+    -- Châtelet d'entrée à deux tours rondes et passage voûté.
+    fill(-12,1,25,12,17,39,M.stone)
+    clear(-4,1,24,4,10,40)
+    clear(-3,11,24,3,14,40)
+    fill(-6,15,24,6,16,40,M.trim)
+    round_tower(-12,26,5,25)
+    round_tower(12,26,5,29)
+    -- Arc en pierre au-dessus du passage.
+    for x=-5,5 do
+        local y=10+math.floor(3*(1-math.abs(x)/5))
+        put(x,y,24,M.trim)
+        put(x,y,40,M.trim)
     end
-    square_tower(-13,25,9,25)
-    square_tower(13,25,9,25)
-    -- Herse décorative relevée, laissant le passage libre.
-    for x=-4,4,2 do
-        fill(x,10,29,x,15,29,M.wood)
-        put(x,16,29,M.gold)
+    -- Herse levée et chaîne de levage.
+    for x=-3,3,2 do
+        fill(x,8,30,x,14,30,M.wood)
+        put(x,15,30,M.gold)
     end
-    fill(-7,20,24,7,21,40,M.roof)
-    for x=-10,10,2 do put(x,20,32,M.gold) end
-end
+    fill(-8,18,24,8,19,40,M.roof)
+    for x=-8,8,4 do put(x,19,32,M.gold) end
+endlocal function new_outer_bailey()
+    -- Enceinte de pierre avec courtines crénelées et tours rondes.
+    wall_x(-42,42,1,14,39,M.stone,2)
+    wall_x(-42,42,1,14,-5,M.stone,2)
+    wall_z(-5,39,1,14,-42,M.stone,2)
+    wall_z(-5,39,1,14,41,M.stone,2)
+    clear(-5,1,38,5,11,41)
+    deck(-41,-4,40,38,15,M.floor)
+    battlement_x(-41,40,16,-5)
+    battlement_x(-41,40,16,39)
+    battlement_z(-4,38,16,-42)
+    battlement_z(-4,38,16,41)
+    round_tower(-42,-5,5,22)
+    round_tower(42,-5,5,25)
+    round_tower(-42,39,5,24)
+    round_tower(42,39,5,21)
 
-local function new_outer_bailey()
-    -- Enceinte carrée, courtines épaisses et chemin de ronde.
-    wall_x(-42,42,1,15,39,M.stone,2)
-    wall_x(-42,42,1,15,-5,M.stone,2)
-    wall_z(-5,39,1,15,-42,M.stone,2)
-    wall_z(-5,39,1,15,41,M.stone,2)
-    clear(-5,1,38,5,12,41)
-    deck(-41,-4,40,38,16,M.floor)
-    battlement_x(-41,40,17,-5)
-    battlement_x(-41,40,17,39)
-    battlement_z(-4,38,17,-42)
-    battlement_z(-4,38,17,41)
-    square_tower(-42,-5,9,23)
-    square_tower(42,-5,9,23)
-    square_tower(-42,39,9,23)
-    square_tower(42,39,9,23)
-    -- Cour intérieure : allée axiale, bassin et jardins géométriques.
+    -- Cour pavée, bassin central et jardins.
     deck(-38,-2,38,36,0,M.path)
     deck(-34,0,34,34,0,M.floor)
     deck(-3,0,3,34,0,M.roof)
@@ -680,19 +707,15 @@ local function new_outer_bailey()
             put(x,4,z,M.gold)
         end
     end
-    -- Pavillons de service adossés aux courtines latérales.
-    house(-31,8,M.roof)
-    house(31,8,M.roof)
-    house(-31,27,M.roof)
-    house(31,27,M.roof)
+    -- Pavillons à colombages et toits pentus.
+    house(-31,8,M.roof); house(31,8,M.roof)
+    house(-31,27,M.roof); house(31,27,M.roof)
     for _,p in ipairs({{-18,5},{18,5},{-18,28},{18,28}}) do
         fill(p[1]-2,1,p[2],p[1]+2,1,p[2],M.wood)
         put(p[1]-2,2,p[2],M.trim); put(p[1]+2,2,p[2],M.trim)
         lamp(p[1],4,p[2])
     end
-end
-
-local function build()
+endlocal function build()
     -- Emprise entièrement nettoyée : aucune trace de l'ancien plan ne subsiste.
     clear(-54,-12,-60,54,82,82)
     fill(-54,-1,-60,54,-1,82,"gdo_core:terre")
@@ -716,11 +739,11 @@ local function build()
         minetest.fix_light({x=-54,y=-2,z=-60},{x=54,y=82,z=82})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Château des Brumes v14 généré : forteresse carrée, donjon à trois niveaux et enceinte refondue.")
+    minetest.log("action","[GDO] Château des Brumes v15 généré : architecture médiévale, tours rondes et toitures pentues.")
 end
 
 local storage = gdo_castle_storage
-local VERSION = 14
+local VERSION = 15
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
@@ -733,11 +756,11 @@ minetest.register_on_mods_loaded(function()
 end)
 
 minetest.register_chatcommand("refairechateau",{
-    description="Reconstruit le Château des Brumes (version architecturale 14)",
+    description="Reconstruit le Château des Brumes (version architecturale 15)",
     privs={server=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
-        return true,"Château des Brumes v14 reconstruit. Retourne sur le parvis sud."
+        return true,"Château des Brumes v15 reconstruit. Retourne sur le parvis sud."
     end,
 })
