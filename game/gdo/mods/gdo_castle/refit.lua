@@ -954,7 +954,7 @@ end)
 
 minetest.register_chatcommand("refairechateau",{
     description="Reconstruit le Château des Brumes (version architecturale 22)",
-    privs={server=true},
+    privs={interact=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
