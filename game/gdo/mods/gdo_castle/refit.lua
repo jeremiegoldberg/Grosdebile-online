@@ -754,6 +754,15 @@ local function new_keep()
     -- La tourelle centrale est décorative : elle ne doit pas prétendre être
     -- l'escalier principal tant que sa géométrie intérieure n'est pas dédiée.
 
+    -- PORTE PRINCIPALE DU DONJON : découpe finale après tous les remplissages.
+    -- Façade sud (z=-13), ouverture réellement traversante, 7 blocs de large.
+    clear(-4,1,-14,4,10,-12)
+    clear(-3,1,-20,3,5,-14)
+    deck(-3,-20,3,-14,1,M.floor)
+    -- Linteau et piédroits de l'entrée, sans reboucher le passage.
+    fill(-5,10,-14,-4,11,-12,M.trim)
+    fill(4,10,-14,5,11,-12,M.trim)
+    fill(-5,11,-14,5,11,-12,M.trim)
 end
 
 local function new_gatehouse()
@@ -920,11 +929,11 @@ local function build()
         minetest.fix_light({x=-54,y=-2,z=-60},{x=54,y=82,z=82})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Château des Brumes v21 généré : salles supplémentaires, escaliers et tours accessibles.")
+    minetest.log("action","[GDO] Château des Brumes v22 généré : salles supplémentaires, escaliers et tours accessibles.")
 end
 
 local storage = gdo_castle_storage
-local VERSION = 21
+local VERSION = 22
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
@@ -944,11 +953,11 @@ minetest.register_on_joinplayer(function(player)
 end)
 
 minetest.register_chatcommand("refairechateau",{
-    description="Reconstruit le Château des Brumes (version architecturale 21)",
+    description="Reconstruit le Château des Brumes (version architecturale 22)",
     privs={server=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
-        return true,"Château des Brumes v21 reconstruit. Retourne sur le parvis sud."
+        return true,"Château des Brumes v22 reconstruit. Retourne sur le parvis sud."
     end,
 })
