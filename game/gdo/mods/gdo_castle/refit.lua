@@ -966,11 +966,11 @@ local function build()
         minetest.fix_light({x=-54,y=-2,z=-60},{x=54,y=82,z=82})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Château des Brumes v22 généré : salles supplémentaires, escaliers et tours accessibles.")
+    minetest.log("action","[GDO] Château des Brumes v26 généré : salles supplémentaires, escaliers et tours accessibles.")
 end
 
 local storage = gdo_castle_storage
-local VERSION = 22
+local VERSION = 26
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
@@ -989,12 +989,19 @@ minetest.register_on_joinplayer(function(player)
     end)
 end)
 
+-- Même point sûr après une mort : ne jamais laisser le joueur réapparaître
+-- dans une tour, sur un toit ou dans une zone enfermée.
+minetest.register_on_respawnplayer(function(player)
+    safe_spawn(player)
+    return true
+end)
+
 minetest.register_chatcommand("refairechateau",{
-    description="Reconstruit le Château des Brumes (version architecturale 22)",
+    description="Reconstruit le Château des Brumes (version architecturale 26)",
     privs={interact=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
-        return true,"Château des Brumes v22 reconstruit. Retourne sur le parvis sud."
+        return true,"Château des Brumes v26 reconstruit. Retourne sur le parvis sud."
     end,
 })
