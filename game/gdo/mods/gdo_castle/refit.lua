@@ -89,6 +89,23 @@ local function lantern(x,y,z)
 end
 
 -- Tour octogonale massive, avec ouvertures, mâchicoulis et toit conique étagé.
+-- Escalier en blocs pleins : une marche par niveau, avec palier à chaque étage.
+local function stair_flight(x1,z,y0,count,dir,material)
+    for i=1,count do
+        local x=x1+(i-1)*dir
+        fill(x,y0+i,z,x,y0+i,z,material or M.trim)
+        clear(x,y0+i+1,z,x,y0+i+2,z)
+    end
+end
+
+local function room_light_grid(x1,x2,z1,z2,y,step)
+    for x=x1,x2,step do
+        for z=z1,z2,step do
+            lamp(x,y,z)
+        end
+    end
+end
+
 local function round_tower(cx,cz,r,h)
     for y=1,h do
         for x=-r,r do for z=-r,r do
@@ -98,12 +115,24 @@ local function round_tower(cx,cz,r,h)
             end
         end end
     end
-    -- Planchers intérieurs et fenêtres hautes.
+    -- Planchers d'étage, fenêtres et éclairage.
     for y=7,h-4,7 do
         deck(cx-r+1,cz-r+1,cx+r-1,cz+r-1,y,M.wood)
         put(cx,y,cz-r,M.glass); put(cx,y,cz+r,M.glass)
         put(cx-r,y,cz,M.glass); put(cx+r,y,cz,M.glass)
         lantern(cx,y+1,cz)
+    end
+    -- Escaliers intérieurs en lacets : chaque volée relie deux planchers.
+    -- La trémie centrale est dégagée pour ne pas enfermer l'escalier.
+    for base=1,h-8,7 do
+        local dir = (math.floor((base-1)/7)%2==0) and 1 or -1
+        local xstart = dir==1 and (cx-r+2) or (cx+r-2)
+        for i=1,6 do
+            local x=xstart+(i-1)*dir
+            fill(x,base+i,cz,x,base+i,cz,M.trim)
+            clear(x,base+i+1,cz,x,base+i+2,cz)
+        end
+        fill(cx-r+1,base+7,cz-1,cx+r-1,base+7,cz+1,M.wood)
     end
     -- Corniche en pierre claire.
     for x=-r-1,r+1 do for z=-r-1,r+1 do
@@ -598,6 +627,28 @@ local function new_keep()
     -- Tourelle de guet sur le faîtage.
     round_tower(0,-31,3,37)
 
+    -- Escaliers du donjon : deux volées en U, avec paliers aux étages.
+    -- Rez-de-chaussée vers étage noble.
+    for i=1,8 do
+        fill(-13+i,1+i,-40,-13+i,1+i,-39,M.trim)
+        clear(-13+i,2+i,-40,-13+i,3+i,-39)
+    end
+    fill(-4,9,-40,2,9,-37,M.wood)
+    for i=1,8 do
+        fill(3-i,9+i,-36,3-i,9+i,-35,M.trim)
+        clear(3-i,10+i,-36,3-i,11+i,-35)
+    end
+    -- Étage noble vers niveau supérieur.
+    for i=1,8 do
+        fill(-13+i,9+i,-22,-13+i,9+i,-21,M.trim)
+        clear(-13+i,10+i,-22,-13+i,11+i,-21)
+    end
+    fill(-4,17,-22,2,17,-19,M.wood)
+    for i=1,8 do
+        fill(3-i,17+i,-18,3-i,17+i,-17,M.trim)
+        clear(3-i,18+i,-18,3-i,19+i,-17)
+    end
+
     -- Galerie d'apparat et balcon en pierre sculptée.
     fill(-9,14,-12,9,14,-10,M.trim)
     for x=-8,8,2 do
@@ -643,6 +694,19 @@ local function new_keep()
     put(13,11,-26,"gdo_castle:forge_station")
     table_block(7,11,-40,14,-39)
     lamp(14,14,-40); lamp(8,14,-28)
+
+    -- Cloisons supplémentaires : petites pièces de service et alcôves.
+    wall_z(-44,-35,2,7,-7,M.wood,1)
+    clear(-7,2,-41,-7,4,-39)
+    wall_z(-29,-20,2,7,7,M.wood,1)
+    clear(7,2,-27,7,4,-25)
+    wall_x(-14,-7,10,15,-40,M.trim,1)
+    clear(-11,10,-40,-9,12,-40)
+    wall_x(7,14,10,15,-40,M.trim,1)
+    clear(9,10,-40,11,12,-40)
+    -- Éclairage renforcé dans les salles et les circulations.
+    room_light_grid(-12,12,-43,-21,7,4)
+    room_light_grid(-12,12,-43,-21,15,6)
 
     -- Dernier étage : chapelle et observatoire sous les combles.
     wall_x(-15,15,18,22,-31,M.trim,1)
@@ -745,11 +809,11 @@ local function build()
         minetest.fix_light({x=-54,y=-2,z=-60},{x=54,y=82,z=82})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Château des Brumes v15 généré : architecture médiévale, tours rondes et toitures pentues.")
+    minetest.log("action","[GDO] Château des Brumes v16 généré : salles supplémentaires, escaliers et tours accessibles.")
 end
 
 local storage = gdo_castle_storage
-local VERSION = 15
+local VERSION = 16
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
@@ -762,11 +826,11 @@ minetest.register_on_mods_loaded(function()
 end)
 
 minetest.register_chatcommand("refairechateau",{
-    description="Reconstruit le Château des Brumes (version architecturale 15)",
+    description="Reconstruit le Château des Brumes (version architecturale 16)",
     privs={server=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
-        return true,"Château des Brumes v15 reconstruit. Retourne sur le parvis sud."
+        return true,"Château des Brumes v16 reconstruit. Retourne sur le parvis sud."
     end,
 })
