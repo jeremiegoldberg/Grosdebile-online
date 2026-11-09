@@ -696,6 +696,20 @@ local function new_keep()
     lamp(14,14,-40); lamp(8,14,-28)
 
     -- Cloisons supplémentaires : petites pièces de service et alcôves.
+    -- Au rez-de-chaussée, le vestibule est séparé des réserves et du cellier.
+    wall_x(-14,-5,2,7,-34,M.trim,1)
+    clear(-10,2,-34,-8,4,-34)
+    wall_x(5,14,2,7,-34,M.trim,1)
+    clear(8,2,-34,10,4,-34)
+    wall_z(-43,-36,2,7,5,M.wood,1)
+    clear(5,2,-41,5,4,-39)
+    -- À l'étage noble, les pièces sont cloisonnées mais gardent des passages.
+    wall_z(-44,-34,10,15,-5,M.trim,1)
+    clear(-5,10,-40,-5,12,-38)
+    wall_z(-44,-34,10,15,5,M.trim,1)
+    clear(5,10,-40,5,12,-38)
+    wall_z(-29,-19,10,15,0,M.wood,1)
+    clear(-2,10,-24,2,12,-24)
     wall_z(-44,-35,2,7,-7,M.wood,1)
     clear(-7,2,-41,-7,4,-39)
     wall_z(-29,-20,2,7,7,M.wood,1)
@@ -742,6 +756,21 @@ local function new_gatehouse()
     end
     fill(-8,18,24,8,19,40,M.roof)
     for x=-8,8,4 do put(x,19,32,M.gold) end
+    -- Assommoir au-dessus du passage et meurtrières latérales.
+    clear(-1,15,29,1,17,35)
+    for x=-10,-7 do
+        clear(x,7,25,x,10,25)
+        put(x,8,25,M.glass)
+    end
+    for x=7,10 do
+        clear(x,7,25,x,10,25)
+        put(x,8,25,M.glass)
+    end
+    -- Consoles et mâchicoulis au-dessus de la herse.
+    for x=-6,6,2 do
+        fill(x,16,28,x,17,28,M.trim)
+        fill(x,16,36,x,17,36,M.trim)
+    end
 end
 
 local function new_outer_bailey()
@@ -751,11 +780,39 @@ local function new_outer_bailey()
     wall_z(-5,39,1,14,-42,M.stone,2)
     wall_z(-5,39,1,14,41,M.stone,2)
     clear(-5,1,38,5,11,41)
-    deck(-41,-4,40,38,15,M.floor)
+    -- Chemin de ronde continu : quatre bandes étroites sur les courtines.
+    -- Contrairement à l'ancien plan, la cour reste entièrement ouverte au ciel.
+    deck(-40,-3,40,-2,15,M.floor)
+    deck(-40,36,40,37,15,M.floor)
+    deck(-40,-1,-39,35,15,M.floor)
+    deck(39,-1,40,35,15,M.floor)
+    -- Parapets extérieurs crénelés et garde-corps côté cour.
     battlement_x(-41,40,16,-5)
     battlement_x(-41,40,16,39)
     battlement_z(-4,38,16,-42)
     battlement_z(-4,38,16,41)
+    battlement_x(-38,38,16,-2)
+    battlement_x(-38,38,16,37)
+    battlement_z(-1,35,16,-39)
+    battlement_z(-1,35,16,39)
+    -- Accès depuis la cour : deux escaliers adossés aux courtines latérales.
+    for i=1,14 do
+        fill(-37+i, i, 0, -37+i, i, 1, M.trim)
+        clear(-37+i, i+1, 0, -37+i, i+2, 1)
+        fill(37-i, i, 25, 37-i, i, 26, M.trim)
+        clear(37-i, i+1, 25, 37-i, i+2, 26)
+    end
+    fill(-24,15,0,-20,15,2,M.wood)
+    fill(20,15,24,24,15,27,M.wood)
+    -- Mâchicoulis : consoles de pierre sous le chemin de ronde.
+    for x=-40,40,3 do
+        fill(x,13,-5,x,14,-5,M.trim)
+        fill(x,13,39,x,14,39,M.trim)
+    end
+    for z=-4,38,3 do
+        fill(-42,13,z,-42,14,z,M.trim)
+        fill(41,13,z,41,14,z,M.trim)
+    end
     round_tower(-42,-5,5,22)
     round_tower(42,-5,5,25)
     round_tower(-42,39,5,24)
@@ -796,6 +853,22 @@ local function build()
     -- Parvis sud et approche lisible depuis le point d'arrivée.
     deck(-25,40,25,78,0,M.floor)
     deck(-4,39,4,68,0,M.path)
+    -- Fossé en eau devant la porte, avec pont de bois franchissable.
+    clear(-15,0,40,15,0,47)
+    fill(-15,0,40,15,0,47,M.water)
+    fill(-6,1,40,6,1,47,M.wood)
+    for x=-6,6,3 do
+        fill(x,2,40,x,2,47,M.trim)
+    end
+    for z=40,47,2 do
+        fill(-7,2,z,-7,3,z,M.wood)
+        fill(7,2,z,7,3,z,M.wood)
+    end
+    -- Chaînes et piles de pierre du pont-levis.
+    fill(-9,3,40,-9,8,40,M.wood)
+    fill(9,3,40,9,8,40,M.wood)
+    fill(-10,8,40,-8,8,40,M.gold)
+    fill(8,8,40,10,8,40,M.gold)
     for z=43,72,4 do
         fill(-12,1,z,-11,2,z,M.trim)
         fill(11,1,z,12,2,z,M.trim)
@@ -809,11 +882,11 @@ local function build()
         minetest.fix_light({x=-54,y=-2,z=-60},{x=54,y=82,z=82})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Château des Brumes v16 généré : salles supplémentaires, escaliers et tours accessibles.")
+    minetest.log("action","[GDO] Château des Brumes v17 généré : salles supplémentaires, escaliers et tours accessibles.")
 end
 
 local storage = gdo_castle_storage
-local VERSION = 16
+local VERSION = 17
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
@@ -826,11 +899,11 @@ minetest.register_on_mods_loaded(function()
 end)
 
 minetest.register_chatcommand("refairechateau",{
-    description="Reconstruit le Château des Brumes (version architecturale 16)",
+    description="Reconstruit le Château des Brumes (version architecturale 17)",
     privs={server=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
-        return true,"Château des Brumes v16 reconstruit. Retourne sur le parvis sud."
+        return true,"Château des Brumes v17 reconstruit. Retourne sur le parvis sud."
     end,
 })
