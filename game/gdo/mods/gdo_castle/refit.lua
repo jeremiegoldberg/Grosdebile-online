@@ -101,7 +101,7 @@ end
 local function room_light_grid(x1,x2,z1,z2,y,step)
     for x=x1,x2,step do
         for z=z1,z2,step do
-            lamp(x,y,z)
+            lantern(x,y,z)
         end
     end
 end
