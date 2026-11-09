@@ -107,6 +107,7 @@ local function room_light_grid(x1,x2,z1,z2,y,step)
 end
 
 local function round_tower(cx,cz,r,h)
+    -- Fût circulaire.
     for y=1,h do
         for x=-r,r do for z=-r,r do
             local d=x*x+z*z
@@ -115,32 +116,64 @@ local function round_tower(cx,cz,r,h)
             end
         end end
     end
-    -- Planchers d'étage, fenêtres et éclairage.
+
+    -- Planchers intermédiaires, puis trémies alignées sur la cage d'escalier.
     for y=7,h-4,7 do
         deck(cx-r+1,cz-r+1,cx+r-1,cz+r-1,y,M.wood)
         put(cx,y,cz-r,M.glass); put(cx,y,cz+r,M.glass)
         put(cx-r,y,cz,M.glass); put(cx+r,y,cz,M.glass)
         lantern(cx,y+1,cz)
+        -- Trémie traversante : les marches peuvent déboucher à l'étage.
+        clear(cx-r+1,y,cz-1,cx+r-1,y,cz+1)
     end
-    -- Escaliers intérieurs en lacets : chaque volée relie deux planchers.
-    -- La trémie centrale est dégagée pour ne pas enfermer l'escalier.
+
+    -- Escalier droit alterné, d'une largeur de 3 blocs, au centre de la tour.
+    -- Chaque volée monte de 6 blocs et arrive sur un palier au niveau suivant.
     for base=1,h-8,7 do
-        local dir = (math.floor((base-1)/7)%2==0) and 1 or -1
-        local xstart = dir==1 and (cx-r+2) or (cx+r-2)
+        local reverse=(math.floor((base-1)/7)%2==1)
         for i=1,6 do
-            local x=xstart+(i-1)*dir
-            fill(x,base+i,cz,x,base+i,cz,M.trim)
-            clear(x,base+i+1,cz,x,base+i+2,cz)
+            local x=reverse and (cx+r-1-i) or (cx-r+ i)
+            fill(x,base+i,cz-1,x,base+i,cz+1,M.trim)
+            clear(x,base+i+1,cz-1,x,base+i+2,cz+1)
         end
-        fill(cx-r+1,base+7,cz-1,cx+r-1,base+7,cz+1,M.wood)
+        local landing_x=reverse and (cx-r+1) or (cx+r-1)
+        fill(landing_x-1,base+7,cz-1,landing_x+1,base+7,cz+1,M.wood)
     end
+
+    -- Porte au pied de chaque tour, tournée vers le centre du château.
+    if cx < -5 then
+        clear(cx+r-1,2,cz-1,cx+r,5,cz+1)
+    elseif cx > 5 then
+        clear(cx-r,2,cz-1,cx-r+1,5,cz+1)
+    elseif cz < -10 then
+        clear(cx-1,2,cz+r-1,cx+1,5,cz+r)
+    elseif cz > 10 then
+        clear(cx-1,2,cz-r,cx+1,5,cz-r+1)
+    else
+        -- Tourelle centrale : accès depuis l'étage noble.
+        clear(cx-1,18,cz+r-1,cx+1,22,cz+r)
+    end
+
+    -- Sortie haute vers le chemin de ronde pour les tours d'enceinte.
+    if math.abs(cx)>30 or math.abs(cz)>30 then
+        if cx < -5 then
+            clear(cx+r-1,14,cz-1,cx+r,17,cz+1)
+        elseif cx > 5 then
+            clear(cx-r,14,cz-1,cx-r+1,17,cz+1)
+        elseif cz < -10 then
+            clear(cx-1,14,cz+r-1,cx+1,17,cz+r)
+        else
+            clear(cx-1,14,cz-r,cx+1,17,cz-r+1)
+        end
+    end
+
     -- Corniche en pierre claire.
     for x=-r-1,r+1 do for z=-r-1,r+1 do
         if x*x+z*z <= (r+1)*(r+1) and x*x+z*z >= (r-2)*(r-2) then
             put(cx+x,h+1,cz+z,M.trim)
         end
     end end
-    -- Toit conique bleu, chaque rang est légèrement resserré.
+    -- Toit conique bleu.
     for layer=0,r+2 do
         local rr=r+1-layer
         if rr>=0 then
