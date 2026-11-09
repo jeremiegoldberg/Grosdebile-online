@@ -627,27 +627,8 @@ local function new_keep()
     -- Tourelle de guet sur le faîtage.
     round_tower(0,-31,3,37)
 
-    -- Escaliers du donjon : deux volées en U, avec paliers aux étages.
-    -- Rez-de-chaussée vers étage noble.
-    for i=1,8 do
-        fill(-13+i,1+i,-40,-13+i,1+i,-39,M.trim)
-        clear(-13+i,2+i,-40,-13+i,3+i,-39)
-    end
-    fill(-4,9,-40,2,9,-37,M.wood)
-    for i=1,8 do
-        fill(3-i,9+i,-36,3-i,9+i,-35,M.trim)
-        clear(3-i,10+i,-36,3-i,11+i,-35)
-    end
-    -- Étage noble vers niveau supérieur.
-    for i=1,8 do
-        fill(-13+i,9+i,-22,-13+i,9+i,-21,M.trim)
-        clear(-13+i,10+i,-22,-13+i,11+i,-21)
-    end
-    fill(-4,17,-22,2,17,-19,M.wood)
-    for i=1,8 do
-        fill(3-i,17+i,-18,3-i,17+i,-17,M.trim)
-        clear(3-i,18+i,-18,3-i,19+i,-17)
-    end
+    -- Escaliers ajoutés en fin de génération dans une cage dédiée à l'est.
+    -- Les planchers restent pleins ici jusqu'à la découpe des trémies finale.
 
     -- Galerie d'apparat et balcon en pierre sculptée.
     fill(-9,14,-12,9,14,-10,M.trim)
@@ -734,46 +715,36 @@ local function new_keep()
     chandelier(0,23,-32)
     lamp(-13,22,-25); lamp(13,22,-25)
 
-    -- CORRECTION CIRCULATION v18.
-    -- Porte du donjon ouverte sur la cour (côté +Z), dégagée après les décors.
-    clear(-3,2,-14,3,9,-12)
-    clear(-2,10,-14,2,12,-12)
-    -- Couloir d'entrée jusqu'au vestibule, sans meuble dans l'axe.
-    clear(-2,2,-18,2,5,-14)
-    deck(-2,-18,2,-14,1,M.floor)
-
-    -- Trémies dans les planchers : les escaliers ne débouchent plus sous un plafond.
-    clear(-13,9,-41,3,9,-34)
-    clear(-13,17,-23,3,17,-16)
-    -- Dégagement vertical au-dessus des deux volées et de leurs paliers.
-    clear(-13,2,-41,-5,10,-38)
-    clear(-5,9,-40,3,11,-35)
-    clear(-13,10,-23,-5,18,-20)
-    clear(-5,17,-22,3,19,-17)
-
-    -- Repose des marches après ouverture des trémies, en deux volées par étage.
-    for i=1,8 do
-        fill(-13+i,1+i,-40,-13+i,1+i,-39,M.trim)
-        fill(-13+i,9+i,-22,-13+i,9+i,-21,M.trim)
+    -- CAGE D'ESCALIER CONTINUE SUR LE COTE EST DU DONJON.
+    -- Dégager les deux planchers et toute cloison dans l'emprise de la cage.
+    clear(8,2,-45,14,26,-16)
+    clear(8,9,-45,14,9,-16)
+    clear(8,17,-45,14,17,-16)
+    -- Déboucher dans les deux étages, avec paliers de 3x4.
+    deck(9,-35,13,-32,9,M.floor)
+    deck(9,-25,13,-22,17,M.floor)
+    -- Première volée : départ au rez-de-chaussée, montée vers le niveau 1.
+    -- Marches disposées en diagonale dans une cage de 5 blocs de large.
+    for i=1,7 do
+        fill(10,1+i,-43+i,12,1+i,-43+i,M.trim)
+        clear(10,2+i,-43+i,12,3+i,-43+i)
     end
-    fill(-4,9,-40,2,9,-37,M.wood)
-    fill(-4,17,-22,2,17,-19,M.wood)
-    for i=1,8 do
-        fill(3-i,9+i,-36,3-i,9+i,-35,M.trim)
-        fill(3-i,17+i,-18,3-i,17+i,-17,M.trim)
+    fill(10,9,-35,12,9,-32,M.wood)
+    -- Deuxième volée : repart du palier et monte au niveau 2.
+    for i=1,7 do
+        fill(10,9+i,-31+i,12,9+i,-31+i,M.trim)
+        clear(10,10+i,-31+i,12,11+i,-31+i)
     end
+    fill(10,17,-25,12,17,-22,M.wood)
+    -- Ouverture dans les cloisons et portes entre cage et salles.
+    clear(8,2,-39,9,6,-36)
+    clear(8,10,-29,9,14,-26)
+    clear(8,18,-21,9,22,-18)
+    -- Éclairage des paliers.
+    lamp(11,8,-35); lamp(11,16,-25); lamp(11,23,-20)
+    -- La tourelle centrale est décorative : elle ne doit pas prétendre être
+    -- l'escalier principal tant que sa géométrie intérieure n'est pas dédiée.
 
-    -- Porte de liaison vers la tourelle de guet centrale.
-    -- On ouvre la paroi ouest de la tourelle et on ménage son noyau.
-    clear(-4,10,-32,-2,13,-30)
-    clear(-4,18,-32,-2,21,-30)
-    -- Escalier de la tourelle : volées alternées dans le noyau, paliers compris.
-    for i=1,5 do
-        fill(-2+i,10+i,-31,-2+i,10+i,-31,M.trim)
-        fill(3-i,17+i,-31,3-i,17+i,-31,M.trim)
-    end
-    clear(-1,11,-31,1,14,-31)
-    clear(-1,18,-31,1,21,-31)
 end
 
 local function new_gatehouse()
@@ -923,11 +894,11 @@ local function build()
         minetest.fix_light({x=-54,y=-2,z=-60},{x=54,y=82,z=82})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Château des Brumes v18 généré : salles supplémentaires, escaliers et tours accessibles.")
+    minetest.log("action","[GDO] Château des Brumes v19 généré : salles supplémentaires, escaliers et tours accessibles.")
 end
 
 local storage = gdo_castle_storage
-local VERSION = 18
+local VERSION = 19
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
@@ -940,11 +911,11 @@ minetest.register_on_mods_loaded(function()
 end)
 
 minetest.register_chatcommand("refairechateau",{
-    description="Reconstruit le Château des Brumes (version architecturale 18)",
+    description="Reconstruit le Château des Brumes (version architecturale 19)",
     privs={server=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
-        return true,"Château des Brumes v18 reconstruit. Retourne sur le parvis sud."
+        return true,"Château des Brumes v19 reconstruit. Retourne sur le parvis sud."
     end,
 })
