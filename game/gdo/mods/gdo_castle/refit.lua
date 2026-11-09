@@ -736,10 +736,19 @@ local function new_keep()
         clear(10,10+i,-31+i,12,11+i,-31+i)
     end
     fill(10,17,-25,12,17,-22,M.wood)
-    -- Ouverture dans les cloisons et portes entre cage et salles.
-    clear(8,2,-39,9,6,-36)
-    clear(8,10,-29,9,14,-26)
-    clear(8,18,-21,9,22,-18)
+    -- Ouverture franche au rez-de-chaussée : accès depuis la grande salle.
+    -- Le passage fait 3 blocs de large et 4 de haut, sans marche ni cloison.
+    clear(7,2,-40,10,6,-35)
+    deck(7,-40,10,-35,1,M.floor)
+    -- Petit vestibule d'accès à la cage, avec linteau et piédroits visibles.
+    fill(7,2,-41,7,6,-41,M.trim)
+    fill(10,2,-41,10,6,-41,M.trim)
+    fill(7,7,-41,10,7,-41,M.trim)
+    -- Dégagement autour du départ de l'escalier : aucune marche ne bouche l'entrée.
+    clear(10,2,-43,12,4,-40)
+    -- Ouvertures aux étages pour rejoindre les paliers.
+    clear(7,10,-29,10,14,-25)
+    clear(7,18,-21,10,22,-17)
     -- Éclairage des paliers.
     lamp(11,8,-35); lamp(11,16,-25); lamp(11,23,-20)
     -- La tourelle centrale est décorative : elle ne doit pas prétendre être
@@ -911,11 +920,11 @@ local function build()
         minetest.fix_light({x=-54,y=-2,z=-60},{x=54,y=82,z=82})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Château des Brumes v20 généré : salles supplémentaires, escaliers et tours accessibles.")
+    minetest.log("action","[GDO] Château des Brumes v21 généré : salles supplémentaires, escaliers et tours accessibles.")
 end
 
 local storage = gdo_castle_storage
-local VERSION = 20
+local VERSION = 21
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
@@ -935,11 +944,11 @@ minetest.register_on_joinplayer(function(player)
 end)
 
 minetest.register_chatcommand("refairechateau",{
-    description="Reconstruit le Château des Brumes (version architecturale 20)",
+    description="Reconstruit le Château des Brumes (version architecturale 21)",
     privs={server=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
-        return true,"Château des Brumes v20 reconstruit. Retourne sur le parvis sud."
+        return true,"Château des Brumes v21 reconstruit. Retourne sur le parvis sud."
     end,
 })
