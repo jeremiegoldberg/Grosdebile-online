@@ -715,42 +715,46 @@ local function new_keep()
     chandelier(0,23,-32)
     lamp(-13,22,-25); lamp(13,22,-25)
 
-    -- CAGE D'ESCALIER CONTINUE SUR LE COTE EST DU DONJON.
-    -- Dégager les deux planchers et toute cloison dans l'emprise de la cage.
-    clear(8,2,-45,14,26,-16)
-    clear(8,9,-45,14,9,-16)
-    clear(8,17,-45,14,17,-16)
-    -- Déboucher dans les deux étages, avec paliers de 3x4.
-    deck(9,-35,13,-32,9,M.floor)
-    deck(9,-25,13,-22,17,M.floor)
-    -- Première volée : départ au rez-de-chaussée, montée vers le niveau 1.
-    -- Marches disposées en diagonale dans une cage de 5 blocs de large.
-    for i=1,7 do
-        fill(10,1+i,-43+i,12,1+i,-43+i,M.trim)
-        clear(10,2+i,-43+i,12,3+i,-43+i)
+    -- ESCALIER EN U : cage ouverte et deux volées parallèles.
+    -- On retire les anciens escaliers, les murs et les planchers dans la cage.
+    clear(8,2,-46,15,25,-32)
+    clear(8,9,-46,15,9,-32)
+    clear(8,17,-46,15,17,-32)
+
+    -- Volée 1 : monte du sud vers le nord (y=2 à y=8).
+    for i=0,6 do
+        fill(10,2+i,-43+i,12,2+i,-43+i,M.trim)
     end
-    fill(10,9,-35,12,9,-32,M.wood)
-    -- Deuxième volée : repart du palier et monte au niveau 2.
-    for i=1,7 do
-        fill(10,9+i,-31+i,12,9+i,-31+i,M.trim)
-        clear(10,10+i,-31+i,12,11+i,-31+i)
+    -- Palier niveau 1 : dalle dégagée et stable.
+    fill(10,9,-36,12,9,-33,M.wood)
+
+    -- Volée 2 : demi-tour, puis montée en sens inverse (y=10 à y=16).
+    for i=0,6 do
+        fill(10,10+i,-35-i,12,10+i,-35-i,M.trim)
     end
-    fill(10,17,-25,12,17,-22,M.wood)
-    -- Ouverture franche au rez-de-chaussée : accès depuis la grande salle.
-    -- Le passage fait 3 blocs de large et 4 de haut, sans marche ni cloison.
-    clear(7,2,-40,10,6,-35)
-    deck(7,-40,10,-35,1,M.floor)
-    -- Petit vestibule d'accès à la cage, avec linteau et piédroits visibles.
-    fill(7,2,-41,7,6,-41,M.trim)
-    fill(10,2,-41,10,6,-41,M.trim)
-    fill(7,7,-41,10,7,-41,M.trim)
-    -- Dégagement autour du départ de l'escalier : aucune marche ne bouche l'entrée.
-    clear(10,2,-43,12,4,-40)
-    -- Ouvertures aux étages pour rejoindre les paliers.
-    clear(7,10,-29,10,14,-25)
-    clear(7,18,-21,10,22,-17)
-    -- Éclairage des paliers.
-    lamp(11,8,-35); lamp(11,16,-25); lamp(11,23,-20)
+    -- Palier niveau 2, raccordé au plancher de l'étage.
+    fill(10,17,-42,12,17,-39,M.wood)
+
+    -- Trémie libre au-dessus des marches : 3 blocs de large, sans poutre basse.
+    clear(9,3,-44,13,16,-32)
+    -- Reposer les marches et les paliers après le dégagement vertical.
+    for i=0,6 do
+        fill(10,2+i,-43+i,12,2+i,-43+i,M.trim)
+        fill(10,10+i,-35-i,12,10+i,-35-i,M.trim)
+    end
+    fill(10,9,-36,12,9,-33,M.wood)
+    fill(10,17,-42,12,17,-39,M.wood)
+
+    -- Accès ouvert depuis la grande salle au pied de la première volée.
+    clear(7,2,-44,10,7,-39)
+    -- Porte de sortie au niveau 1, vers le couloir est.
+    clear(7,10,-38,10,14,-34)
+    -- Porte de sortie au niveau 2.
+    clear(7,18,-44,10,22,-40)
+    lamp(11,8,-35)
+    lamp(11,16,-40)
+    lamp(11,23,-38)
+
     -- La tourelle centrale est décorative : elle ne doit pas prétendre être
     -- l'escalier principal tant que sa géométrie intérieure n'est pas dédiée.
 
