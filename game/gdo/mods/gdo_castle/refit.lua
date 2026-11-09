@@ -951,13 +951,23 @@ local function build()
         fill(-12,1,z,-11,2,z,M.trim)
         fill(11,1,z,12,2,z,M.trim)
     end
-    -- OUVERTURE FINALE DU DONJON.
-    -- Découpe après TOUS les bâtiments : aucun remplissage ultérieur ne peut la reboucher.
-    clear(-4,1,-15,4,9,-11)
-    clear(-3,1,-22,3,5,-15)
-    deck(-3,-22,3,-15,0,M.floor)
-    -- Dégagement du seuil et raccord au vestibule intérieur.
-    clear(-3,1,-16,3,4,-11)
+    -- OUVERTURES FINALES DES TROIS MURS ALIGNÉS SUR L'AXE D'ENTRÉE.
+    -- La porte du donjon (z=-13) est découpée après toutes les décorations.
+    clear(-5,1,-15,5,11,-11)
+    clear(-4,1,-22,4,6,-15)
+    deck(-4,-22,4,-15,0,M.floor)
+
+    -- Le mur nord de l'enceinte (z=39) doit être percé devant le châtelet.
+    -- Le châtelet est centré sur x=0 : ouverture large, haute et traversante.
+    clear(-6,1,37,6,12,42)
+    -- Le mur opposé de l'enceinte (z=-5) reçoit également un passage piéton.
+    clear(-5,1,-7,5,10,-3)
+
+    -- Réouverture du portail du châtelet après tous les autres remplissages.
+    clear(-5,1,23,5,12,41)
+    -- Couloir continu entre le pont-levis, le châtelet et la cour.
+    clear(-4,1,39,4,6,55)
+    deck(-4,39,4,55,0,M.floor)
 
     -- Jardinet et panneau à l'entrée du domaine.
     deck(-18,45,-10,54,0,M.grass)
@@ -974,11 +984,11 @@ local function build()
         minetest.fix_light({x=-54,y=-2,z=-60},{x=54,y=82,z=82})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Château des Brumes v27 généré : salles supplémentaires, escaliers et tours accessibles.")
+    minetest.log("action","[GDO] Château des Brumes v28 généré : salles supplémentaires, escaliers et tours accessibles.")
 end
 
 local storage = gdo_castle_storage
-local VERSION = 27
+local VERSION = 28
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
@@ -1005,11 +1015,11 @@ minetest.register_on_respawnplayer(function(player)
 end)
 
 minetest.register_chatcommand("refairechateau",{
-    description="Reconstruit le Château des Brumes (version architecturale 27)",
+    description="Reconstruit le Château des Brumes (version architecturale 28)",
     privs={interact=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
-        return true,"Château des Brumes v27 reconstruit. Retourne sur le parvis sud."
+        return true,"Château des Brumes v28 reconstruit. Retourne sur le parvis sud."
     end,
 })
