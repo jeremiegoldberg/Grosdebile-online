@@ -733,6 +733,47 @@ local function new_keep()
     end
     chandelier(0,23,-32)
     lamp(-13,22,-25); lamp(13,22,-25)
+
+    -- CORRECTION CIRCULATION v18.
+    -- Porte du donjon ouverte sur la cour (côté +Z), dégagée après les décors.
+    clear(-3,2,-14,3,9,-12)
+    clear(-2,10,-14,2,12,-12)
+    -- Couloir d'entrée jusqu'au vestibule, sans meuble dans l'axe.
+    clear(-2,2,-18,2,5,-14)
+    deck(-2,-18,2,-14,1,M.floor)
+
+    -- Trémies dans les planchers : les escaliers ne débouchent plus sous un plafond.
+    clear(-13,9,-41,3,9,-34)
+    clear(-13,17,-23,3,17,-16)
+    -- Dégagement vertical au-dessus des deux volées et de leurs paliers.
+    clear(-13,2,-41,-5,10,-38)
+    clear(-5,9,-40,3,11,-35)
+    clear(-13,10,-23,-5,18,-20)
+    clear(-5,17,-22,3,19,-17)
+
+    -- Repose des marches après ouverture des trémies, en deux volées par étage.
+    for i=1,8 do
+        fill(-13+i,1+i,-40,-13+i,1+i,-39,M.trim)
+        fill(-13+i,9+i,-22,-13+i,9+i,-21,M.trim)
+    end
+    fill(-4,9,-40,2,9,-37,M.wood)
+    fill(-4,17,-22,2,17,-19,M.wood)
+    for i=1,8 do
+        fill(3-i,9+i,-36,3-i,9+i,-35,M.trim)
+        fill(3-i,17+i,-18,3-i,17+i,-17,M.trim)
+    end
+
+    -- Porte de liaison vers la tourelle de guet centrale.
+    -- On ouvre la paroi ouest de la tourelle et on ménage son noyau.
+    clear(-4,10,-32,-2,13,-30)
+    clear(-4,18,-32,-2,21,-30)
+    -- Escalier de la tourelle : volées alternées dans le noyau, paliers compris.
+    for i=1,5 do
+        fill(-2+i,10+i,-31,-2+i,10+i,-31,M.trim)
+        fill(3-i,17+i,-31,3-i,17+i,-31,M.trim)
+    end
+    clear(-1,11,-31,1,14,-31)
+    clear(-1,18,-31,1,21,-31)
 end
 
 local function new_gatehouse()
@@ -882,11 +923,11 @@ local function build()
         minetest.fix_light({x=-54,y=-2,z=-60},{x=54,y=82,z=82})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Château des Brumes v17 généré : salles supplémentaires, escaliers et tours accessibles.")
+    minetest.log("action","[GDO] Château des Brumes v18 généré : salles supplémentaires, escaliers et tours accessibles.")
 end
 
 local storage = gdo_castle_storage
-local VERSION = 17
+local VERSION = 18
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
@@ -899,11 +940,11 @@ minetest.register_on_mods_loaded(function()
 end)
 
 minetest.register_chatcommand("refairechateau",{
-    description="Reconstruit le Château des Brumes (version architecturale 17)",
+    description="Reconstruit le Château des Brumes (version architecturale 18)",
     privs={server=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
-        return true,"Château des Brumes v17 reconstruit. Retourne sur le parvis sud."
+        return true,"Château des Brumes v18 reconstruit. Retourne sur le parvis sud."
     end,
 })
