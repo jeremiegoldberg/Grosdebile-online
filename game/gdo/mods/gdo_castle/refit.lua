@@ -854,7 +854,18 @@ local function new_outer_bailey()
     end
 end
 
+local function safe_spawn(player)
+    if not player or not player:is_player() then return end
+    -- Parvis extérieur, derrière le panneau et devant le pont-levis.
+    player:set_pos({x=0,y=1,z=78})
+    if player.set_velocity then player:set_velocity({x=0,y=0,z=0}) end
+end
+
 local function build()
+    -- Déplacer les joueurs avant de vider la zone : personne ne reste enfermé.
+    for _,player in ipairs(minetest.get_connected_players()) do
+        safe_spawn(player)
+    end
     -- Emprise entièrement nettoyée : aucune trace de l'ancien plan ne subsiste.
     clear(-54,-12,-60,54,82,82)
     fill(-54,-1,-60,54,-1,82,"gdo_core:terre")
@@ -890,15 +901,21 @@ local function build()
     put(-14,1,49,"gdo_core:navet_sur_pied")
     put(-14,1,51,"gdo_core:navet_sur_pied")
     put(0,1,74,"gdo_castle:arrival_sign")
+    -- Zone d'apparition permanente : sol plat et volume libre pour le joueur.
+    deck(-3,76,3,80,0,M.floor)
+    clear(-2,1,76,2,5,80)
+    -- Garde-corps bas sur les côtés de la petite plateforme.
+    fill(-3,1,76,-3,2,80,M.trim)
+    fill(3,1,76,3,2,80,M.trim)
     if minetest.fix_light then
         minetest.fix_light({x=-54,y=-2,z=-60},{x=54,y=82,z=82})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Château des Brumes v19 généré : salles supplémentaires, escaliers et tours accessibles.")
+    minetest.log("action","[GDO] Château des Brumes v20 généré : salles supplémentaires, escaliers et tours accessibles.")
 end
 
 local storage = gdo_castle_storage
-local VERSION = 19
+local VERSION = 20
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
@@ -910,12 +927,19 @@ minetest.register_on_mods_loaded(function()
     minetest.after(5,generate_if_needed)
 end)
 
+-- Sécurité de connexion : évite de réapparaître dans le château ou sur un toit.
+minetest.register_on_joinplayer(function(player)
+    minetest.after(1.5,function()
+        if player and player:is_player() then safe_spawn(player) end
+    end)
+end)
+
 minetest.register_chatcommand("refairechateau",{
-    description="Reconstruit le Château des Brumes (version architecturale 19)",
+    description="Reconstruit le Château des Brumes (version architecturale 20)",
     privs={server=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
-        return true,"Château des Brumes v19 reconstruit. Retourne sur le parvis sud."
+        return true,"Château des Brumes v20 reconstruit. Retourne sur le parvis sud."
     end,
 })
