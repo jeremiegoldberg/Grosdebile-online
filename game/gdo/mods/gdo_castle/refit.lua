@@ -655,7 +655,9 @@ local function new_keep()
     end
     chandelier(0,23,-32)
     lamp(-13,22,-25); lamp(13,22,-25)
-endlocal function new_gatehouse()
+end
+
+local function new_gatehouse()
     -- Châtelet d'entrée à deux tours rondes et passage voûté.
     fill(-12,1,25,12,17,39,M.stone)
     clear(-4,1,24,4,10,40)
@@ -676,7 +678,9 @@ endlocal function new_gatehouse()
     end
     fill(-8,18,24,8,19,40,M.roof)
     for x=-8,8,4 do put(x,19,32,M.gold) end
-endlocal function new_outer_bailey()
+end
+
+local function new_outer_bailey()
     -- Enceinte de pierre avec courtines crénelées et tours rondes.
     wall_x(-42,42,1,14,39,M.stone,2)
     wall_x(-42,42,1,14,-5,M.stone,2)
@@ -715,7 +719,9 @@ endlocal function new_outer_bailey()
         put(p[1]-2,2,p[2],M.trim); put(p[1]+2,2,p[2],M.trim)
         lamp(p[1],4,p[2])
     end
-endlocal function build()
+end
+
+local function build()
     -- Emprise entièrement nettoyée : aucune trace de l'ancien plan ne subsiste.
     clear(-54,-12,-60,54,82,82)
     fill(-54,-1,-60,54,-1,82,"gdo_core:terre")
