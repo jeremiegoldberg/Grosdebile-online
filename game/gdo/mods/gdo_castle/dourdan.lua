@@ -546,6 +546,25 @@ register_room_action("gdo_castle:kitchen_station", "Comptoir des cuisines",
 register_room_action("gdo_castle:forge_station", "Enclume de l'armurerie",
     "L'atelier du forgeron attend les matériaux et les commandes.")
 
+local function place_logis_switchback()
+    -- Escalier principal du logis : deux volées parallèles en U.
+    -- 14 cellules par étage, 0,5 node de montée par cellule.
+    local path = {}
+    for z=-24,-18 do path[#path+1] = {x=8,z=z} end
+    for z=-18,-24,-1 do path[#path+1] = {x=9,z=z} end
+
+    for cycle=0,1 do
+        for i,p in ipairs(path) do
+            local target_height = 2 + cycle*7 + (i-1)*0.5
+            local node_y = math.floor(target_height)
+            local level = (target_height-node_y > 0.25) and 64 or 32
+            clear(p.x,node_y+1,p.z,p.x,node_y+3,p.z)
+            put(p.x,node_y,p.z,M.stair,level)
+            staircase_cells[#staircase_cells+1] = {x=p.x,y=node_y,z=p.z}
+        end
+    end
+end
+
 local function build_logis()
     fill(-28,1,-27,14,17,-11,M.stone)
     clear(-26,2,-25,12,16,-13)
@@ -634,14 +653,14 @@ local function build_logis()
     put(-17,6,-24,M.gold)
     put(-16,6,-24,M.gold)
 
-    -- Réfectoire et cuisine sur le côté est.
-    for x=3,9 do put(x,2,-24,M.table) end
-    for x=4,10,2 do put(x,2,-18,M.bench) end
-    put(10,3,-23,"gdo_castle:kitchen_station")
-    -- Étagères, chaudron et garde-manger.
-    fill(10,3,-20,10,5,-18,M.wood)
-    fill(8,2,-24,9,3,-24,M.trim)
-    lamp(10,6,-20)
+    -- Réfectoire et cuisine regroupés au sud-est ; la cage d'escalier reste libre.
+    for x=3,6 do put(x,2,-24,M.table) end
+    for x=4,6,2 do put(x,2,-18,M.bench) end
+    put(5,3,-22,"gdo_castle:kitchen_station")
+    -- Étagères et garde-manger en alcôve.
+    fill(3,3,-17,3,5,-15,M.wood)
+    fill(4,2,-16,6,3,-16,M.trim)
+    lamp(4,6,-16)
     -- Étage noble : bibliothèque et chambre seigneuriale.
     wall_z(-24,-14,9,14,-4,M.trim,1)
     clear(-4,9,-20,-4,12,-18)
@@ -668,6 +687,9 @@ local function build_logis()
     for x=-17,-8,3 do
         put(x,16,-14,M.trim)
     end
+
+    -- L'escalier U est posé après les meubles et avant la toiture.
+    place_logis_switchback()
 
     -- Baies vitrées et encadrements de façade.
     for x=-22,10,8 do
@@ -1094,7 +1116,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 18
+local VERSION = 19
 
 local generation_started = false
 local function generate_if_needed()
