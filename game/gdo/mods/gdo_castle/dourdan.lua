@@ -318,9 +318,9 @@ local function build_round_tower(spec)
 
     place_spiral_stair(cx,cz,r,h,spec.entry)
 
-    -- Terrasse sommitale : plateforme intérieure continue, puis couronne crénelée.
-    disk_floor(cx,cz,inner-1,h+1,M.floor)
-
+    -- Le plancher du dernier niveau (y=h) sert de terrasse sommitale.
+    -- On ne pose pas de seconde dalle : elle créerait une marche d'un node.
+    
     -- Porte de pied et sorties de circulation aux niveaux de rempart.
     tower_door(cx,cz,r,spec.entry,1,spec.threshold_steps)
     if spec.wall_side then
@@ -727,7 +727,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 3
+local VERSION = 4
 
 local function generate_if_needed()
     if not storage or storage:get_int("dourdan_plan_version") < VERSION then
