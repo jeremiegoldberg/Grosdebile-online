@@ -7,6 +7,9 @@
 local modname = minetest.get_current_modname()
 local S = minetest.get_translator and minetest.get_translator(modname) or function(s) return s end
 
+-- Altitude absolue du plateau. Toutes les coordonnées du plan restent relatives.
+local BASE_Y = 0
+
 local M = {
     stone = "gdo_castle:refit_stone",
     trim = "gdo_castle:refit_trim",
@@ -146,7 +149,7 @@ register_step_node(M.stair_high, "Marche haute en pierre",
     {-0.5,0,-0.5,0.5,0.5,0.5})
 
 local function put(x,y,z,name,param2)
-    minetest.set_node({x=x,y=y,z=z}, {name=name, param2=param2 or 0})
+    minetest.set_node({x=x,y=y+BASE_Y,z=z}, {name=name, param2=param2 or 0})
 end
 
 local function fill(x1,y1,z1,x2,y2,z2,name)
@@ -752,7 +755,7 @@ local function audit_geometry()
     for _,p in ipairs(staircase_cells) do
         for dy=1,2 do
             local q = {x=p.x,y=p.y+dy,z=p.z}
-            local node = minetest.get_node(q)
+            local node = minetest.get_node({x=q.x,y=q.y+BASE_Y,z=q.z})
             if node and node.name ~= "air" then
                 put(q.x,q.y,q.z,"air")
                 repaired = repaired + 1
@@ -771,7 +774,7 @@ local function audit_geometry()
         for x=c.x1,c.x2 do
             for y=c.y1,c.y2 do
                 for z=c.z1,c.z2 do
-                    local n = minetest.get_node({x=x,y=y,z=z})
+                    local n = minetest.get_node({x=x,y=y+BASE_Y,z=z})
                     if not n or n.name ~= "air" then blocked = blocked + 1 end
                 end
             end
@@ -785,22 +788,78 @@ end
 
 local function safe_spawn(player)
     if not player or not player:is_player() then return end
-    player:set_pos({x=0,y=1,z=68})
+    player:set_pos({x=0,y=BASE_Y+1,z=68})
     if player.set_velocity then player:set_velocity({x=0,y=0,z=0}) end
 end
 
+local function find_surface_y(x,z)
+    for y=80,-16,-1 do
+        local node = minetest.get_node_or_nil({x=x,y=y,z=z})
+        if node and node.name ~= "air" and node.name ~= "ignore" then
+            local def = minetest.registered_nodes[node.name]
+            if def and def.walkable and def.liquidtype == "none"
+                and minetest.get_item_group(node.name,"tree") == 0
+                and minetest.get_item_group(node.name,"leaves") == 0
+                and minetest.get_item_group(node.name,"plant") == 0 then
+                return y
+            end
+        end
+    end
+    return nil
+end
+
+local function choose_base_y()
+    local heights = {}
+    for x=-32,32,8 do
+        for z=-24,32,8 do
+            local y = find_surface_y(x,z)
+            if y then heights[#heights+1] = y end
+        end
+    end
+    if #heights == 0 then
+        minetest.log("warning","[GDO] Terrain introuvable pour le plateau ; altitude 0 utilisée.")
+        return 0
+    end
+    table.sort(heights)
+    local median = heights[math.floor((#heights+1)/2)]
+    minetest.log("action","[GDO] Altitude du plateau choisie : "..median..
+        " (échantillons "..#heights..", min "..heights[1]..", max "..heights[#heights]..").")
+    return median
+end
+
+local function prepare_level_pad()
+    -- Plateau ovale sous l'enceinte : 94 x 104 nodes environ.
+    -- En dehors, le relief généré par la carte est conservé.
+    local rx,rz,cz = 47,52,2
+    for x=-50,50 do
+        for z=-56,76 do
+            local d = (x/rx)*(x/rx) + ((z-cz)/rz)*((z-cz)/rz)
+            local apron = math.abs(x) <= 17 and z >= 44 and z <= 72
+            if d <= 1 or apron then
+                clear(x,1,z,x,82,z)
+                fill(x,-5,z,x,-1,z,"gdo_core:terre")
+                put(x,0,z,M.grass)
+            elseif d <= 1.18 then
+                -- Talus enherbé de cinq niveaux : raccord du plateau au relief.
+                local drop = math.min(5,math.max(1,math.floor((d-1)*28)+1))
+                local top = -drop
+                clear(x,top+1,z,x,82,z)
+                fill(x,top-4,z,x,top-1,z,"gdo_core:terre")
+                put(x,top,z,M.grass)
+            end
+        end
+    end
+end
+
 local function build()
-    -- Les joueurs sont déplacés hors de la zone effacée pendant les travaux.
+    -- Les joueurs sont déplacés au-dessus de la zone pendant les travaux.
     for _,player in ipairs(minetest.get_connected_players()) do
-        player:set_pos({x=0,y=12,z=83})
+        player:set_pos({x=0,y=BASE_Y+95,z=90})
         if player.set_velocity then player:set_velocity({x=0,y=0,z=0}) end
     end
 
-    -- Nettoyage strict de l'emprise du nouveau plan Dourdan.
-    -- Efface aussi les anciennes tours hautes et leurs débords, dans la zone réservée.
-    clear(-50,-12,-54,50,82,80)
-    fill(-50,-1,-54,50,-1,80,"gdo_core:terre")
-    deck(-50,-54,50,80,0,M.grass)
+    -- Aplanir seulement l'emprise bâtie et le parvis ; garder collines et plaines autour.
+    prepare_level_pad()
 
     -- Construction par zones, dans l'ordre des structures porteuses.
     build_enclosure()
@@ -816,7 +875,7 @@ local function build()
     audit_geometry()
 
     if minetest.fix_light then
-        minetest.fix_light({x=-50,y=-2,z=-54},{x=50,y=82,z=80})
+        minetest.fix_light({x=-50,y=BASE_Y-6,z=-56},{x=50,y=BASE_Y+82,z=76})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
 
@@ -825,12 +884,25 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 12
+local VERSION = 13
 
+local generation_started = false
 local function generate_if_needed()
+    if generation_started then return end
     if not storage or storage:get_int("dourdan_plan_version") < VERSION then
-        build()
-        if storage then storage:set_int("dourdan_plan_version",VERSION) end
+        generation_started = true
+        -- Faire générer le terrain classique avant de choisir l'altitude du plateau.
+        minetest.emerge_area(
+            {x=-56,y=-16,z=-64},
+            {x=56,y=100,z=88},
+            function(blockpos, action, calls_remaining)
+                if calls_remaining == 0 then
+                    BASE_Y = choose_base_y()
+                    build()
+                    if storage then storage:set_int("dourdan_plan_version",VERSION) end
+                end
+            end
+        )
     end
 end
 
@@ -879,8 +951,9 @@ minetest.register_chatcommand("refairechateau",{
     description = "Reconstruit le château selon le plan Dourdan",
     privs = {interact=true},
     func = function()
+        BASE_Y = choose_base_y()
         build()
         if storage then storage:set_int("dourdan_plan_version",VERSION) end
-        return true,"Château reconstruit selon le nouveau plan. Tu es sur le parvis sud."
+        return true,"Château reconstruit sur le plateau naturel. Tu es sur le parvis sud."
     end,
 })
