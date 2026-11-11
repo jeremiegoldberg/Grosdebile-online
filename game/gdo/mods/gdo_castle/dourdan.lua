@@ -154,8 +154,8 @@ local function register_open_gate_leaf(name, side)
 end
 register_open_gate_leaf("gdo_castle:open_gate_left", "left")
 register_open_gate_leaf("gdo_castle:open_gate_right", "right")
-local function register_step_node(name, description, box)
-    minetest.register_node(name, {
+local function register_step_node(name, description, boxes, facedir)
+    local def = {
         description = S(description),
         drawtype = "nodebox",
         tiles = {textures.refit_trim},
@@ -163,43 +163,24 @@ local function register_step_node(name, description, box)
         sunlight_propagates = true,
         walkable = true,
         groups = {cracky = 2},
-        node_box = {type = "fixed", fixed = {box}},
-        collision_box = {type = "fixed", fixed = {box}},
-        selection_box = {type = "fixed", fixed = {box}},
-    })
+        node_box = {type = "fixed", fixed = boxes},
+        collision_box = {type = "fixed", fixed = boxes},
+        selection_box = {type = "fixed", fixed = boxes},
+    }
+    if facedir then def.paramtype2 = "facedir" end
+    minetest.register_node(name, def)
 end
 
--- Deux demi-blocs complémentaires : le joueur monte de 0,5 node par palier.
-register_step_node(M.stair_low, "Marche basse en pierre",
-    {-0.5,-0.5,-0.5,0.5,0,0.5})
-register_step_node(M.stair_high, "Marche haute en pierre",
-    {-0.5,0,-0.5,0.5,0.5,0.5})
-
--- Marche de progression à hauteur variable : base pleine, surface réglée par
--- param2 (32 = demi-bloc, 64 = bloc plein). Pas de demi-bloc flottant.
-minetest.register_node(M.stair, {
-    description = S("Marche de tour en pierre"),
-    drawtype = "nodebox",
-    tiles = {textures.refit_trim},
-    paramtype = "light",
-    paramtype2 = "leveled",
-    leveled_max = 64,
-    sunlight_propagates = true,
-    walkable = true,
-    groups = {cracky = 2},
-    node_box = {
-        type = "leveled",
-        fixed = {-0.5,-0.5,-0.5,0.5,0,0.5},
-    },
-    collision_box = {
-        type = "leveled",
-        fixed = {-0.5,-0.5,-0.5,0.5,0,0.5},
-    },
-    selection_box = {
-        type = "leveled",
-        fixed = {-0.5,-0.5,-0.5,0.5,0,0.5},
-    },
+-- Marche basse : dalle de 1/2 bloc.
+register_step_node(M.stair_low, "Marche basse en pierre", {
+    {-0.5,-0.5,-0.5,0.5,0,0.5},
 })
+-- Marche haute : socle bas + demi-marche en avant (+Z local).
+-- Le paramtype2 facedir oriente cette demi-marche vers la marche suivante.
+register_step_node(M.stair_high, "Marche haute en pierre", {
+    {-0.5,-0.5,-0.5,0.5,0,0.5},
+    {-0.5,0,0,0.5,0.5,0.5},
+}, true)
 
 local function register_furniture(name, description, texture, boxes, walkable)
     minetest.register_node(name, {
@@ -403,9 +384,14 @@ local function angle_progress(x,z,entry_side)
     return delta/(2*math.pi)
 end
 
+local function stair_facedir(dx,dz)
+    if not minetest.dir_to_facedir then return 0 end
+    return minetest.dir_to_facedir({x=dx,y=0,z=dz})
+end
+
 local function place_spiral_stair(cx,cz,r,height,entry_side)
-    -- Rampe hélicoïdale annulaire de deux à trois nodes de largeur.
-    -- Elle suit le fût circulaire et laisse un noyau central ouvert.
+    -- Vis à marches physiques de 1/2 bloc, en anneau de deux à trois blocs.
+    -- Chaque niveau est un nodebox fixe, avec collision identique au rendu.
     local outer = r-3
     local inner = r-5
     if inner < 2 then
@@ -413,8 +399,9 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
         return
     end
 
-    -- Une révolution gagne 7 nodes ; les niveaux sont quantifiés en demi-nodes.
-    local turns = math.floor((height-2)/7)
+    -- 14 demi-marches par révolution : 7 nodes gagnés par tour.
+    local max_step = 2*(height-1)+1
+    local turns = math.floor(max_step/14)
     for turn=0,turns do
         for dx=-outer,outer do
             for dz=-outer,outer do
@@ -422,16 +409,26 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
                 if d2 >= inner*inner and d2 <= outer*outer then
                     local progress = angle_progress(dx,dz,entry_side)
                     local halfstep = math.floor(progress*14)
-                    local target_height = 1.5 + 0.5*(1 + turn*14 + halfstep)
-                    if target_height <= height+0.5 then
-                        local node_y = math.floor(target_height)
-                        local level = math.floor((target_height-(node_y-0.5))*64+0.5)
-                        level = math.max(32,math.min(64,level))
+                    local step_index = turn*14 + halfstep
+                    if step_index <= max_step then
+                        local node_y = 1 + math.floor(step_index/2)
                         local x,z = cx+dx,cz+dz
+                        local node_name = (step_index%2 == 0) and M.stair_low or M.stair_high
+                        local param2 = 0
+                        if step_index%2 == 1 then
+                            -- Tangente à la vis : la demi-marche regarde vers l'avant.
+                            local theta = math.atan2 and math.atan2(dz,dx) or math.atan(dz/(dx==0 and 0.0001 or dx))
+                            local tx,tz = -math.sin(theta),math.cos(theta)
+                            if math.abs(tx) >= math.abs(tz) then
+                                param2 = stair_facedir(tx >= 0 and 1 or -1,0)
+                            else
+                                param2 = stair_facedir(0,tz >= 0 and 1 or -1)
+                            end
+                        end
 
-                        -- Volume de marche net, avec deux nodes libres au-dessus.
+                        -- Deux blocs libres au-dessus, marche non enterrée.
                         clear(x,node_y+1,z,x,node_y+2,z)
-                        put(x,node_y,z,M.stair,level)
+                        put(x,node_y,z,node_name,param2)
                         staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
                     end
                 end
@@ -459,22 +456,22 @@ local function tower_door(cx,cz,r,side,level,threshold_steps)
         for lateral=-1,1 do
             if side == "east" then
                 put(cx+reach,1,cz+lateral,M.stair_low)
-                put(cx+reach-1,1,cz+lateral,M.stair_high)
+                put(cx+reach-1,1,cz+lateral,M.stair_high,stair_facedir(-1,0))
                 put(cx+inner+1,1,cz+lateral,M.floor)
                 put(cx+inner,1,cz+lateral,M.floor)
             elseif side == "west" then
                 put(cx-reach,1,cz+lateral,M.stair_low)
-                put(cx-reach+1,1,cz+lateral,M.stair_high)
+                put(cx-reach+1,1,cz+lateral,M.stair_high,stair_facedir(1,0))
                 put(cx-inner-1,1,cz+lateral,M.floor)
                 put(cx-inner,1,cz+lateral,M.floor)
             elseif side == "north" then
                 put(cx+lateral,1,cz-reach,M.stair_low)
-                put(cx+lateral,1,cz-reach+1,M.stair_high)
+                put(cx+lateral,1,cz-reach+1,M.stair_high,stair_facedir(0,1))
                 put(cx+lateral,1,cz-inner-1,M.floor)
                 put(cx+lateral,1,cz-inner,M.floor)
             elseif side == "south" then
                 put(cx+lateral,1,cz+reach,M.stair_low)
-                put(cx+lateral,1,cz+reach-1,M.stair_high)
+                put(cx+lateral,1,cz+reach-1,M.stair_high,stair_facedir(0,-1))
                 put(cx+lateral,1,cz+inner+1,M.floor)
                 put(cx+lateral,1,cz+inner,M.floor)
             end
@@ -644,11 +641,14 @@ local function place_logis_switchback()
 
     for cycle=0,1 do
         for i,p in ipairs(path) do
-            local target_height = 2 + cycle*7 + (i-1)*0.5
-            local node_y = math.floor(target_height)
-            local level = (target_height-node_y > 0.25) and 64 or 32
+            local step_index = cycle*14 + (i-1)
+            local node_y = 1 + math.floor(step_index/2)
+            local node_name = (step_index%2 == 0) and M.stair_low or M.stair_high
+            local nextp = path[(i % #path)+1]
+            local dx,dz = nextp.x-p.x,nextp.z-p.z
             clear(p.x,node_y+1,p.z,p.x,node_y+2,p.z)
-            put(p.x,node_y,p.z,M.stair,level)
+            put(p.x,node_y,p.z,node_name,
+                node_name == M.stair_high and stair_facedir(dx,dz) or 0)
             staircase_cells[#staircase_cells+1] = {x=p.x,y=node_y,z=p.z}
         end
     end
@@ -1047,12 +1047,12 @@ local function build_towers()
 
     -- Tours jumelles du châtelet : sorties raccordées à la galerie haute.
     build_round_tower({
-        x=-10,z=32,r=9,h=22,
-        entry="north",wall_side="east",
+        x=-13,z=32,r=8,h=22,
+        entry="south",wall_side="east",
     })
     build_round_tower({
-        x=10,z=32,r=9,h=22,
-        entry="north",wall_side="west",
+        x=13,z=32,r=8,h=22,
+        entry="south",wall_side="west",
     })
 end
 
@@ -1323,14 +1323,14 @@ local function build_exterior_landscape()
     build_rolling_hill(92,-74,24,22,13)
     build_rolling_hill(-91,104,25,22,11)
     build_rolling_hill(91,108,26,24,14)
-    build_rolling_hill(6,-121,18,17,8)
+    build_rolling_hill(8,-150,13,10,7)
 
     -- Bosquets irréguliers et clairières fleuries autour du chemin.
     plant_grove(-91,-84,17)
     plant_grove(92,-74,16)
     plant_grove(-91,104,17)
     plant_grove(91,108,18)
-    plant_grove(5,-121,11)
+    plant_grove(8,-150,8)
 
     -- Petit étang naturel dans la prairie sud-est.
     build_natural_pond(28,112,8,6)
@@ -1390,7 +1390,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 27
+local VERSION = 28
 
 local generation_started = false
 local function generate_if_needed()
