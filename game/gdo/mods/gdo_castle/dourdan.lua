@@ -569,10 +569,54 @@ local function build_logis()
     }) do
         lamp(p[1],p[2],p[3])
     end
+    -- Grande table de banquet et bancs : le centre de la salle reste dégagé.
+    for x=-21,-12 do
+        put(x,2,-20,M.table)
+    end
+    for x=-20,-14,2 do
+        put(x,2,-22,M.bench)
+        put(x,2,-18,M.bench)
+    end
+    -- Tapis bleu et or qui guide vers l'estrade sans barrer l'entrée.
+    for x=-10,-7 do
+        for z=-24,-15 do
+            put(x,2,z,M.rug)
+        end
+    end
+    for z=-24,-15 do
+        put(-11,2,z,M.gold)
+        put(-6,2,z,M.gold)
+    end
+
+    -- Piliers engagés, tapisseries héraldiques et appliques sur les murs.
+    for _,p in ipairs({{-25,-24},{-25,-15},{11,-24},{11,-15}}) do
+        for y=2,7 do put(p[1],y,p[2],M.pillar) end
+        put(p[1],8,p[2],M.gold)
+    end
+    for _,z in ipairs({-23,-17}) do
+        fill(-25,3,z-1,-25,7,z+1,M.roof)
+        fill(-24,4,z,-24,6,z,M.gold)
+        put(-24,7,z,M.trim)
+        lamp(-24,8,z)
+    end
+
+    -- Foyer monumental : socle, manteau et blason au-dessus de la cheminée.
+    fill(-19,2,-25,-14,2,-25,M.trim)
+    fill(-19,6,-25,-14,6,-25,M.wood)
+    fill(-19,3,-25,-19,5,-25,M.gold)
+    fill(-14,3,-25,-14,5,-25,M.gold)
+    fill(-17,7,-25,-16,8,-25,M.roof)
+    put(-17,6,-24,M.gold)
+    put(-16,6,-24,M.gold)
+
     -- Réfectoire et cuisine sur le côté est.
-    fill(3,2,-24,9,2,-22,M.wood)
-    fill(4,2,-18,10,2,-17,M.wood)
+    for x=3,9 do put(x,2,-24,M.table) end
+    for x=4,10,2 do put(x,2,-18,M.bench) end
     put(10,3,-23,"gdo_castle:kitchen_station")
+    -- Étagères, chaudron et garde-manger.
+    fill(10,3,-20,10,5,-18,M.wood)
+    fill(8,2,-24,9,3,-24,M.trim)
+    lamp(10,6,-20)
     -- Étage noble : bibliothèque et chambre seigneuriale.
     wall_z(-24,-14,9,14,-4,M.trim,1)
     clear(-4,9,-20,-4,12,-18)
@@ -581,6 +625,19 @@ local function build_logis()
         fill(-21,9,z,-20,13,z,M.wood)
     end
     put(-22,10,-15,"gdo_castle:library_catalog")
+    -- Bibliothèque : rayonnages, pupitre de lecture et tapis.
+    fill(-25,10,-23,-25,13,-17,M.wood)
+    for z=-22,-18,2 do
+        put(-24,11,z,M.gold)
+        put(-24,12,z,M.trim)
+    end
+    put(-18,10,-18,M.table)
+    put(-18,10,-17,M.bench)
+    for x=-17,-13 do
+        for z=-22,-19 do put(x,10,z,M.rug) end
+    end
+    lamp(-23,14,-20)
+    lamp(-16,14,-20)
     -- Balcon intérieur sur la grande salle.
     deck(-18,-24,-7,-14,15,M.floor)
     for x=-17,-8,3 do
@@ -710,6 +767,21 @@ local function build_courtyard_buildings()
     for _,p in ipairs({{20,8,5},{24,8,5},{20,8,15},{24,8,15}}) do
         lamp(p[1],p[2],p[3])
     end
+    -- Chapelle meublée : nef, bancs alignés et autel sous le vitrail.
+    for z=5,13,2 do
+        put(20,2,z,M.bench)
+        put(24,2,z,M.bench)
+    end
+    for x=21,23 do
+        for z=15,17 do put(x,2,z,M.rug) end
+    end
+    fill(21,2,17,23,3,17,M.trim)
+    fill(21,4,17,23,4,17,M.gold)
+    put(22,5,17,M.gold)
+    lamp(22,9,17)
+    -- Confessionnal et lutrin près de l'entrée.
+    put(18,2,4,M.table)
+    put(18,3,4,M.gold)
 
     -- Puits central décalé de l'axe de circulation.
     fill(-13,1,1,-9,2,5,M.trim)
@@ -718,6 +790,31 @@ local function build_courtyard_buildings()
     fill(-13,3,1,-9,3,1,M.wood)
     fill(-13,3,5,-9,3,5,M.wood)
     lamp(-11,5,3)
+    -- Fontaine à bassin dans le secteur est de la cour ; l'axe central reste libre.
+    fill(7,1,7,11,1,11,M.trim)
+    clear(8,2,8,10,2,10)
+    fill(8,2,8,10,2,10,M.water)
+    fill(9,2,9,9,3,9,M.trim)
+    fill(8,3,8,10,3,8,M.gold)
+    fill(8,3,10,10,3,10,M.gold)
+    fill(8,3,9,8,3,9,M.gold)
+    fill(10,3,9,10,3,9,M.gold)
+    lamp(9,4,9)
+    -- Bancs de promenade face à la fontaine.
+    put(6,2,9,M.bench)
+    put(12,2,9,M.bench)
+    -- Jardins bas, arbres et bordures dans les coins de la cour.
+    fill(-17,1,17,-11,1,23,M.wood)
+    for x=-16,-12 do
+        for z=18,22 do
+            if x==-16 or x==-12 or z==18 or z==22 then put(x,2,z,M.leaves) end
+        end
+    end
+    put(-14,2,20,"gdo_core:arbre")
+    for x=-16,-12 do for z=18,22 do
+        if (x-14)^2+(z-20)^2 <= 5 then put(x,5,z,"gdo_core:feuilles") end
+    end end
+
     -- Trois navets héroïques du tutoriel, replacés dans le jardin de la cour.
     put(-8,1,21,"gdo_core:navet_sur_pied")
     put(-10,1,22,"gdo_core:navet_sur_pied")
@@ -827,7 +924,7 @@ local function audit_geometry()
     local repaired = 0
     -- Vérification du dégagement de chaque marche : 2 nodes libres au-dessus.
     for _,p in ipairs(staircase_cells) do
-        for dy=1,2 do
+        for dy=1,3 do
             local q = {x=p.x,y=p.y+dy,z=p.z}
             local node = minetest.get_node({x=q.x,y=q.y+BASE_Y,z=q.z})
             if node and node.name ~= "air" then
@@ -972,7 +1069,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 15
+local VERSION = 16
 
 local generation_started = false
 local function generate_if_needed()
