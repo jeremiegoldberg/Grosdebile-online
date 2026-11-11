@@ -20,7 +20,8 @@ local M = {
     leaves = "gdo_castle:refit_leaves",
     water = "gdo_castle:refit_water",
     lamp = "gdo_castle:refit_lamp",
-    stair = "gdo_castle:refit_stair",
+    stair_low = "gdo_castle:refit_stair_low",
+    stair_high = "gdo_castle:refit_stair_high",
 }
 
 local textures = {
@@ -82,30 +83,26 @@ register_textured(M.lamp, "Lanterne murale", {cracky = 2}, {
     sunlight_propagates = true,
     light_source = 12,
 })
-minetest.register_node(M.stair, {
-    description = S("Marche en pierre"),
-    drawtype = "nodebox",
-    tiles = {textures.refit_trim},
-    paramtype = "light",
-    paramtype2 = "facedir",
-    sunlight_propagates = true,
-    walkable = true,
-    groups = {cracky = 2},
-    node_box = {
-        type = "fixed",
-        fixed = {
-            {-0.5,-0.5,-0.5, 0.5,0,0.5},
-            {-0.5,0,0, 0.5,0.5,0.5},
-        },
-    },
-    selection_box = {
-        type = "fixed",
-        fixed = {
-            {-0.5,-0.5,-0.5, 0.5,0,0.5},
-            {-0.5,0,0, 0.5,0.5,0.5},
-        },
-    },
-})
+local function register_step_node(name, description, box)
+    minetest.register_node(name, {
+        description = S(description),
+        drawtype = "nodebox",
+        tiles = {textures.refit_trim},
+        paramtype = "light",
+        sunlight_propagates = true,
+        walkable = true,
+        groups = {cracky = 2},
+        node_box = {type = "fixed", fixed = {box}},
+        collision_box = {type = "fixed", fixed = {box}},
+        selection_box = {type = "fixed", fixed = {box}},
+    })
+end
+
+-- Deux demi-blocs complémentaires : le joueur monte de 0,5 node par palier.
+register_step_node(M.stair_low, "Marche basse en pierre",
+    {-0.5,-0.5,-0.5,0.5,0,0.5})
+register_step_node(M.stair_high, "Marche haute en pierre",
+    {-0.5,0,-0.5,0.5,0.5,0.5})
 
 local function put(x,y,z,name,param2)
     minetest.set_node({x=x,y=y,z=z}, {name=name, param2=param2 or 0})
@@ -215,6 +212,8 @@ end
 
 local staircase_cells = {}
 
+local staircase_cells = {}
+
 local function place_spiral_stair(cx,cz,r,height,entry_side)
     local radius = r-3
     local ring = make_octagonal_ring(radius,entry_side)
@@ -224,30 +223,30 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
         return
     end
 
-    -- Chaque révolution gagne sept nodes. Les marches nodebox créent
-    -- des demi-niveaux ; la rampe reste entièrement dans le fût.
-    local base = 2
-    while base+6 <= height do
+    -- Une révolution complète monte de 7 nodes, par 14 demi-marches.
+    -- Le même anneau dessert les niveaux 1, 8, 15, 22 et 29.
+    local max_halfsteps = 2*(height-1)
+    local cycle = 0
+    while 1 + cycle*14 <= max_halfsteps do
         for i,p in ipairs(ring) do
-            local nextp = ring[(i % count)+1]
-            local y = base + math.floor((i-1)*7/count)
-            local dx,dz = nextp.x-p.x,nextp.z-p.z
-            local param2 = 0
-            if minetest.dir_to_facedir then
-                param2 = minetest.dir_to_facedir({x=dx,y=0,z=dz})
-            end
+            local halfsteps = 1 + cycle*14 + math.floor((i-1)*14/count)
+            local target_height = 1.5 + 0.5*halfsteps
+            local node_y = math.floor(target_height)
+            local node_name = (target_height-node_y > 0.25) and M.stair_high or M.stair_low
             local inner = radial_inner_cell(p)
             local cells = {
                 {x=cx+p.x,z=cz+p.z},
                 {x=cx+inner.x,z=cz+inner.z},
             }
             for _,cell in ipairs(cells) do
-                clear(cell.x,y,cell.z,cell.x,y+2,cell.z)
-                put(cell.x,y,cell.z,M.stair,param2)
-                staircase_cells[#staircase_cells+1] = {x=cell.x,y=y,z=cell.z}
+                clear(cell.x,node_y+1,cell.z,cell.x,node_y+2,cell.z)
+                put(cell.x,node_y,cell.z,node_name)
+                staircase_cells[#staircase_cells+1] = {
+                    x=cell.x,y=node_y,z=cell.z
+                }
             end
         end
-        base = base+7
+        cycle = cycle+1
     end
 end
 
