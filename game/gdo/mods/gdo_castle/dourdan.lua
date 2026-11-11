@@ -449,21 +449,15 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
         local dx,dz = q.x-p.x,q.z-p.z
         local facedir = node_name == M.stair_high and stair_facedir(dx,dz) or 0
 
-        -- Deux cellules de large vers le centre de la tour.
-        local ix,iz = p.x,p.z
-        if math.abs(p.x) >= math.abs(p.z) then
-            ix = p.x - (p.x >= 0 and 1 or -1)
-        else
-            iz = p.z - (p.z >= 0 and 1 or -1)
-        end
-
-        for _,cell in ipairs({{x=p.x,z=p.z},{x=ix,z=iz}}) do
-            local x,z = cx+cell.x,cz+cell.z
-            clear(x,node_y+1,z,x,node_y+2,z)
-            put(x,node_y-1,z,M.stone)
-            put(x,node_y,z,node_name,facedir)
-            staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
-        end
+            -- Une seule bande de marche, contre la paroi : la seconde bande
+        -- précédente mordait sur la marche du tour suivant dans les angles,
+        -- ce qui créait des collisions superposées et des marches visuellement
+        -- difformes. Les nodes nodebox ont déjà une surface à mi-hauteur.
+        local x,z = cx+p.x,cz+p.z
+        clear(x,node_y+1,z,x,node_y+2,z)
+        put(x,node_y-1,z,M.stone)
+        put(x,node_y,z,node_name,facedir)
+        staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
     end
 end
 
@@ -576,6 +570,18 @@ local function build_round_tower(spec)
             lamp(cx,level+2,cz)
             put(cx,level+1,cz-1,M.gold)
             put(cx,level+1,cz+1,M.gold)
+        end
+    end
+
+    -- Réserver la trémie annulaire sur chaque palier : sans cette découpe,
+    -- les disques de plancher recouvrent les marches à leur passage de niveau.
+    local stair_ring = make_octagonal_ring(r-3,spec.entry)
+    local ring_count = #stair_ring
+    for _,level in ipairs({8,15,22,29,36,43,50}) do
+        if level < h then
+            for _,p in ipairs(stair_ring) do
+                put(cx+p.x,level,cz+p.z,"air")
+            end
         end
     end
 
