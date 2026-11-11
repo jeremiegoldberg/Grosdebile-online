@@ -308,6 +308,21 @@ local function make_octagonal_ring(radius, entry_side)
         local final_segment = k == 7
         append_line(path,a.x,a.z,b.x,b.z,final_segment)
     end
+
+    -- append_line omet le sommet de départ pour éviter un doublon.
+    -- On referme explicitement l'anneau avec les cellules orthogonales manquantes.
+    local first = path[1]
+    local last = path[#path]
+    local dx,dz = first.x-last.x,first.z-last.z
+    while math.abs(dx)+math.abs(dz) > 1 do
+        if dx ~= 0 then
+            last = {x=last.x+(dx>0 and 1 or -1),z=last.z}
+        else
+            last = {x=last.x,z=last.z+(dz>0 and 1 or -1)}
+        end
+        path[#path+1] = last
+        dx,dz = first.x-last.x,first.z-last.z
+    end
     return path
 end
 
@@ -320,6 +335,15 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
     if count < 16 then
         minetest.log("error","[GDO] Anneau d'escalier trop court pour une tour.")
         return
+    end
+    for i,p in ipairs(ring) do
+        local q = ring[(i % count)+1]
+        local distance = math.abs(p.x-q.x)+math.abs(p.z-q.z)
+        if distance ~= 1 then
+            minetest.log("error","[GDO] Escalier refusé : rupture de "..distance..
+                " nodes dans la boucle de la tour.")
+            return
+        end
     end
 
     -- Une seule vis continue. Chaque marche a un support plein et une hauteur
@@ -1070,7 +1094,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 17
+local VERSION = 18
 
 local generation_started = false
 local function generate_if_needed()
