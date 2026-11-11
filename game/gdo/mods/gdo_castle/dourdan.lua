@@ -160,7 +160,7 @@ local function register_step_node(name, description, boxes, facedir)
     local def = {
         description = S(description),
         drawtype = "nodebox",
-        tiles = {textures.refit_trim},
+        tiles = {textures.refit_stone},
         paramtype = "light",
         sunlight_propagates = true,
         walkable = true,
@@ -449,6 +449,8 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
             for _,cell in ipairs({{x=p.x,z=p.z},{x=ix,z=iz}}) do
                 local x,z = cx+cell.x,cz+cell.z
                 clear(x,node_y+1,z,x,node_y+2,z)
+                -- Chaque marche repose sur un bloc porteur ; la vis ne flotte pas.
+                put(x,node_y-1,z,M.stone)
                 put(x,node_y,z,node_name,facedir)
                 staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
             end
@@ -469,6 +471,7 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
     for _,cell in ipairs({{x=p.x,z=p.z},{x=ix,z=iz}}) do
         local x,z = cx+cell.x,cz+cell.z
         clear(x,final_y+1,z,x,final_y+2,z)
+        put(x,final_y-1,z,M.stone)
         put(x,final_y,z,M.stair_high,facing)
         staircase_cells[#staircase_cells+1] = {x=x,y=final_y,z=z}
     end
@@ -709,7 +712,7 @@ local function place_logis_switchback()
                 local dx,dz = nextp.x-p.x,nextp.z-p.z
                 clear(p.x,node_y+1,p.z,p.x,node_y+2,p.z)
                 -- Limon plein sous chaque demi-marche : elles ne flottent plus.
-                put(p.x,node_y-1,p.z,M.trim)
+                put(p.x,node_y-1,p.z,M.stone)
                 put(p.x,node_y,p.z,node_name,
                     node_name == M.stair_high and stair_facedir(dx,dz) or 0)
                 staircase_cells[#staircase_cells+1] = {x=p.x,y=node_y,z=p.z}
@@ -1551,7 +1554,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 34
+local VERSION = 35
 
 local generation_started = false
 local function generate_if_needed()
