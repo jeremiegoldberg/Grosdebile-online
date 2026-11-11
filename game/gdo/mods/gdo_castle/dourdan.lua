@@ -203,15 +203,6 @@ local function make_octagonal_ring(radius, entry_side)
     return path
 end
 
-local function radial_inner_cell(p)
-    if math.abs(p.x) >= math.abs(p.z) then
-        return {x=p.x-signum(p.x), z=p.z}
-    end
-    return {x=p.x, z=p.z-signum(p.z)}
-end
-
-local staircase_cells = {}
-
 local staircase_cells = {}
 
 local function place_spiral_stair(cx,cz,r,height,entry_side)
@@ -223,8 +214,8 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
         return
     end
 
-    -- Une révolution complète monte de 7 nodes, par 14 demi-marches.
-    -- Le même anneau dessert les niveaux 1, 8, 15, 22 et 29.
+    -- Une seule volée en vis, accolée au mur intérieur.
+    -- Une révolution complète gagne 7 nodes (14 demi-marches).
     local max_halfsteps = 2*(height-1)
     local cycle = 0
     while 1 + cycle*14 <= max_halfsteps do
@@ -233,18 +224,10 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
             local target_height = 1.5 + 0.5*halfsteps
             local node_y = math.floor(target_height)
             local node_name = (target_height-node_y > 0.25) and M.stair_high or M.stair_low
-            local inner = radial_inner_cell(p)
-            local cells = {
-                {x=cx+p.x,z=cz+p.z},
-                {x=cx+inner.x,z=cz+inner.z},
-            }
-            for _,cell in ipairs(cells) do
-                clear(cell.x,node_y+1,cell.z,cell.x,node_y+2,cell.z)
-                put(cell.x,node_y,cell.z,node_name)
-                staircase_cells[#staircase_cells+1] = {
-                    x=cell.x,y=node_y,z=cell.z
-                }
-            end
+            local x,z = cx+p.x,cz+p.z
+            clear(x,node_y+1,z,x,node_y+2,z)
+            put(x,node_y,z,node_name)
+            staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
         end
         cycle = cycle+1
     end
@@ -333,6 +316,9 @@ local function build_round_tower(spec)
     end
 
     place_spiral_stair(cx,cz,r,h,spec.entry)
+
+    -- Terrasse sommitale : plateforme intérieure continue, puis couronne crénelée.
+    disk_floor(cx,cz,inner-1,h+1,M.floor)
 
     -- Porte de pied et sorties de circulation aux niveaux de rempart.
     tower_door(cx,cz,r,spec.entry,1,spec.threshold_steps)
