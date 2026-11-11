@@ -925,37 +925,44 @@ local function build_courtyard_buildings()
     fill(-13,3,1,-9,3,1,M.wood)
     fill(-13,3,5,-9,3,5,M.wood)
     lamp(-11,5,3)
-    -- Fontaine à bassin dans le secteur est de la cour ; l'axe central reste libre.
-    fill(7,1,7,11,1,11,M.trim)
-    clear(8,2,8,10,2,10)
-    fill(8,2,8,10,2,10,M.water)
-    fill(9,2,9,9,3,9,M.trim)
-    fill(8,3,8,10,3,8,M.gold)
-    fill(8,3,10,10,3,10,M.gold)
-    fill(8,3,9,8,3,9,M.gold)
-    fill(10,3,9,10,3,9,M.gold)
-    lamp(9,4,9)
-    -- Bancs de promenade face à la fontaine.
-    put(6,2,9,M.bench)
-    put(12,2,9,M.bench)
-    -- Jardins bas, arbres et bordures dans les coins de la cour.
-    for x=-17,-11 do
-        put(x,1,17,M.wood)
-        put(x,1,23,M.wood)
-    end
-    for z=17,23 do
-        put(-17,1,z,M.wood)
-        put(-11,1,z,M.wood)
-    end
-    for x=-16,-12 do
-        for z=18,22 do
-            if x==-16 or x==-12 or z==18 or z==22 then put(x,2,z,M.leaves) end
+    -- Fontaine de cour sur plan octogonal, avec bassin et jet central.
+    for x=6,12 do
+        for z=6,12 do
+            local dx,dz=x-9,z-9
+            if dx*dx+dz*dz <= 10 then put(x,1,z,M.trim) end
         end
     end
-    put(-14,2,20,"gdo_core:arbre")
-    for x=-16,-12 do for z=18,22 do
-        if (x-14)^2+(z-20)^2 <= 5 then put(x,5,z,"gdo_core:feuilles") end
-    end end
+    for x=7,11 do
+        for z=7,11 do
+            if (x-9)^2+(z-9)^2 <= 5 then put(x,1,z,M.water) end
+        end
+    end
+    put(9,1,9,M.gold)
+    put(9,2,9,M.trim)
+    put(9,3,9,M.gold)
+    put(9,4,9,M.water)
+    lamp(9,5,9)
+    -- Quatre petits massifs autour du bassin.
+    flower_patch(5,5,6,7,1)
+    flower_patch(12,5,13,7,1)
+    flower_patch(5,11,6,13,1)
+    flower_patch(12,11,13,13,1)
+    -- Bancs de promenade sur les quatre côtés.
+    put(9,2,4,M.bench)
+    put(9,2,14,M.bench)
+    put(4,2,9,M.bench)
+    put(14,2,9,M.bench)
+    -- Jardin clos au nord-ouest : haie basse, fleurs et arbre complet.
+    for x=-18,-10 do
+        put(x,1,17,M.leaves)
+        put(x,1,25,M.leaves)
+    end
+    for z=17,25 do
+        put(-18,1,z,M.leaves)
+        put(-10,1,z,M.leaves)
+    end
+    build_tree(-14,0,21,4)
+    flower_patch(-17,18,-11,24,2)
 
     -- Trois navets héroïques du tutoriel, replacés dans le jardin de la cour.
     put(-8,1,21,"gdo_core:navet_sur_pied")
@@ -969,13 +976,33 @@ local function build_courtyard_buildings()
 end
 
 local function build_gardens_and_approach()
-    -- Cour en pavés avec axe de circulation dégagé.
-    deck(-31,-27,31,31,0,M.path)
-    deck(-4,-10,4,31,0,M.floor)
-    for z=-8,29,6 do
+    -- Cour vivante : alternance de pelouses, d'allées et de petites places.
+    deck(-31,-27,31,31,0,M.grass)
+    deck(-4,-27,4,31,0,M.path)
+    deck(-31,-3,31,3,0,M.path)
+    deck(-14,-13,14,-8,0,M.floor)
+    deck(15,-7,29,0,0,M.floor)
+    deck(-29,17,-18,27,0,M.floor)
+
+    -- Bordures de l'allée centrale et lanternes basses.
+    for z=-24,28,6 do
         put(-6,1,z,M.trim)
         put(6,1,z,M.trim)
+        if z%12 == 0 then
+            lamp(-7,2,z)
+            lamp(7,2,z)
+        end
     end
+
+    -- Jardins de promenade : arbres, haies, fleurs et bancs.
+    build_tree(-22,0,20,4)
+    build_tree(20,0,-5,4)
+    build_tree(17,0,25,4)
+    flower_patch(-28,18,-24,26,2)
+    flower_patch(22,-6,27,0,2)
+    flower_patch(-9,12,-5,16,2)
+    put(-19,2,14,M.bench)
+    put(19,2,14,M.bench)
 
     -- Parvis extérieur et allée vers la herse.
     deck(-17,44,17,72,0,M.floor)
@@ -997,7 +1024,7 @@ local function build_gardens_and_approach()
     -- Lumières du chemin d'accès et de la herse.
     lamp(-3,5,42); lamp(3,5,42)
     lamp(-3,5,55); lamp(3,5,55)
-    -- Plateforme de spawn entièrement dégagée.
+    -- Plateforme de spawn dégagée, bordée d'une allée vers la campagne.
     deck(-4,64,4,72,0,M.floor)
     clear(-3,1,64,3,5,72)
     put(0,1,71,"gdo_castle:arrival_sign")
@@ -1212,7 +1239,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 24
+local VERSION = 25
 
 local generation_started = false
 local function generate_if_needed()
