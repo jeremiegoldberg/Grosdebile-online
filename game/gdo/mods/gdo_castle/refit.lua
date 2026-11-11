@@ -623,12 +623,17 @@ local function new_keep()
     clear(-3,2,-13,3,10,-13)
     fill(-5,10,-14,5,11,-13,M.trim)
     fill(-4,12,-14,4,13,-13,M.roof)
-    for x=-12,12,4 do
-        for y=5,21,8 do
+    -- Trois grandes baies verticales, plus lisibles que les petites fenêtres répétées.
+    for _,x in ipairs({-10,0,10}) do
+        for _,y in ipairs({5,14}) do
             clear(x,y,-13,x,y+3,-13)
             put(x,y+1,-13,M.glass)
-            fill(x-1,y+3,-14,x+1,y+3,-13,M.trim)
-            put(x,y+4,-13,M.gold)
+            put(x,y+2,-13,M.glass)
+            fill(x-2,y,-14,x+2,y,-14,M.trim)
+            fill(x-2,y+3,-14,x+2,y+3,-14,M.trim)
+            put(x,y+4,-14,M.gold)
+            put(x-1,y+1,-14,M.trim)
+            put(x+1,y+1,-14,M.trim)
         end
     end
     -- Contreforts verticaux et corniches sculptées.
@@ -641,9 +646,23 @@ local function new_keep()
         fill(-17,y,-14,17,y,-13,M.trim)
     end
 
-    -- Toit à deux pans très pentu, avec faîtage et pignons.
-    for layer=0,9 do
-        fill(-19+layer,27+layer,-51+layer,19-layer,27+layer,-11-layer,M.roof)
+    -- Toit à deux versants : profil en pente, faîtage longitudinal,
+    -- au lieu d'une succession de dalles horizontales massives.
+    for z=-51,-11 do
+        for x=-19,19 do
+            local y=27+math.floor((19-math.abs(x))/2)
+            put(x,y,z,M.roof)
+        end
+    end
+    -- Faîtage, rives et chevrons apparents sous les versants.
+    fill(-1,36,-50,1,36,-12,M.trim)
+    fill(-20,26,-51,20,26,-51,M.wood)
+    fill(-20,26,-11,20,26,-11,M.wood)
+    for z=-47,-15,8 do
+        for x=-18,18 do
+            local y=26+math.floor((19-math.abs(x))/2)
+            put(x,y,z,M.wood)
+        end
     end
     gable(0,27,-13,21,10,4)
     gable(0,27,-49,21,10,4)
@@ -671,11 +690,17 @@ local function new_keep()
         put(x,18,-10,M.trim)
     end
     fill(-10,19,-13,10,19,-10,M.roof)
-    -- Bannières et blasons.
-    for x=-11,11,22 do
-        fill(x-1,12,-13,x+1,16,-13,M.roof)
-        fill(x-2,16,-13,x+2,17,-13,M.gold)
-        put(x,11,-13,M.gold)
+    -- Bannières héraldiques encadrant la porte du donjon.
+    for _,x in ipairs({-13,13}) do
+        fill(x-1,12,-14,x+1,18,-14,M.roof)
+        fill(x-2,18,-14,x+2,18,-14,M.gold)
+        fill(x,14,-15,x,16,-15,M.gold)
+        put(x,11,-14,M.trim)
+    end
+    -- Couronnement de façade : bandeau, petits pinacles et gargouilles stylisées.
+    for x=-16,16,8 do
+        fill(x,24,-15,x+1,25,-14,M.trim)
+        put(x,26,-14,M.gold)
     end
 
     -- Salle du trône : estrade, dais, colonnes et lustres.
@@ -733,9 +758,37 @@ local function new_keep()
     clear(-11,10,-40,-9,12,-40)
     wall_x(7,14,10,15,-40,M.trim,1)
     clear(9,10,-40,11,12,-40)
-    -- Éclairage renforcé dans les salles et les circulations.
-    room_light_grid(-12,12,-43,-21,7,4)
-    room_light_grid(-12,12,-43,-21,15,6)
+    -- Éclairage de la grande salle : lustres sur l'axe et appliques murales.
+    -- On retire la grille de cubes lumineux flottants.
+    chandelier(0,6,-32)
+    chandelier(-8,6,-32)
+    chandelier(8,6,-32)
+    for _,p in ipairs({
+        {-15,4,-41},{15,4,-41},{-15,4,-29},{15,4,-29},
+        {-15,12,-41},{15,12,-41},{-15,12,-25},{15,12,-25},
+    }) do
+        put(p[1],p[2],p[3],M.gold)
+        lamp(p[1],p[2]+1,p[3])
+    end
+
+    -- Tapisseries bleues et or sur les murs latéraux du hall.
+    for _,side in ipairs({-1,1}) do
+        local x=side*15
+        for _,z in ipairs({-38,-26}) do
+            fill(x,3,z-1,x,7,z+1,M.roof)
+            fill(x,5,z,x,6,z,M.gold)
+            put(x,2,z,M.trim)
+            put(x,8,z,M.gold)
+        end
+    end
+
+    -- Poutres de chêne au plafond : elles structurent la salle sans
+    -- descendre dans le volume de circulation.
+    for _,z in ipairs({-41,-33,-25}) do
+        fill(-13,8,z,13,8,z,M.wood)
+        fill(-13,7,z,-13,8,z,M.trim)
+        fill(13,7,z,13,8,z,M.trim)
+    end
 
     -- Dernier étage : chapelle et observatoire sous les combles.
     wall_x(-15,15,18,22,-31,M.trim,1)
@@ -982,11 +1035,11 @@ local function build()
         minetest.fix_light({x=-58,y=-2,z=-64},{x=58,y=88,z=86})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Château des Brumes v30 généré : zones assemblées, tours élargies, escaliers hélicoïdaux continus.")
+    minetest.log("action","[GDO] Château des Brumes v31 généré : donjon redessiné, zones assemblées, tours élargies, escaliers hélicoïdaux continus.")
 end
 
 local storage = gdo_castle_storage
-local VERSION = 30
+local VERSION = 31
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
@@ -1013,11 +1066,11 @@ minetest.register_on_respawnplayer(function(player)
 end)
 
 minetest.register_chatcommand("refairechateau",{
-    description="Reconstruit le Château des Brumes (version architecturale 30)",
+    description="Reconstruit le Château des Brumes (version architecturale 31)",
     privs={interact=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
-        return true,"Château des Brumes v30 reconstruit. Retourne sur le parvis sud."
+        return true,"Château des Brumes v31 reconstruit. Retourne sur le parvis sud."
     end,
 })
