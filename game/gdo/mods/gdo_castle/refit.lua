@@ -89,9 +89,10 @@ end
 -- Les marches suivent un anneau octogonal : une révolution complète par étage.
 local function spiral_stair(cx, cz, r, h)
     local radius = math.max(1, r - 2)
+    local diagonal = math.max(1, math.floor(radius * 0.707 + 0.5))
     local ring = {
-        {0,-radius}, {radius,-radius}, {radius,0}, {radius,radius},
-        {0,radius}, {-radius,radius}, {-radius,0}, {-radius,-radius}
+        {0,-radius}, {diagonal,-diagonal}, {radius,0}, {diagonal,diagonal},
+        {0,radius}, {-diagonal,diagonal}, {-radius,0}, {-diagonal,-diagonal}
     }
     -- Un palier horizontal au départ, puis sept marches montantes :
     -- la boucle fait un tour complet et gagne exactement sept blocs.
@@ -112,7 +113,7 @@ local function spiral_stair(cx, cz, r, h)
         -- Le palier de sortie rejoint le plancher supérieur.
         local exit = ring[1]
         local ey = base + 7
-        clear(cx+exit[1],ey,cx+exit[1],cz+exit[2],ey+2,cz+exit[2])
+        clear(cx+exit[1],ey,cz+exit[2],cx+exit[1],ey+2,cz+exit[2])
         put(cx+exit[1],ey,cz+exit[2],M.wood)
         y = base + 7
     end
