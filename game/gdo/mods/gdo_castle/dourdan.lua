@@ -23,13 +23,15 @@ local M = {
     leaves = "gdo_castle:refit_leaves",
     water = "gdo_castle:refit_water",
     lamp = "gdo_castle:refit_lamp",
-    stair = "gdo_castle:refit_stair",
     stair_low = "gdo_castle:refit_stair_low",
     stair_high = "gdo_castle:refit_stair_high",
     table = "gdo_castle:refit_table",
     bench = "gdo_castle:refit_bench",
     rug = "gdo_castle:refit_rug",
     pillar = "gdo_castle:refit_pillar",
+    crate = "gdo_castle:refit_crate",
+    barrel = "gdo_castle:refit_barrel",
+    banner = "gdo_castle:refit_banner",
     flower_red = "gdo_castle:refit_flower_red",
     flower_blue = "gdo_castle:refit_flower_blue",
     flower_gold = "gdo_castle:refit_flower_gold",
@@ -219,6 +221,21 @@ register_furniture(M.pillar, "Colonne sculptée", textures.refit_trim, {
     {-0.38,-0.5,-0.38,0.38,-0.34,0.38},
     {-0.34,0.34,-0.34,0.34,0.5,0.34},
 })
+register_furniture(M.crate, "Caisse de marchandises", textures.refit_wood, {
+    {-0.5,-0.5,-0.5,0.5,0.5,0.5},
+    {-0.5,-0.32,-0.52,0.5,-0.24,0.52},
+    {-0.5,0.24,-0.52,0.5,0.32,0.52},
+    {-0.52,-0.5,-0.04,0.52,0.5,0.04},
+    {-0.04,-0.5,-0.52,0.04,0.5,0.52},
+})
+register_furniture(M.barrel, "Tonneau", textures.refit_wood, {
+    {-0.34,-0.5,-0.34,0.34,0.5,0.34},
+    {-0.42,-0.3,-0.42,0.42,-0.22,0.42},
+    {-0.42,0.22,-0.42,0.42,0.3,0.42},
+})
+register_furniture(M.banner, "Bannière de la maison", textures.refit_roof, {
+    {-0.05,-0.5,-0.36,0.05,0.35,0.36},
+}, false)
 
 local function put(x,y,z,name,param2)
     minetest.set_node({x=x,y=y+BASE_Y,z=z}, {name=name, param2=param2 or 0})
@@ -540,7 +557,7 @@ local function build_round_tower(spec)
     -- Porte du rez-de-chaussée et accès au chemin de ronde au niveau haut.
     tower_door(cx,cz,r,spec.entry,1,spec.threshold_steps)
     if spec.ground_side then
-        tower_door(cx,cz,r,spec.ground_side,1,false)
+        tower_door(cx,cz,r,spec.ground_side,1)
     end
     if spec.wall_side then
         tower_door(cx,cz,r,spec.wall_side,15,false)
@@ -1460,7 +1477,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 29
+local VERSION = 30
 
 local generation_started = false
 local function generate_if_needed()
