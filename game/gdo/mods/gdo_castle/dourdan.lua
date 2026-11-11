@@ -173,15 +173,15 @@ local function register_step_node(name, description, boxes, facedir)
     minetest.register_node(name, def)
 end
 
--- Marche basse : dalle de 1/2 bloc.
+-- Marche basse : demi-bloc inférieur, plateau horizontal stable.
 register_step_node(M.stair_low, "Marche basse en pierre", {
     {-0.5,-0.5,-0.5,0.5,0,0.5},
 })
--- Marche haute : socle bas + demi-marche en avant (+Z local).
--- Le paramtype2 facedir oriente cette demi-marche vers la marche suivante.
+-- Marche haute : même emprise au sol, avec une surélévation de 1/2 node
+-- sur la moitié avant. Le haut doit être dans la direction de progression.
 register_step_node(M.stair_high, "Marche haute en pierre", {
     {-0.5,-0.5,-0.5,0.5,0,0.5},
-    {-0.5,0,0,0.5,0.5,0.5},
+    {-0.5,0,-0.5,0.5,0,0.5},
 }, true)
 
 local function register_furniture(name, description, texture, boxes, walkable)
