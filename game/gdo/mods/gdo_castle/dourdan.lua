@@ -1390,7 +1390,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 26
+local VERSION = 27
 
 local generation_started = false
 local function generate_if_needed()
@@ -1406,8 +1406,8 @@ local function generate_if_needed()
         -- Faire générer le terrain classique avant de choisir l'altitude du plateau.
         local emerge_failed = false
         minetest.emerge_area(
-            {x=-56,y=-16,z=-64},
-            {x=56,y=160,z=96},
+            {x=-128,y=-32,z=-164},
+            {x=128,y=160,z=164},
             function(blockpos, action, calls_remaining)
                 if action == minetest.EMERGE_ERRORED or action == minetest.EMERGE_CANCELLED then
                     emerge_failed = true
@@ -1419,6 +1419,7 @@ local function generate_if_needed()
                         return
                     end
                     BASE_Y = choose_base_y()
+                    sample_natural_heights()
                     build()
                     if storage then storage:set_int("dourdan_plan_version",VERSION) end
                 end
@@ -1477,6 +1478,7 @@ minetest.register_chatcommand("refairechateau",{
             return false,"Cette carte utilise le générateur flat. Crée un nouveau monde avec le mapgen v6 pour obtenir les collines et les plaines."
         end
         BASE_Y = choose_base_y()
+        sample_natural_heights()
         build()
         if storage then storage:set_int("dourdan_plan_version",VERSION) end
         return true,"Château reconstruit sur le plateau naturel. Tu es sur le parvis sud."
