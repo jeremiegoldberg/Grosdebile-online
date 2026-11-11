@@ -902,7 +902,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 13
+local VERSION = 14
 
 local generation_started = false
 local function generate_if_needed()
@@ -919,7 +919,7 @@ local function generate_if_needed()
         local emerge_failed = false
         minetest.emerge_area(
             {x=-56,y=-16,z=-64},
-            {x=56,y=100,z=88},
+            {x=56,y=160,z=96},
             function(blockpos, action, calls_remaining)
                 if action == minetest.EMERGE_ERRORED or action == minetest.EMERGE_CANCELLED then
                     emerge_failed = true
