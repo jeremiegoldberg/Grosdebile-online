@@ -497,22 +497,27 @@ local function tower_door(cx,cz,r,side,level,threshold_steps)
 end
 
 local function tower_window(cx,cz,r,side,y)
+    -- Archère verticale étroite : une seule colonne ouverte sur trois niveaux.
     if side == "north" then
-        clear(cx-1,y,cz-r,cx+1,y+1,cz-r)
-        put(cx,y,cz-r,M.glass)
+        clear(cx,y,cz-r,cx,y+2,cz-r)
         put(cx,y+1,cz-r,M.glass)
+        put(cx,y,cz-r,M.trim)
+        put(cx,y+2,cz-r,M.trim)
     elseif side == "south" then
-        clear(cx-1,y,cz+r,cx+1,y+1,cz+r)
-        put(cx,y,cz+r,M.glass)
+        clear(cx,y,cz+r,cx,y+2,cz+r)
         put(cx,y+1,cz+r,M.glass)
+        put(cx,y,cz+r,M.trim)
+        put(cx,y+2,cz+r,M.trim)
     elseif side == "east" then
-        clear(cx+r, y,cz-1,cx+r,y+1,cz+1)
-        put(cx+r,y,cz,M.glass)
+        clear(cx+r,y,cz,cx+r,y+2,cz)
         put(cx+r,y+1,cz,M.glass)
+        put(cx+r,y,cz,M.trim)
+        put(cx+r,y+2,cz,M.trim)
     else
-        clear(cx-r,y,cz-1,cx-r,y+1,cz+1)
-        put(cx-r,y,cz,M.glass)
+        clear(cx-r,y,cz,cx-r,y+2,cz)
         put(cx-r,y+1,cz,M.glass)
+        put(cx-r,y,cz,M.trim)
+        put(cx-r,y+2,cz,M.trim)
     end
 end
 
@@ -549,6 +554,22 @@ local function build_round_tower(spec)
     -- Planchers à chaque niveau ; la rampe annulaire découpe sa trémie.
     for y=1,h,7 do
         disk_floor(cx,cz,inner,y,M.floor)
+    end
+
+    -- Noyau central de la tour : pilier de pierre et nervures de taille.
+    -- Il donne un point d'appui visuel à l'escalier qui tourne le long du mur.
+    for y=1,h do
+        for dx=-1,1 do
+            for dz=-1,1 do
+                local name = (dx==0 and dz==0) and M.stone or M.trim
+                put(cx+dx,y,cz+dz,name)
+            end
+        end
+    end
+    for level=1,h,7 do
+        if level+2 < h then lamp(cx,level+2,cz) end
+        put(cx-1,level+1,cz-1,M.gold)
+        put(cx+1,level+1,cz+1,M.gold)
     end
 
     -- Une vis large, dans le vide libéré, entre chaque niveau.
@@ -1509,7 +1530,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 31
+local VERSION = 32
 
 local generation_started = false
 local function generate_if_needed()
