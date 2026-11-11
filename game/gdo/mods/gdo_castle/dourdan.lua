@@ -490,9 +490,9 @@ local function build_logis()
     for _,p in ipairs({
         {-20,6,-22},{-12,6,-22},{0,6,-22},{8,6,-22},
         {-20,6,-16},{-12,6,-16},{0,6,-16},{8,6,-16},
-        {-20,13,-22},{-12,13,-22},{0,13,-22},{8,13,-22},
-        {-20,13,-16},{-12,13,-16},{0,13,-16},{8,13,-16},
-        {-20,17,-22},{-12,17,-22},{0,17,-22},{8,17,-22},
+        {-16,13,-22},{-10,13,-22},{-2,13,-22},{8,13,-22},
+        {-16,13,-16},{-10,13,-16},{-2,13,-16},{8,13,-16},
+        {-16,16,-22},{-10,16,-22},{-2,16,-22},{8,16,-22},
     }) do
         lamp(p[1],p[2],p[3])
     end
@@ -824,7 +824,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 10
+local VERSION = 11
 
 local function generate_if_needed()
     if not storage or storage:get_int("dourdan_plan_version") < VERSION then
