@@ -78,6 +78,7 @@ register_textured(M.water, "Eau du fossé", {cracky = 3}, {
     pointable = false,
 })
 register_textured(M.lamp, "Lanterne murale", {cracky = 2}, {
+    tiles = {textures.refit_gold},
     drawtype = "glasslike",
     paramtype = "light",
     sunlight_propagates = true,
@@ -145,12 +146,6 @@ end
 
 local function lamp(x,y,z)
     put(x,y,z,M.lamp)
-end
-
-local function signum(n)
-    if n < 0 then return -1 end
-    if n > 0 then return 1 end
-    return 0
 end
 
 local function round_number(n)
@@ -727,7 +722,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 4
+local VERSION = 5
 
 local function generate_if_needed()
     if not storage or storage:get_int("dourdan_plan_version") < VERSION then
