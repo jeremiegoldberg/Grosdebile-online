@@ -714,9 +714,9 @@ local function build()
     end
 
     -- Nettoyage strict de l'emprise du nouveau plan Dourdan.
-    clear(-44,-8,-43,44,48,76)
-    fill(-44,-1,-43,44,-1,76,"gdo_core:terre")
-    deck(-44,-43,44,76,0,M.grass)
+    clear(-44,-8,-54,44,48,80)
+    fill(-44,-1,-54,44,-1,80,"gdo_core:terre")
+    deck(-44,-54,44,80,0,M.grass)
 
     -- Construction par zones, dans l'ordre des structures porteuses.
     build_enclosure()
@@ -732,7 +732,7 @@ local function build()
     audit_geometry()
 
     if minetest.fix_light then
-        minetest.fix_light({x=-44,y=-2,z=-43},{x=44,y=48,z=76})
+        minetest.fix_light({x=-44,y=-2,z=-54},{x=44,y=48,z=80})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
 
