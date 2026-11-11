@@ -137,7 +137,8 @@ end
 local function disk_floor(cx,cz,r,y,name)
     for x=-r,r do
         for z=-r,r do
-            if x*x+z*z <= r*r then put(cx+x,y,cz+z,name) end
+            -- Surface strictement intérieure : ne jamais remplacer l'anneau porteur.
+            if x*x+z*z < r*r then put(cx+x,y,cz+z,name) end
         end
     end
 end
@@ -312,7 +313,7 @@ local function build_round_tower(spec)
 
     -- Planchers de niveaux ; la spirale découpe sa propre trémie ensuite.
     for y=1,h,7 do
-        disk_floor(cx,cz,inner-1,y,M.floor)
+        disk_floor(cx,cz,inner,y,M.floor)
     end
 
     place_spiral_stair(cx,cz,r,h,spec.entry)
@@ -726,7 +727,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 2
+local VERSION = 3
 
 local function generate_if_needed()
     if not storage or storage:get_int("dourdan_plan_version") < VERSION then
