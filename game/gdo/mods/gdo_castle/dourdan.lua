@@ -454,7 +454,7 @@ local function build_round_tower(spec)
     -- REPRISE DU FÛT : on vide d'abord tout l'intérieur.
     -- Les courtines et le châtelet étaient construits avant les tours ;
     -- leurs murs traversaient donc les cages d'escalier et les condamnaient.
-    for y=1,h+2 do
+    for y=1,h do
         for x=-r,r do
             for z=-r,r do
                 local d=x*x+z*z
@@ -462,6 +462,16 @@ local function build_round_tower(spec)
                     put(cx+x,y,cz+z,"air")
                 elseif d <= r*r then
                     put(cx+x,y,cz+z,M.stone)
+                end
+            end
+        end
+    end
+    -- La zone au-dessus du plancher sommital reste ouverte jusqu'aux créneaux.
+    for y=h+1,h+2 do
+        for x=-r,r do
+            for z=-r,r do
+                if x*x+z*z < inner*inner then
+                    put(cx+x,y,cz+z,"air")
                 end
             end
         end
@@ -1147,7 +1157,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 22
+local VERSION = 23
 
 local generation_started = false
 local function generate_if_needed()
