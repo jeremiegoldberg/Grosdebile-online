@@ -648,6 +648,10 @@ local function build_courtyard_buildings()
     fill(-13,3,1,-9,3,1,M.wood)
     fill(-13,3,5,-9,3,5,M.wood)
     lamp(-11,5,3)
+    -- Trois navets héroïques du tutoriel, replacés dans le jardin de la cour.
+    put(-8,1,21,"gdo_core:navet_sur_pied")
+    put(-10,1,22,"gdo_core:navet_sur_pied")
+    put(-7,1,23,"gdo_core:navet_sur_pied")
     -- Appliques au niveau des galeries et des portes de la cour.
     for _,p in ipairs({{-20,5,-5},{20,5,-5},{-20,5,20},{20,5,20},
                        {-30,8,0},{30,8,0},{-30,8,25},{30,8,25}}) do
@@ -786,6 +790,19 @@ local function audit_geometry()
         " dégagements corrigés, "..blocked.." blocs dans les couloirs.")
 end
 
+local function ensure_gerard()
+    local pos = {x=3,y=BASE_Y+1,z=20}
+    for _,object in ipairs(minetest.get_objects_inside_radius(pos,8)) do
+        local entity = object:get_luaentity()
+        if entity and entity.name == "gdo_core:gerard" then
+            object:remove()
+        end
+    end
+    if minetest.registered_entities["gdo_core:gerard"] then
+        minetest.add_entity(pos,"gdo_core:gerard")
+    end
+end
+
 local function safe_spawn(player)
     if not player or not player:is_player() then return end
     player:set_pos({x=0,y=BASE_Y+1,z=68})
@@ -873,6 +890,7 @@ local function build()
     -- La passe d'assemblage intervient après toutes les zones.
     final_connections()
     audit_geometry()
+    ensure_gerard()
 
     if minetest.fix_light then
         minetest.fix_light({x=-50,y=BASE_Y-6,z=-56},{x=50,y=BASE_Y+82,z=76})
