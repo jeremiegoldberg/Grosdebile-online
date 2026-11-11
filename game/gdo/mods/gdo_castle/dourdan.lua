@@ -250,7 +250,7 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
     end
 end
 
-local function tower_door(cx,cz,r,side,level)
+local function tower_door(cx,cz,r,side,level,threshold_steps)
     local y1,y2 = level+1,level+4
     local reach = r+1
     local inner = r-2
@@ -262,6 +262,29 @@ local function tower_door(cx,cz,r,side,level)
         clear(cx+inner,y1,cz-1,cx+reach,y2,cz+1)
     elseif side == "west" then
         clear(cx-reach,y1,cz-1,cx-inner,y2,cz+1)
+    end
+
+    -- Deux demi-marches raccordent le sol de la cour au plancher du rez-de-chaussée.
+    if level == 1 and threshold_steps ~= false then
+        for lateral=-1,1 do
+            if side == "east" then
+                put(cx+reach,1,cz+lateral,M.stair_low)
+                put(cx+reach-1,1,cz+lateral,M.stair_high)
+                put(cx+inner,1,cz+lateral,M.floor)
+            elseif side == "west" then
+                put(cx-reach,1,cz+lateral,M.stair_low)
+                put(cx-reach+1,1,cz+lateral,M.stair_high)
+                put(cx-inner,1,cz+lateral,M.floor)
+            elseif side == "north" then
+                put(cx+lateral,1,cz-reach,M.stair_low)
+                put(cx+lateral,1,cz-reach+1,M.stair_high)
+                put(cx+lateral,1,cz-inner,M.floor)
+            elseif side == "south" then
+                put(cx+lateral,1,cz+reach,M.stair_low)
+                put(cx+lateral,1,cz+reach-1,M.stair_high)
+                put(cx+lateral,1,cz+inner,M.floor)
+            end
+        end
     end
 end
 
@@ -308,7 +331,7 @@ local function build_round_tower(spec)
     place_spiral_stair(cx,cz,r,h,spec.entry)
 
     -- Porte de pied et sorties de circulation aux niveaux de rempart.
-    tower_door(cx,cz,r,spec.entry,1)
+    tower_door(cx,cz,r,spec.entry,1,spec.threshold_steps)
     if spec.wall_side then
         tower_door(cx,cz,r,spec.wall_side,15)
     end
@@ -404,8 +427,12 @@ local function build_logis()
     deck(-26,-25,12,-13,8,M.wood)
     deck(-26,-25,12,-13,15,M.wood)
 
-    -- Porte principale ouverte sur la cour.
+    -- Porte principale ouverte sur la cour, avec deux demi-marches de seuil.
     clear(-6,2,-12,-1,5,-10)
+    for x=-4,0 do
+        put(x,1,-11,M.stair_low)
+        put(x,1,-12,M.stair_high)
+    end
     -- Grande salle au rez-de-chaussée, cloison de cuisine au nord-est.
     wall_z(-24,-14,2,7,-3,M.trim,1)
     clear(-3,2,-20,-3,5,-18)
@@ -459,7 +486,7 @@ end
 local function build_keep()
     build_round_tower({
         x=24,z=-20,r=10,h=29,
-        entry="west",wall_side="north",
+        entry="west",wall_side="north",threshold_steps=false,
         extra_doors={8},window_side="east",
     })
 end
@@ -608,6 +635,10 @@ local function final_connections()
     clear(13,2,-22,18,5,-18)
     clear(13,9,-22,18,12,-18)
     clear(13,16,-22,18,19,-18)
+    -- Petits paliers de raccord entre le logis et le noyau du donjon.
+    deck(13,-22,16,-18,1,M.floor)
+    deck(13,-22,16,-18,8,M.floor)
+    deck(13,-22,16,-18,15,M.floor)
     -- Entrée des tours d'angle après construction des courtines et bâtiments.
     tower_door(-31,-27,7,"east",1)
     tower_door(-31,31,7,"east",1)
@@ -616,9 +647,9 @@ local function final_connections()
     tower_door(-10,32,7,"north",1)
     tower_door(10,32,7,"north",1)
     -- Refaire les fenêtres/portes du donjon en dernier pour garder les seuils nets.
-    tower_door(24,-20,10,"west",1)
-    tower_door(24,-20,10,"west",8)
-    tower_door(24,-20,10,"north",15)
+    tower_door(24,-20,10,"west",1,false)
+    tower_door(24,-20,10,"west",8,false)
+    tower_door(24,-20,10,"north",15,false)
 
     -- Dégagement vertical et horizontal des passages vitaux.
     clear(-3,2,25,3,10,42)
