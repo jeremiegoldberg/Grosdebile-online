@@ -88,34 +88,25 @@ end
 -- Tour circulaire avec escalier hélicoïdal intégré contre la paroi intérieure.
 -- Les marches suivent un anneau octogonal : une révolution complète par étage.
 local function spiral_stair(cx, cz, r, h)
-    local radius = math.max(1, r - 2)
-    local diagonal = math.max(1, math.floor(radius * 0.707 + 0.5))
-    local ring = {
-        {0,-radius}, {diagonal,-diagonal}, {radius,0}, {diagonal,diagonal},
-        {0,radius}, {-diagonal,diagonal}, {-radius,0}, {-diagonal,-diagonal}
-    }
-    -- Un palier horizontal au départ, puis sept marches montantes :
-    -- la boucle fait un tour complet et gagne exactement sept blocs.
-    local y = 2
-    for base=1,h-5,7 do
+    -- Escalier hélicoïdal continu sur un anneau carré arrondi.
+    -- Chaque marche est voisine de la suivante (pas de saut diagonal).
+    local radius = math.max(3, r - 2)
+    local ring = {}
+    for x=-radius,radius do ring[#ring+1]={x,-radius} end
+    for z=-radius+1,radius do ring[#ring+1]={radius,z} end
+    for x=radius-1,-radius,-1 do ring[#ring+1]={x,radius} end
+    for z=radius-1,-radius+1,-1 do ring[#ring+1]={-radius,z} end
+
+    local rise_per_turn = 7
+    local base = 1
+    while base + rise_per_turn < h - 2 do
         for i,p in ipairs(ring) do
-            local rise = (i == 1) and 0 or 1
-            y = y + rise
-            local x, z = cx+p[1], cz+p[2]
-            -- Dégager le volume de passage et remplacer le plancher traversé.
+            local y = base + math.floor((i-1)*rise_per_turn/#ring)
+            local x,z = cx+p[1],cz+p[2]
             clear(x,y,z,x,y+2,z)
             put(x,y,z,M.trim)
-            -- Dégager aussi le bloc au-dessus du pas suivant pour éviter
-            -- les plafonds trop bas dans les petites tours.
-            local nextp = ring[(i % #ring)+1]
-            clear(cx+nextp[1],y+1,cz+nextp[2],cx+nextp[1],y+2,cz+nextp[2])
         end
-        -- Le palier de sortie rejoint le plancher supérieur.
-        local exit = ring[1]
-        local ey = base + 7
-        clear(cx+exit[1],ey,cz+exit[2],cx+exit[1],ey+2,cz+exit[2])
-        put(cx+exit[1],ey,cz+exit[2],M.wood)
-        y = base + 7
+        base = base + rise_per_turn
     end
 end
 
@@ -128,6 +119,9 @@ local function room_light_grid(x1,x2,z1,z2,y,step)
 end
 
 local function round_tower(cx,cz,r,h)
+    -- Les tours de ce château sont volontairement généreuses :
+    -- diamètre intérieur suffisant pour une vraie cage d'escalier hélicoïdale.
+    r = math.max(7, r + 2)
     -- Fût circulaire épais, avec un intérieur réellement accessible.
     for y=1,h do
         for x=-r,r do for z=-r,r do
@@ -924,32 +918,34 @@ local function safe_spawn(player)
 end
 
 local function build()
-    -- Déplacer les joueurs avant de vider la zone : personne ne reste enfermé.
-    for _,player in ipairs(minetest.get_connected_players()) do
-        safe_spawn(player)
-    end
-    -- Emprise entièrement nettoyée : aucune trace de l'ancien plan ne subsiste.
-    clear(-54,-12,-60,54,82,82)
-    fill(-54,-1,-60,54,-1,82,"gdo_core:terre")
-    deck(-54,-60,54,82,0,M.grass)
+    -- Joueurs déplacés avant toute reconstruction de l'emprise.
+    for _,player in ipairs(minetest.get_connected_players()) do safe_spawn(player) end
+
+    -- Préparation commune du terrain : une base propre pour toutes les zones.
+    clear(-58,-12,-64,58,88,86)
+    fill(-58,-1,-64,58,-1,86,"gdo_core:terre")
+    deck(-58,-64,58,86,0,M.grass)
+
+    -- ZONE 1 — enceinte et cour : périmètre, chemins de ronde, tours d'angle.
     new_outer_bailey()
+
+    -- ZONE 2 — donjon : volumes, niveaux, salles, toiture et tours maîtresses.
     new_keep()
+
+    -- ZONE 3 — châtelet : tours de porte, herse et assommoir.
     new_gatehouse()
-    -- Parvis sud et approche lisible depuis le point d'arrivée.
+
+    -- ZONE 4 — liaison extérieure : parvis, fossé et pont-levis.
     deck(-25,40,25,78,0,M.floor)
     deck(-4,39,4,68,0,M.path)
-    -- Fossé en eau devant la porte, avec pont de bois franchissable.
     clear(-15,0,40,15,0,47)
     fill(-15,0,40,15,0,47,M.water)
     fill(-6,1,40,6,1,47,M.wood)
-    for x=-6,6,3 do
-        fill(x,2,40,x,2,47,M.trim)
-    end
+    for x=-6,6,3 do fill(x,2,40,x,2,47,M.trim) end
     for z=40,47,2 do
         fill(-7,2,z,-7,3,z,M.wood)
         fill(7,2,z,7,3,z,M.wood)
     end
-    -- Chaînes et piles de pierre du pont-levis.
     fill(-9,3,40,-9,8,40,M.wood)
     fill(9,3,40,9,8,40,M.wood)
     fill(-10,8,40,-8,8,40,M.gold)
@@ -958,44 +954,39 @@ local function build()
         fill(-12,1,z,-11,2,z,M.trim)
         fill(11,1,z,12,2,z,M.trim)
     end
-    -- OUVERTURES FINALES DES TROIS MURS ALIGNÉS SUR L'AXE D'ENTRÉE.
-    -- La porte du donjon (z=-13) est découpée après toutes les décorations.
-    clear(-5,1,-15,5,11,-11)
-    clear(-4,1,-22,4,6,-15)
-    deck(-4,-22,4,-15,0,M.floor)
 
-    -- Le mur nord de l'enceinte (z=39) doit être percé devant le châtelet.
-    -- Le châtelet est centré sur x=0 : ouverture large, haute et traversante.
-    clear(-6,1,37,6,12,42)
-    -- Le mur opposé de l'enceinte (z=-5) reçoit également un passage piéton.
-    clear(-5,1,-7,5,10,-3)
-
-    -- Réouverture du portail du châtelet après tous les autres remplissages.
-    clear(-5,1,23,5,12,41)
-    -- Couloir continu entre le pont-levis, le châtelet et la cour.
-    clear(-4,1,39,4,6,55)
-    deck(-4,39,4,55,0,M.floor)
-
-    -- Jardinet et panneau à l'entrée du domaine.
+    -- ZONE 5 — parvis d'accueil et signalétique.
     deck(-18,45,-10,54,0,M.grass)
     put(-14,1,49,"gdo_core:navet_sur_pied")
     put(-14,1,51,"gdo_core:navet_sur_pied")
     put(0,1,74,"gdo_castle:arrival_sign")
-    -- Zone d'apparition permanente : sol plat et volume libre pour le joueur.
     deck(-3,76,3,80,0,M.floor)
     clear(-2,1,76,2,5,80)
-    -- Garde-corps bas sur les côtés de la petite plateforme.
     fill(-3,1,76,-3,2,80,M.trim)
     fill(3,1,76,3,2,80,M.trim)
+
+    -- PASSE DE COHÉRENCE — les ouvertures sont retaillées après toutes
+    -- les constructions pour garantir un parcours sans mur rebouché.
+    -- Axe sud -> châtelet -> cour -> entrée du donjon.
+    clear(-5,1,-15,5,11,-11)
+    clear(-4,1,-22,4,6,-15)
+    deck(-4,-22,4,-15,0,M.floor)
+    clear(-6,1,37,6,12,42)
+    clear(-5,1,-7,5,10,-3)
+    clear(-5,1,23,5,12,41)
+    clear(-4,1,39,4,6,55)
+    deck(-4,39,4,55,0,M.floor)
+
+    -- Éclairage et mise à jour du monde après l'ensemble des zones.
     if minetest.fix_light then
-        minetest.fix_light({x=-54,y=-2,z=-60},{x=54,y=82,z=82})
+        minetest.fix_light({x=-58,y=-2,z=-64},{x=58,y=88,z=86})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Château des Brumes v28 généré : salles supplémentaires, escaliers et tours accessibles.")
+    minetest.log("action","[GDO] Château des Brumes v29 généré : zones assemblées, tours élargies, escaliers hélicoïdaux continus.")
 end
 
 local storage = gdo_castle_storage
-local VERSION = 28
+local VERSION = 29
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
@@ -1022,11 +1013,11 @@ minetest.register_on_respawnplayer(function(player)
 end)
 
 minetest.register_chatcommand("refairechateau",{
-    description="Reconstruit le Château des Brumes (version architecturale 28)",
+    description="Reconstruit le Château des Brumes (version architecturale 29)",
     privs={interact=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
-        return true,"Château des Brumes v28 reconstruit. Retourne sur le parvis sud."
+        return true,"Château des Brumes v29 reconstruit. Retourne sur le parvis sud."
     end,
 })
