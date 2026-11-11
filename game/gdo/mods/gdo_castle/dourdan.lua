@@ -487,10 +487,13 @@ local function build_logis()
     fill(-17,3,-24,-16,5,-24,M.roof)
     lamp(-16,6,-24)
     -- Éclairage réparti au-dessus des espaces de réception.
-    for _,p in ipairs({{-20,6,-22},{-12,6,-22},{-4,6,-22},
-                       {-20,6,-34},{-12,6,-34},{-4,6,-34},
-                       {-20,13,-22},{-12,13,-22},{-4,13,-22},
-                       {-20,20,-22},{-12,20,-22},{-4,20,-22}}) do
+    for _,p in ipairs({
+        {-20,6,-22},{-12,6,-22},{0,6,-22},{8,6,-22},
+        {-20,6,-16},{-12,6,-16},{0,6,-16},{8,6,-16},
+        {-20,13,-22},{-12,13,-22},{0,13,-22},{8,13,-22},
+        {-20,13,-16},{-12,13,-16},{0,13,-16},{8,13,-16},
+        {-20,17,-22},{-12,17,-22},{0,17,-22},{8,17,-22},
+    }) do
         lamp(p[1],p[2],p[3])
     end
     -- Réfectoire et cuisine sur le côté est.
@@ -821,7 +824,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 9
+local VERSION = 10
 
 local function generate_if_needed()
     if not storage or storage:get_int("dourdan_plan_version") < VERSION then
