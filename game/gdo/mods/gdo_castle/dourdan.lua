@@ -848,6 +848,32 @@ minetest.register_on_respawnplayer(function(player)
     return true
 end)
 
+minetest.register_chatcommand("chateau_pos", {
+    description = "Affiche les coordonnées et les blocs devant le joueur",
+    privs = {interact = true},
+    func = function(name)
+        local player = minetest.get_player_by_name(name)
+        if not player then return false, "Joueur introuvable." end
+        local p = player:get_pos()
+        local d = player:get_look_dir()
+        minetest.chat_send_player(name, string.format(
+            "[GDO] Position : x=%.2f y=%.2f z=%.2f | direction : x=%.2f y=%.2f z=%.2f",
+            p.x,p.y,p.z,d.x,d.y,d.z))
+        for step=1,5 do
+            local q = {
+                x=math.floor(p.x+d.x*step+0.5),
+                y=math.floor(p.y+1.2+d.y*step+0.5),
+                z=math.floor(p.z+d.z*step+0.5),
+            }
+            local n = minetest.get_node_or_nil(q)
+            minetest.chat_send_player(name, string.format(
+                "[GDO] Devant %d : (%d,%d,%d) = %s",
+                step,q.x,q.y,q.z,n and n.name or "ignore"))
+        end
+        return true, "Diagnostic affiché dans le chat."
+    end,
+})
+
 minetest.register_chatcommand("refairechateau",{
     description = "Reconstruit le château selon le plan Dourdan",
     privs = {interact=true},
