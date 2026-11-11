@@ -328,42 +328,60 @@ end
 
 local staircase_cells = {}
 
+local function angle_progress(x,z,entry_side)
+    local atan2 = math.atan2 or function(y,x0)
+        if x0 > 0 then return math.atan(y/x0) end
+        if x0 < 0 and y >= 0 then return math.atan(y/x0)+math.pi end
+        if x0 < 0 then return math.atan(y/x0)-math.pi end
+        if y > 0 then return math.pi/2 end
+        if y < 0 then return -math.pi/2 end
+        return 0
+    end
+    local starts = {
+        east = 0,
+        south = math.pi/2,
+        west = math.pi,
+        north = -math.pi/2,
+    }
+    local angle = atan2(z,x)
+    local delta = (angle - (starts[entry_side] or math.pi)) % (2*math.pi)
+    return delta/(2*math.pi)
+end
+
 local function place_spiral_stair(cx,cz,r,height,entry_side)
-    local radius = r-3
-    local ring = make_octagonal_ring(radius,entry_side)
-    local count = #ring
-    if count < 16 then
-        minetest.log("error","[GDO] Anneau d'escalier trop court pour une tour.")
+    -- Rampe hélicoïdale annulaire de deux à trois nodes de largeur.
+    -- Elle suit le fût circulaire et laisse un noyau central ouvert.
+    local outer = r-3
+    local inner = r-5
+    if inner < 2 then
+        minetest.log("error","[GDO] Tour trop étroite pour une vis praticable.")
         return
     end
-    for i,p in ipairs(ring) do
-        local q = ring[(i % count)+1]
-        local distance = math.abs(p.x-q.x)+math.abs(p.z-q.z)
-        if distance ~= 1 then
-            minetest.log("error","[GDO] Escalier refusé : rupture de "..distance..
-                " nodes dans la boucle de la tour.")
-            return
-        end
-    end
 
-    -- Une seule vis continue. Chaque marche a un support plein et une hauteur
-    -- réelle de 0,5 ou 1 node via paramtype2=leveled.
-    local max_halfsteps = 2*(height-1)
-    local cycle = 0
-    while 1 + cycle*14 <= max_halfsteps do
-        for i,p in ipairs(ring) do
-            local halfsteps = 1 + cycle*14 + math.floor((i-1)*14/count)
-            local target_height = 1.5 + 0.5*halfsteps
-            local node_y = math.floor(target_height)
-            local level = (target_height-node_y > 0.25) and 64 or 32
-            local x,z = cx+p.x,cz+p.z
+    -- Une révolution gagne 7 nodes ; les niveaux sont quantifiés en demi-nodes.
+    local turns = math.floor((height-2)/7)
+    for turn=0,turns do
+        for dx=-outer,outer do
+            for dz=-outer,outer do
+                local d2 = dx*dx + dz*dz
+                if d2 >= inner*inner and d2 <= outer*outer then
+                    local progress = angle_progress(dx,dz,entry_side)
+                    local halfstep = math.floor(progress*14)
+                    local target_height = 1.5 + 0.5*(1 + turn*14 + halfstep)
+                    if target_height <= height+0.5 then
+                        local node_y = math.floor(target_height)
+                        local level = math.floor((target_height-(node_y-0.5))*64+0.5)
+                        level = math.max(32,math.min(64,level))
+                        local x,z = cx+dx,cz+dz
 
-            -- Dégagement de 2,5 blocs au-dessus de chaque marche.
-            clear(x,node_y+1,z,x,node_y+2,z)
-            put(x,node_y,z,M.stair,level)
-            staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
+                        -- Volume de marche net, avec deux nodes libres au-dessus.
+                        clear(x,node_y+1,z,x,node_y+2,z)
+                        put(x,node_y,z,M.stair,level)
+                        staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
+                    end
+                end
+            end
         end
-        cycle = cycle+1
     end
 end
 
@@ -432,60 +450,63 @@ end
 local function build_round_tower(spec)
     local cx,cz,r,h = spec.x,spec.z,spec.r,spec.h
     local inner = r-2
-    -- Mur circulaire de deux nodes d'épaisseur.
-    for y=1,h do
+
+    -- REPRISE DU FÛT : on vide d'abord tout l'intérieur.
+    -- Les courtines et le châtelet étaient construits avant les tours ;
+    -- leurs murs traversaient donc les cages d'escalier et les condamnaient.
+    for y=1,h+2 do
         for x=-r,r do
             for z=-r,r do
                 local d=x*x+z*z
-                if d <= r*r and d >= inner*inner then
+                if d < inner*inner then
+                    put(cx+x,y,cz+z,"air")
+                elseif d <= r*r then
                     put(cx+x,y,cz+z,M.stone)
                 end
             end
         end
     end
 
-    -- Planchers de niveaux ; la spirale découpe sa propre trémie ensuite.
+    -- Planchers à chaque niveau ; la rampe annulaire découpe sa trémie.
     for y=1,h,7 do
         disk_floor(cx,cz,inner,y,M.floor)
-        -- Une lanterne centrale par niveau ; le noyau reste libre de la spirale.
-        if y+3 < h then lamp(cx,y+3,cz) end
     end
 
+    -- Une vis large, dans le vide libéré, entre chaque niveau.
     place_spiral_stair(cx,cz,r,h,spec.entry)
 
-    -- Le plancher du dernier niveau (y=h) sert de terrasse sommitale.
-    -- On ne pose pas de seconde dalle : elle créerait une marche d'un node.
-    
-    -- Porte de pied et sorties de circulation aux niveaux de rempart.
+    -- Porte du rez-de-chaussée et accès au chemin de ronde au niveau haut.
     tower_door(cx,cz,r,spec.entry,1,spec.threshold_steps)
     if spec.wall_side then
         tower_door(cx,cz,r,spec.wall_side,15)
     end
-    if spec.extra_doors then
-        for _,level in ipairs(spec.extra_doors) do
-            tower_door(cx,cz,r,spec.entry,level)
-        end
-    end
 
-    -- Baies étroites opposées à la porte, étagées sur le fût.
-    local window_side = spec.window_side or "north"
+    -- Quatre meurtrières vitrées et lanternes murales à chaque niveau.
     for y=5,h-3,7 do
-        tower_window(cx,cz,r,window_side,y)
+        tower_window(cx,cz,r,"north",y)
+        tower_window(cx,cz,r,"east",y)
+        tower_window(cx,cz,r,"south",y)
+        tower_window(cx,cz,r,"west",y)
+        lamp(cx,y+2,cz-r+1)
+        lamp(cx+r-1,y+2,cz)
+        lamp(cx,y+2,cz+r-1)
+        lamp(cx-r+1,y+2,cz)
     end
 
-    -- Terrasse sommitale crénelée, sans toit bas qui condamnerait l'escalier.
+    -- Terrasse supérieure avec un véritable sol continu et des créneaux.
+    disk_floor(cx,cz,inner,h+1,M.floor)
     for x=-r-1,r+1 do
         for z=-r-1,r+1 do
             local d=x*x+z*z
             if d <= (r+1)*(r+1) and d >= (r-1)*(r-1) then
-                put(cx+x,h+1,cz+z,M.trim)
+                put(cx+x,h+2,cz+z,M.trim)
                 if (x+z)%2 == 0 then
-                    put(cx+x,h+2,cz+z,M.trim)
+                    put(cx+x,h+3,cz+z,M.trim)
                 end
             end
         end
     end
-    lamp(cx,h-1,cz)
+    lamp(cx,h,cz)
 end
 
 -- ZONE 1 : enceinte quadrangulaire et chemins de ronde.
@@ -716,9 +737,8 @@ end
 -- ZONE 3 : donjon circulaire au nord-est, inspiré du plan de Dourdan.
 local function build_keep()
     build_round_tower({
-        x=24,z=-20,r=10,h=29,
+        x=24,z=-20,r=12,h=29,
         entry="west",wall_side="north",threshold_steps=false,
-        extra_doors={8},window_side="east",
     })
 end
 
@@ -916,27 +936,28 @@ local function build_gardens_and_approach()
 end
 
 local function build_towers()
-    -- Trois tours d'angle ; la quatrième est le grand donjon nord-est.
+    -- Tours d'angle agrandies ; les portes hautes rejoignent les chemins de ronde.
     build_round_tower({
-        x=-31,z=-27,r=7,h=22,
-        entry="east",window_side="west",
+        x=-31,z=-27,r=9,h=22,
+        entry="east",wall_side="south",
     })
     build_round_tower({
-        x=-31,z=31,r=7,h=22,
-        entry="east",window_side="west",
+        x=-31,z=31,r=9,h=22,
+        entry="east",wall_side="north",
     })
     build_round_tower({
-        x=31,z=31,r=7,h=22,
-        entry="west",window_side="east",
+        x=31,z=31,r=9,h=22,
+        entry="west",wall_side="north",
     })
-    -- Tours jumelles du châtelet.
+
+    -- Tours jumelles du châtelet : sorties raccordées à la galerie haute.
     build_round_tower({
-        x=-10,z=32,r=7,h=22,
-        entry="north",window_side="west",
+        x=-10,z=32,r=9,h=22,
+        entry="north",wall_side="east",
     })
     build_round_tower({
-        x=10,z=32,r=7,h=22,
-        entry="north",window_side="east",
+        x=10,z=32,r=9,h=22,
+        entry="north",wall_side="west",
     })
 end
 
@@ -1123,7 +1144,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 20
+local VERSION = 21
 
 local generation_started = false
 local function generate_if_needed()
