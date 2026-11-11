@@ -695,9 +695,10 @@ local function build()
     end
 
     -- Nettoyage strict de l'emprise du nouveau plan Dourdan.
-    clear(-44,-8,-54,44,48,80)
-    fill(-44,-1,-54,44,-1,80,"gdo_core:terre")
-    deck(-44,-54,44,80,0,M.grass)
+    -- Efface aussi les anciennes tours hautes et leurs débords, dans la zone réservée.
+    clear(-50,-12,-54,50,82,80)
+    fill(-50,-1,-54,50,-1,80,"gdo_core:terre")
+    deck(-50,-54,50,80,0,M.grass)
 
     -- Construction par zones, dans l'ordre des structures porteuses.
     build_enclosure()
@@ -713,7 +714,7 @@ local function build()
     audit_geometry()
 
     if minetest.fix_light then
-        minetest.fix_light({x=-44,y=-2,z=-54},{x=44,y=48,z=80})
+        minetest.fix_light({x=-50,y=-2,z=-54},{x=50,y=82,z=80})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
 
@@ -722,7 +723,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 5
+local VERSION = 6
 
 local function generate_if_needed()
     if not storage or storage:get_int("dourdan_plan_version") < VERSION then
