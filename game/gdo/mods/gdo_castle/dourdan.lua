@@ -797,7 +797,7 @@ local function find_surface_y(x,z)
         local node = minetest.get_node_or_nil({x=x,y=y,z=z})
         if node and node.name ~= "air" and node.name ~= "ignore" then
             local def = minetest.registered_nodes[node.name]
-            if def and def.walkable and def.liquidtype == "none"
+            if def and def.walkable and (not def.liquidtype or def.liquidtype == "none")
                 and minetest.get_item_group(node.name,"tree") == 0
                 and minetest.get_item_group(node.name,"leaves") == 0
                 and minetest.get_item_group(node.name,"plant") == 0 then
@@ -890,13 +890,28 @@ local generation_started = false
 local function generate_if_needed()
     if generation_started then return end
     if not storage or storage:get_int("dourdan_plan_version") < VERSION then
+        local mapgen = minetest.get_mapgen_setting and minetest.get_mapgen_setting("mg_name")
+        if mapgen == "flat" then
+            minetest.log("warning","[GDO] Cette sauvegarde utilise encore le mapgen flat. "..
+                "Pour les paysages naturels, crée une nouvelle carte GDO avec le mapgen v6.")
+            return
+        end
         generation_started = true
         -- Faire générer le terrain classique avant de choisir l'altitude du plateau.
+        local emerge_failed = false
         minetest.emerge_area(
             {x=-56,y=-16,z=-64},
             {x=56,y=100,z=88},
             function(blockpos, action, calls_remaining)
+                if action == minetest.EMERGE_ERRORED or action == minetest.EMERGE_CANCELLED then
+                    emerge_failed = true
+                end
                 if calls_remaining == 0 then
+                    if emerge_failed then
+                        minetest.log("error","[GDO] Impossible de générer le terrain autour du château.")
+                        generation_started = false
+                        return
+                    end
                     BASE_Y = choose_base_y()
                     build()
                     if storage then storage:set_int("dourdan_plan_version",VERSION) end
@@ -951,6 +966,10 @@ minetest.register_chatcommand("refairechateau",{
     description = "Reconstruit le château selon le plan Dourdan",
     privs = {interact=true},
     func = function()
+        local mapgen = minetest.get_mapgen_setting and minetest.get_mapgen_setting("mg_name")
+        if mapgen == "flat" then
+            return false,"Cette carte utilise le générateur flat. Crée un nouveau monde avec le mapgen v6 pour obtenir les collines et les plaines."
+        end
         BASE_Y = choose_base_y()
         build()
         if storage then storage:set_int("dourdan_plan_version",VERSION) end
