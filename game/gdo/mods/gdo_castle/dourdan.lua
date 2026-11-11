@@ -461,6 +461,11 @@ local function build_logis()
         put(x,1,-11,M.stair_low)
         put(x,1,-12,M.stair_high)
     end
+    -- Encadrement sculpté et linteau au-dessus de la porte du logis.
+    fill(-7,2,-12,-7,6,-10,M.trim)
+    fill(0,2,-12,0,6,-10,M.trim)
+    fill(-7,6,-12,0,6,-10,M.trim)
+    fill(-4,7,-12,-3,7,-10,M.gold)
     -- Deux vantaux en chêne ouverts contre les jambages de l'entrée du logis.
     for y=2,5 do
         for z=-12,-10 do
@@ -569,8 +574,8 @@ local function build_gatehouse()
     end
     -- Lanternes encastrées dans les deux murs du tunnel.
     for z=27,39,6 do
-        lamp(-3,8,z)
-        lamp(3,8,z)
+        lamp(-4,8,z)
+        lamp(4,8,z)
     end
     -- Galerie supérieure de garde.
     deck(-9,27,9,37,15,M.wood)
@@ -699,9 +704,10 @@ end
 
 local function final_connections()
     -- Portail traversant : aucun élément du châtelet ne doit le reboucher.
-    clear(-3,2,25,3,10,42)
-    -- Accès du logis depuis la cour.
-    clear(-6,2,-13,-1,5,-10)
+    -- Conserver les vantaux latéraux ; seul le passage central est évidé.
+    clear(-2,2,25,2,10,42)
+    -- Accès du logis depuis la cour, sans effacer les vantaux.
+    clear(-5,2,-13,-2,5,-10)
     -- Liaison logis/donjon à chaque niveau habitable.
     clear(13,2,-22,18,5,-18)
     clear(13,9,-22,18,12,-18)
@@ -723,8 +729,8 @@ local function final_connections()
     tower_door(24,-20,10,"north",15,false)
 
     -- Dégagement vertical et horizontal des passages vitaux.
-    clear(-3,2,25,3,10,42)
-    clear(-6,2,-13,-1,5,-10)
+    clear(-2,2,25,2,10,42)
+    clear(-5,2,-13,-2,5,-10)
     clear(13,2,-22,18,5,-18)
     clear(13,9,-22,18,12,-18)
     clear(13,16,-22,18,19,-18)
@@ -746,8 +752,8 @@ local function audit_geometry()
 
     -- Contrôle des trois traversées principales après assemblage des zones.
     local corridors = {
-        {name="portail", x1=-3,y1=2,z1=25,x2=3,y2=10,z2=42},
-        {name="entrée du logis", x1=-6,y1=2,z1=-13,x2=-1,y2=5,z2=-10},
+        {name="portail", x1=-2,y1=2,z1=25,x2=2,y2=10,z2=42},
+        {name="entrée du logis", x1=-5,y1=2,z1=-13,x2=-2,y2=5,z2=-10},
         {name="liaison logis-donjon", x1=13,y1=2,z1=-22,x2=18,y2=5,z2=-18},
     }
     local blocked = 0
@@ -809,7 +815,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 7
+local VERSION = 8
 
 local function generate_if_needed()
     if not storage or storage:get_int("dourdan_plan_version") < VERSION then
