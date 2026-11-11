@@ -161,6 +161,7 @@ minetest.register_node(M.stair, {
     tiles = {textures.refit_trim},
     paramtype = "light",
     paramtype2 = "leveled",
+    leveled_max = 64,
     sunlight_propagates = true,
     walkable = true,
     groups = {cracky = 2},
@@ -214,7 +215,7 @@ register_furniture(M.pillar, "Colonne sculptée", textures.refit_trim, {
     {-0.22,-0.5,-0.22,0.22,0.5,0.22},
     {-0.38,-0.5,-0.38,0.38,-0.34,0.38},
     {-0.34,0.34,-0.34,0.34,0.5,0.34},
-}, false)
+})
 
 local function put(x,y,z,name,param2)
     minetest.set_node({x=x,y=y+BASE_Y,z=z}, {name=name, param2=param2 or 0})
@@ -589,7 +590,7 @@ local function build_logis()
     end
 
     -- Piliers engagés, tapisseries héraldiques et appliques sur les murs.
-    for _,p in ipairs({{-25,-24},{-25,-15},{11,-24},{11,-15}}) do
+    for _,p in ipairs({{-24,-24},{-24,-15},{10,-24},{10,-15}}) do
         for y=2,7 do put(p[1],y,p[2],M.pillar) end
         put(p[1],8,p[2],M.gold)
     end
@@ -597,7 +598,7 @@ local function build_logis()
         fill(-25,3,z-1,-25,7,z+1,M.roof)
         fill(-24,4,z,-24,6,z,M.gold)
         put(-24,7,z,M.trim)
-        lamp(-24,8,z)
+        lamp(-24,6,z)
     end
 
     -- Foyer monumental : socle, manteau et blason au-dessus de la cheminée.
@@ -1069,7 +1070,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 16
+local VERSION = 17
 
 local generation_started = false
 local function generate_if_needed()
