@@ -516,11 +516,10 @@ local function build_gatehouse()
     deck(-9,27,9,37,15,M.wood)
     fill(-9,16,27,-9,18,37,M.trim)
     fill(9,16,27,9,18,37,M.trim)
-    -- Toit du châtelet avec merlons.
-    fill(-5,17,25,5,18,38,M.roof)
+    -- Terrasse supérieure ouverte : pas de plafond bas au-dessus du parcours.
     for x=-5,5,2 do
-        fill(x,19,25,x,20,25,M.trim)
-        fill(x,19,38,x,20,38,M.trim)
+        fill(x,16,25,x,17,25,M.trim)
+        fill(x,16,38,x,17,38,M.trim)
     end
 end
 
@@ -741,7 +740,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 1
+local VERSION = 2
 
 local function generate_if_needed()
     if not storage or storage:get_int("dourdan_plan_version") < VERSION then
