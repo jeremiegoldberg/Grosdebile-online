@@ -32,23 +32,20 @@ local function wall_z(z1,z2,y1,y2,x,n,t)
     fill(x,y1,z1,x+(t or 1)-1,y2,z2,n)
 end
 
--- Textures autonomes : aucun fichier PNG externe n'est requis.
--- Textures fournies par minetest_game : aucun PNG GDO manquant.
--- Les modificateurs donnent une palette cohérente sans dépendre de fichiers externes.
--- Palette autonome : unknown_node.png est fourni par le moteur Luanti.
--- Aucun PNG externe n'est référencé : les textures sont générées par modificateurs.
+-- Textures dédiées au château : elles sont bien présentes dans textures/.
+-- Utiliser les PNG du mod, et non unknown_node.png (texture de secours uniforme).
 local palette = {
-    refit_stone = "unknown_node.png^[colorize:#78869b:255",
-    refit_trim = "unknown_node.png^[colorize:#d8d2c5:255",
-    refit_roof = "unknown_node.png^[colorize:#182b50:255",
-    refit_floor = "unknown_node.png^[colorize:#c4bba8:255",
-    refit_wood = "unknown_node.png^[colorize:#75472d:255",
-    refit_glass = "unknown_node.png^[colorize:#70c9e8:180",
-    refit_gold = "unknown_node.png^[colorize:#e4b83e:255",
-    refit_grass = "unknown_node.png^[colorize:#4b8b3d:255",
-    refit_path = "unknown_node.png^[colorize:#777b83:255",
-    refit_leaves = "unknown_node.png^[colorize:#397b39:255",
-    refit_water = "unknown_node.png^[colorize:#319bd1:180",
+    refit_stone = "refit_stone.png",
+    refit_trim = "refit_trim.png",
+    refit_roof = "refit_roof.png",
+    refit_floor = "refit_floor.png",
+    refit_wood = "refit_wood.png",
+    refit_glass = "refit_glass.png",
+    refit_gold = "refit_gold.png",
+    refit_grass = "refit_grass.png",
+    refit_path = "refit_path.png",
+    refit_leaves = "refit_leaves.png",
+    refit_water = "refit_water.png",
 }
 local function register_texture_node(name, desc, groups, extra)
     local short = name:match(":(.+)$")
