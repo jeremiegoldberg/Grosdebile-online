@@ -765,4 +765,4 @@ minetest.log("action", "[GDO] Le module du Château des Brumes est chargé.")
 gdo_castle_storage = minetest.get_mod_storage()
 
 -- Refonte visuelle et remise à niveau du terrain de départ.
-dofile(minetest.get_modpath(modname) .. "/refit.lua")
+dofile(minetest.get_modpath(modname) .. "/dourdan.lua")
