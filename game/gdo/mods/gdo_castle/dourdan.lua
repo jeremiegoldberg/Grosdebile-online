@@ -299,10 +299,8 @@ local function build_round_tower(spec)
     end
 
     -- Planchers de niveaux ; la spirale découpe sa propre trémie ensuite.
-    local levels = {}
     for y=1,h,7 do
         disk_floor(cx,cz,inner-1,y,M.floor)
-        levels[#levels+1] = y
     end
 
     place_spiral_stair(cx,cz,r,h,spec.entry)
@@ -377,6 +375,26 @@ local function build_enclosure()
 end
 
 -- ZONE 2 : logis seigneurial, au nord-ouest de la cour.
+local function register_room_action(name, description, message)
+    minetest.register_node(name, {
+        description = S(description),
+        tiles = {textures.refit_wood},
+        groups = {choppy = 2, oddly_breakable_by_hand = 2},
+        on_rightclick = function(pos, node, player)
+            if player and player:is_player() then
+                minetest.chat_send_player(player:get_player_name(), message)
+            end
+        end,
+    })
+end
+
+register_room_action("gdo_castle:library_catalog", "Catalogue de la bibliothèque",
+    "La bibliothèque rassemble les chroniques, les cartes et les grimoires du royaume.")
+register_room_action("gdo_castle:kitchen_station", "Comptoir des cuisines",
+    "Les cuisines du château sont ouvertes. Le ragoût du jour est au navet.")
+register_room_action("gdo_castle:forge_station", "Enclume de l'armurerie",
+    "L'atelier du forgeron attend les matériaux et les commandes.")
+
 local function build_logis()
     fill(-28,1,-27,14,17,-11,M.stone)
     clear(-26,2,-25,12,16,-13)
@@ -407,7 +425,6 @@ local function build_logis()
         fill(-21,9,z,-20,13,z,M.wood)
     end
     put(-22,10,-15,"gdo_castle:library_catalog")
-    table_block_placeholder = nil
     -- Balcon intérieur sur la grande salle.
     deck(-18,-24,-7,-14,15,M.floor)
     for x=-17,-8,3 do
@@ -479,17 +496,18 @@ local function small_building(x1,x2,z1,z2,height,door_side,roof_material)
     fill(x1,1,z1,x2,height,z2,M.stone)
     clear(x1+1,2,z1+1,x2-1,height-1,z2-1)
     deck(x1+1,z1+1,x2-1,z2-1,1,M.floor)
+    local mid = math.floor((x1+x2)/2)
+    local midz = math.floor((z1+z2)/2)
     if door_side == "east" then
-        clear(x2-1,2,(z1+z2)/2-1,x2+1,5,(z1+z2)/2+1)
+        clear(x2-1,2,midz-1,x2+1,5,midz+1)
     elseif door_side == "west" then
-        clear(x1-1,2,(z1+z2)/2-1,x1+1,5,(z1+z2)/2+1)
+        clear(x1-1,2,midz-1,x1+1,5,midz+1)
     elseif door_side == "north" then
-        clear((x1+x2)/2-1,2,z1-1,(x1+x2)/2+1,5,z1+1)
+        clear(mid-1,2,z1-1,mid+1,5,z1+1)
     else
-        clear((x1+x2)/2-1,2,z2-1,(x1+x2)/2+1,5,z2+1)
+        clear(mid-1,2,z2-1,mid+1,5,z2+1)
     end
     local roof = roof_material or M.roof
-    local mid = math.floor((x1+x2)/2)
     local half = math.floor((x2-x1)/2)
     for layer=0,4 do
         fill(mid-half+layer,height+1+layer,z1-1,mid+half-layer,height+1+layer,z2+1,roof)
@@ -558,24 +576,24 @@ local function build_towers()
     -- Trois tours d'angle ; la quatrième est le grand donjon nord-est.
     build_round_tower({
         x=-31,z=-27,r=7,h=22,
-        entry="east",wall_side="north",window_side="west",
+        entry="east",window_side="west",
     })
     build_round_tower({
         x=-31,z=31,r=7,h=22,
-        entry="east",wall_side="south",window_side="west",
+        entry="east",window_side="west",
     })
     build_round_tower({
         x=31,z=31,r=7,h=22,
-        entry="west",wall_side="south",window_side="east",
+        entry="west",window_side="east",
     })
     -- Tours jumelles du châtelet.
     build_round_tower({
         x=-10,z=32,r=7,h=22,
-        entry="north",wall_side="south",window_side="west",
+        entry="north",window_side="west",
     })
     build_round_tower({
         x=10,z=32,r=7,h=22,
-        entry="north",wall_side="south",window_side="east",
+        entry="north",window_side="east",
     })
 end
 
@@ -590,16 +608,11 @@ local function final_connections()
     clear(13,16,-22,18,19,-18)
     -- Entrée des tours d'angle après construction des courtines et bâtiments.
     tower_door(-31,-27,7,"east",1)
-    tower_door(-31,-27,7,"north",15)
     tower_door(-31,31,7,"east",1)
-    tower_door(-31,31,7,"south",15)
     tower_door(31,31,7,"west",1)
-    tower_door(31,31,7,"south",15)
     -- Tours du portail : accès depuis la cour et vers la galerie de garde.
     tower_door(-10,32,7,"north",1)
-    tower_door(-10,32,7,"south",15)
     tower_door(10,32,7,"north",1)
-    tower_door(10,32,7,"south",15)
     -- Refaire les fenêtres/portes du donjon en dernier pour garder les seuils nets.
     tower_door(24,-20,10,"west",1)
     tower_door(24,-20,10,"west",8)
