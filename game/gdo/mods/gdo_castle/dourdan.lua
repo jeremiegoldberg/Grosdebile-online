@@ -698,22 +698,21 @@ local function place_logis_switchback()
     for z=-24,-18 do path[#path+1] = {x=8,z=z} end
     for z=-18,-24,-1 do path[#path+1] = {x=9,z=z} end
 
-    for cycle=0,2 do
-        for i,p in ipairs(path) do
-            local step_index = 1 + cycle*14 + (i-1)
-            if step_index <= 29 then
-                local node_y = 1 + math.floor(step_index/2)
-                local node_name = (step_index%2 == 0) and M.stair_low or M.stair_high
-                local nextp = path[(i % #path)+1]
-                local dx,dz = nextp.x-p.x,nextp.z-p.z
-                clear(p.x,node_y+1,p.z,p.x,node_y+2,p.z)
-                -- Limon plein sous chaque demi-marche : elles ne flottent plus.
-                put(p.x,node_y-1,p.z,M.stone)
-                put(p.x,node_y,p.z,node_name,
-                    node_name == M.stair_high and stair_facedir(dx,dz) or 0)
-                staircase_cells[#staircase_cells+1] = {x=p.x,y=node_y,z=p.z}
-            end
-        end
+    -- Deux volées parallèles : monter la première, traverser le palier,
+    -- puis redescendre en coordonnées pour reprendre la seconde volée.
+    -- Chaque position ne reçoit qu'une seule marche ; les cycles précédents
+    -- superposaient parfois plusieurs nodebox au même emplacement.
+    for step_index=1,29 do
+        local p = path[((step_index-1)%#path)+1]
+        local node_y = 1 + math.floor(step_index/2)
+        local node_name = (step_index%2 == 0) and M.stair_low or M.stair_high
+        local nextp = path[(step_index % #path)+1]
+        local dx,dz = nextp.x-p.x,nextp.z-p.z
+        clear(p.x,node_y+1,p.z,p.x,node_y+2,p.z)
+        put(p.x,node_y-1,p.z,M.stone)
+        put(p.x,node_y,p.z,node_name,
+            node_name == M.stair_high and stair_facedir(dx,dz) or 0)
+        staircase_cells[#staircase_cells+1] = {x=p.x,y=node_y,z=p.z}
     end
 end
 
