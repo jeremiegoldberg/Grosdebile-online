@@ -407,50 +407,70 @@ local function stair_facedir(dx,dz)
 end
 
 local function place_spiral_stair(cx,cz,r,height,entry_side)
-    -- Vis à marches physiques de 1/2 bloc, en anneau de deux à trois blocs.
-    -- Chaque niveau est un nodebox fixe, avec collision identique au rendu.
+    -- Un seul chemin octogonal continu, et non des secteurs remplis.
+    -- Chaque cellule est adjacente à la suivante ; 14 demi-marches par tour.
     local outer = r-3
-    local inner = r-5
-    if inner < 2 then
-        minetest.log("error","[GDO] Tour trop étroite pour une vis praticable.")
+    local path = make_octagonal_ring(outer,entry_side)
+    local count = #path
+    if count < 24 then
+        minetest.log("error","[GDO] Périmètre trop court pour une vis praticable.")
         return
     end
 
-    -- 14 demi-marches par révolution : 7 nodes gagnés par tour.
-    local max_step = 2*(height-1)+1
-    local turns = math.floor(max_step/14)
-    for turn=0,turns do
-        for dx=-outer,outer do
-            for dz=-outer,outer do
-                local d2 = dx*dx + dz*dz
-                if d2 >= inner*inner and d2 <= outer*outer then
-                    local progress = angle_progress(dx,dz,entry_side)
-                    local halfstep = math.floor(progress*14)
-                    local step_index = turn*14 + halfstep
-                    if step_index <= max_step then
-                        local node_y = 1 + math.floor(step_index/2)
-                        local x,z = cx+dx,cz+dz
-                        local node_name = (step_index%2 == 0) and M.stair_low or M.stair_high
-                        local param2 = 0
-                        if step_index%2 == 1 then
-                            -- Tangente à la vis : la demi-marche regarde vers l'avant.
-                            local theta = math.atan2 and math.atan2(dz,dx) or math.atan(dz/(dx==0 and 0.0001 or dx))
-                            local tx,tz = -math.sin(theta),math.cos(theta)
-                            if math.abs(tx) >= math.abs(tz) then
-                                param2 = stair_facedir(tx >= 0 and 1 or -1,0)
-                            else
-                                param2 = stair_facedir(0,tz >= 0 and 1 or -1)
-                            end
-                        end
+    for i,p in ipairs(path) do
+        local q = path[(i % count)+1]
+        local gap = math.abs(p.x-q.x)+math.abs(p.z-q.z)
+        if gap ~= 1 then
+            minetest.log("error","[GDO] Vis refusée : rupture de "..gap.." blocs dans le chemin.")
+            return
+        end
+    end
 
-                        -- Deux blocs libres au-dessus, marche non enterrée.
-                        clear(x,node_y+1,z,x,node_y+2,z)
-                        put(x,node_y,z,node_name,param2)
-                        staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
-                    end
-                end
+    -- La progression suit l'ordre du chemin, du seuil vers le haut.
+    -- Les marches hautes regardent toujours vers la cellule suivante.
+    local revolutions = math.floor((height-1)/7)
+    for turn=0,revolutions-1 do
+        for i,p in ipairs(path) do
+            local q = path[(i % count)+1]
+            local step_index = 1 + turn*14 + math.floor((i-1)*14/count)
+            local node_y = 1 + math.floor(step_index/2)
+            local node_name = (step_index % 2 == 1) and M.stair_high or M.stair_low
+            local dx,dz = q.x-p.x,q.z-p.z
+            local facedir = node_name == M.stair_high and stair_facedir(dx,dz) or 0
+
+            -- Deux cellules de large vers le centre ; la rampe reste annulaire.
+            local ix,iz = p.x,p.z
+            if math.abs(p.x) >= math.abs(p.z) then
+                ix = p.x - (p.x >= 0 and 1 or -1)
+            else
+                iz = p.z - (p.z >= 0 and 1 or -1)
+            end
+
+            for _,cell in ipairs({{x=p.x,z=p.z},{x=ix,z=iz}}) do
+                local x,z = cx+cell.x,cz+cell.z
+                clear(x,node_y+1,z,x,node_y+2,z)
+                put(x,node_y,z,node_name,facedir)
+                staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
             end
         end
+    end
+
+    -- Dernière demi-marche alignée avec le plancher de la terrasse.
+    local p,q = path[1],path[2]
+    local final_index = 1 + revolutions*14
+    local final_y = 1 + math.floor(final_index/2)
+    local ix,iz = p.x,p.z
+    if math.abs(p.x) >= math.abs(p.z) then
+        ix = p.x - (p.x >= 0 and 1 or -1)
+    else
+        iz = p.z - (p.z >= 0 and 1 or -1)
+    end
+    local facing = stair_facedir(q.x-p.x,q.z-p.z)
+    for _,cell in ipairs({{x=p.x,z=p.z},{x=ix,z=iz}}) do
+        local x,z = cx+cell.x,cz+cell.z
+        clear(x,final_y+1,z,x,final_y+2,z)
+        put(x,final_y,z,M.stair_high,facing)
+        staircase_cells[#staircase_cells+1] = {x=x,y=final_y,z=z}
     end
 end
 
@@ -556,20 +576,14 @@ local function build_round_tower(spec)
         disk_floor(cx,cz,inner,y,M.floor)
     end
 
-    -- Noyau central de la tour : pilier de pierre et nervures de taille.
-    -- Il donne un point d'appui visuel à l'escalier qui tourne le long du mur.
-    for y=1,h do
-        for dx=-1,1 do
-            for dz=-1,1 do
-                local name = (dx==0 and dz==0) and M.stone or M.trim
-                put(cx+dx,y,cz+dz,name)
-            end
-        end
-    end
+    -- Petit noyau central d'un seul bloc : la cage reste lisible et lumineuse.
+    for y=1,h do put(cx,y,cz,M.stone) end
     for level=1,h,7 do
-        if level+2 < h then lamp(cx,level+2,cz) end
-        put(cx-1,level+1,cz-1,M.gold)
-        put(cx+1,level+1,cz+1,M.gold)
+        if level+2 < h then
+            lamp(cx,level+2,cz)
+            put(cx,level+1,cz-1,M.gold)
+            put(cx,level+1,cz+1,M.gold)
+        end
     end
 
     -- Une vis large, dans le vide libéré, entre chaque niveau.
@@ -689,6 +703,8 @@ local function place_logis_switchback()
                 local nextp = path[(i % #path)+1]
                 local dx,dz = nextp.x-p.x,nextp.z-p.z
                 clear(p.x,node_y+1,p.z,p.x,node_y+2,p.z)
+                -- Limon plein sous chaque demi-marche : elles ne flottent plus.
+                put(p.x,node_y-1,p.z,M.trim)
                 put(p.x,node_y,p.z,node_name,
                     node_name == M.stair_high and stair_facedir(dx,dz) or 0)
                 staircase_cells[#staircase_cells+1] = {x=p.x,y=node_y,z=p.z}
@@ -1530,7 +1546,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 32
+local VERSION = 33
 
 local generation_started = false
 local function generate_if_needed()
