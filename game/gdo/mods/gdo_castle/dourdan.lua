@@ -23,8 +23,13 @@ local M = {
     leaves = "gdo_castle:refit_leaves",
     water = "gdo_castle:refit_water",
     lamp = "gdo_castle:refit_lamp",
+    stair = "gdo_castle:refit_stair",
     stair_low = "gdo_castle:refit_stair_low",
     stair_high = "gdo_castle:refit_stair_high",
+    table = "gdo_castle:refit_table",
+    bench = "gdo_castle:refit_bench",
+    rug = "gdo_castle:refit_rug",
+    pillar = "gdo_castle:refit_pillar",
 }
 
 local textures = {
@@ -148,6 +153,69 @@ register_step_node(M.stair_low, "Marche basse en pierre",
 register_step_node(M.stair_high, "Marche haute en pierre",
     {-0.5,0,-0.5,0.5,0.5,0.5})
 
+-- Marche de progression à hauteur variable : base pleine, surface réglée par
+-- param2 (32 = demi-bloc, 64 = bloc plein). Pas de demi-bloc flottant.
+minetest.register_node(M.stair, {
+    description = S("Marche de tour en pierre"),
+    drawtype = "nodebox",
+    tiles = {textures.refit_trim},
+    paramtype = "light",
+    paramtype2 = "leveled",
+    sunlight_propagates = true,
+    walkable = true,
+    groups = {cracky = 2},
+    node_box = {
+        type = "leveled",
+        fixed = {-0.5,-0.5,-0.5,0.5,0,0.5},
+    },
+    collision_box = {
+        type = "leveled",
+        fixed = {-0.5,-0.5,-0.5,0.5,0,0.5},
+    },
+    selection_box = {
+        type = "leveled",
+        fixed = {-0.5,-0.5,-0.5,0.5,0,0.5},
+    },
+})
+
+local function register_furniture(name, description, texture, boxes, walkable)
+    minetest.register_node(name, {
+        description = S(description),
+        drawtype = "nodebox",
+        tiles = {texture},
+        paramtype = "light",
+        sunlight_propagates = true,
+        walkable = walkable ~= false,
+        groups = {cracky = 2, oddly_breakable_by_hand = 2},
+        node_box = {type = "fixed", fixed = boxes},
+        collision_box = {type = "fixed", fixed = boxes},
+        selection_box = {type = "fixed", fixed = boxes},
+    })
+end
+
+register_furniture(M.table, "Table de banquet", textures.refit_wood, {
+    {-0.44,-0.42,-0.44,-0.32,0.16,-0.32},
+    {0.32,-0.42,-0.44,0.44,0.16,-0.32},
+    {-0.44,-0.42,0.32,-0.32,0.16,0.44},
+    {0.32,-0.42,0.32,0.44,0.16,0.44},
+    {-0.5,0.16,-0.5,0.5,0.28,0.5},
+})
+register_furniture(M.bench, "Banc de chêne", textures.refit_wood, {
+    {-0.44,-0.5,-0.36,-0.32,-0.05,-0.24},
+    {0.32,-0.5,-0.36,0.44,-0.05,-0.24},
+    {-0.44,-0.5,0.24,-0.32,-0.05,0.36},
+    {0.32,-0.5,0.24,0.44,-0.05,0.36},
+    {-0.5,-0.05,-0.42,0.5,0.08,0.42},
+})
+register_furniture(M.rug, "Tapis du seigneur", textures.refit_roof, {
+    {-0.5,-0.49,-0.5,0.5,-0.45,0.5},
+}, false)
+register_furniture(M.pillar, "Colonne sculptée", textures.refit_trim, {
+    {-0.22,-0.5,-0.22,0.22,0.5,0.22},
+    {-0.38,-0.5,-0.38,0.38,-0.34,0.38},
+    {-0.34,0.34,-0.34,0.34,0.5,0.34},
+}, false)
+
 local function put(x,y,z,name,param2)
     minetest.set_node({x=x,y=y+BASE_Y,z=z}, {name=name, param2=param2 or 0})
 end
@@ -253,8 +321,8 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
         return
     end
 
-    -- Une seule volée en vis, accolée au mur intérieur.
-    -- Une révolution complète gagne 7 nodes (14 demi-marches).
+    -- Une seule vis continue. Chaque marche a un support plein et une hauteur
+    -- réelle de 0,5 ou 1 node via paramtype2=leveled.
     local max_halfsteps = 2*(height-1)
     local cycle = 0
     while 1 + cycle*14 <= max_halfsteps do
@@ -262,10 +330,12 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
             local halfsteps = 1 + cycle*14 + math.floor((i-1)*14/count)
             local target_height = 1.5 + 0.5*halfsteps
             local node_y = math.floor(target_height)
-            local node_name = (target_height-node_y > 0.25) and M.stair_high or M.stair_low
+            local level = (target_height-node_y > 0.25) and 64 or 32
             local x,z = cx+p.x,cz+p.z
-            clear(x,node_y+1,z,x,node_y+2,z)
-            put(x,node_y,z,node_name)
+
+            -- Dégagement de 2,5 blocs au-dessus de chaque marche.
+            clear(x,node_y+1,z,x,node_y+3,z)
+            put(x,node_y,z,M.stair,level)
             staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
         end
         cycle = cycle+1
@@ -902,7 +972,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 14
+local VERSION = 15
 
 local generation_started = false
 local function generate_if_needed()
