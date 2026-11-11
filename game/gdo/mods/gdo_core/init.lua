@@ -12,6 +12,12 @@ local C = {
     stone = "unknown_node.png^[colorize:#777777:220",
     navet = "unknown_node.png^[colorize:#d6b24c:220",
     npc = "unknown_node.png^[colorize:#d9a06b:220",
+    water = "unknown_node.png^[colorize:#319bd1:180",
+    sand = "unknown_node.png^[colorize:#d9c18b:220",
+    gravel = "unknown_node.png^[colorize:#77736b:220",
+    snow = "unknown_node.png^[colorize:#e8f1f7:240",
+    tree = "unknown_node.png^[colorize:#684326:240",
+    leaves = "unknown_node.png^[colorize:#3e783b:220",
 }
 
 minetest.register_node("gdo_core:herbe", {
@@ -45,12 +51,132 @@ minetest.register_node("gdo_core:pierre", {
     groups = {cracky = 3, oddly_breakable_by_hand = 3},
 })
 
--- Nœuds de base attendus par le mapgen. Le monde prototype est plat :
--- l'eau est volontairement remplacée par de l'air tant que le terrain aquatique
--- n'est pas implémenté.
+-- Blocs naturels utilisés par le mapgen v6.
+-- Le jeu GDO est autonome : il déclare ses propres sols, arbres et liquides.
+minetest.register_node("gdo_core:sable", {
+    description = S("Sable naturel"),
+    tiles = {C.sand},
+    groups = {crumbly = 3, falling_node = 1, sand = 1},
+})
+minetest.register_node("gdo_core:gravier", {
+    description = S("Gravier naturel"),
+    tiles = {C.gravel},
+    groups = {crumbly = 2, falling_node = 1},
+})
+minetest.register_node("gdo_core:neige", {
+    description = S("Neige"),
+    tiles = {C.snow},
+    groups = {crumbly = 3, falling_node = 1},
+})
+minetest.register_node("gdo_core:glace", {
+    description = S("Glace"),
+    tiles = {C.water},
+    groups = {cracky = 3},
+})
+minetest.register_node("gdo_core:arbre", {
+    description = S("Tronc naturel"),
+    tiles = {C.tree},
+    groups = {tree = 1, choppy = 2, oddly_breakable_by_hand = 1},
+})
+minetest.register_node("gdo_core:feuilles", {
+    description = S("Feuillage naturel"),
+    drawtype = "allfaces_optional",
+    tiles = {C.leaves},
+    paramtype = "light",
+    sunlight_propagates = true,
+    groups = {snappy = 3, leaves = 1, flammable = 2},
+})
+minetest.register_node("gdo_core:pomme", {
+    description = S("Pomme sauvage"),
+    drawtype = "plantlike",
+    tiles = {C.navet},
+    inventory_image = C.navet,
+    wield_image = C.navet,
+    paramtype = "light",
+    sunlight_propagates = true,
+    walkable = false,
+    groups = {snappy = 3, food = 1},
+})
+minetest.register_node("gdo_core:herbe_jungle", {
+    description = S("Herbe de jungle"),
+    drawtype = "plantlike",
+    tiles = {C.leaves},
+    paramtype = "light",
+    sunlight_propagates = true,
+    walkable = false,
+    groups = {snappy = 3, flora = 1},
+})
+
+-- Eau de carte : sources et écoulement standard, sans dépendance externe.
+minetest.register_node("gdo_core:eau_courante", {
+    description = S("Eau courante"),
+    drawtype = "flowingliquid",
+    tiles = {C.water},
+    special_tiles = {
+        {name = C.water, backface_culling = false},
+        {name = C.water, backface_culling = true},
+    },
+    paramtype = "light",
+    paramtype2 = "flowingliquid",
+    walkable = false,
+    pointable = false,
+    diggable = false,
+    buildable_to = true,
+    liquidtype = "flowing",
+    liquid_alternative_flowing = "gdo_core:eau_courante",
+    liquid_alternative_source = "gdo_core:eau",
+    liquid_viscosity = 1,
+    liquid_range = 8,
+    groups = {water = 3, liquid = 3},
+})
+minetest.register_node("gdo_core:eau", {
+    description = S("Eau"),
+    drawtype = "liquid",
+    tiles = {C.water},
+    special_tiles = {
+        {name = C.water, backface_culling = false},
+        {name = C.water, backface_culling = true},
+    },
+    paramtype = "light",
+    walkable = false,
+    pointable = false,
+    diggable = false,
+    buildable_to = true,
+    liquidtype = "source",
+    liquid_alternative_flowing = "gdo_core:eau_courante",
+    liquid_alternative_source = "gdo_core:eau",
+    liquid_viscosity = 1,
+    liquid_range = 8,
+    groups = {water = 3, liquid = 3},
+})
+
+-- Aliases indispensables au mapgen v6.
 minetest.register_alias("mapgen_stone", "gdo_core:pierre")
-minetest.register_alias("mapgen_water_source", "air")
-minetest.register_alias("mapgen_river_water_source", "air")
+minetest.register_alias("mapgen_water_source", "gdo_core:eau")
+minetest.register_alias("mapgen_river_water_source", "gdo_core:eau")
+minetest.register_alias("mapgen_lava_source", "air")
+minetest.register_alias("mapgen_dirt", "gdo_core:terre")
+minetest.register_alias("mapgen_dirt_with_grass", "gdo_core:herbe")
+minetest.register_alias("mapgen_sand", "gdo_core:sable")
+minetest.register_alias("mapgen_gravel", "gdo_core:gravier")
+minetest.register_alias("mapgen_desert_stone", "gdo_core:pierre")
+minetest.register_alias("mapgen_desert_sand", "gdo_core:sable")
+minetest.register_alias("mapgen_dirt_with_snow", "gdo_core:herbe")
+minetest.register_alias("mapgen_snowblock", "gdo_core:neige")
+minetest.register_alias("mapgen_snow", "gdo_core:neige")
+minetest.register_alias("mapgen_ice", "gdo_core:glace")
+minetest.register_alias("mapgen_tree", "gdo_core:arbre")
+minetest.register_alias("mapgen_leaves", "gdo_core:feuilles")
+minetest.register_alias("mapgen_apple", "gdo_core:pomme")
+minetest.register_alias("mapgen_jungletree", "gdo_core:arbre")
+minetest.register_alias("mapgen_jungleleaves", "gdo_core:feuilles")
+minetest.register_alias("mapgen_junglegrass", "gdo_core:herbe_jungle")
+minetest.register_alias("mapgen_pine_tree", "gdo_core:arbre")
+minetest.register_alias("mapgen_pine_needles", "gdo_core:feuilles")
+minetest.register_alias("mapgen_cobble", "gdo_core:pierre")
+minetest.register_alias("mapgen_stair_cobble", "gdo_core:pierre")
+minetest.register_alias("mapgen_mossycobble", "gdo_core:pierre")
+minetest.register_alias("mapgen_stair_desert_stone", "gdo_core:pierre")
 
 minetest.register_craftitem("gdo_core:navet", {
     description = S("Navet héroïque"),
