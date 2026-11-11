@@ -1402,6 +1402,22 @@ local function build_farmstead(cx,cz)
     put(cx+7,fy+1,cz-3,M.barrel)
 end
 
+local function scatter_wildflowers(x1,z1,x2,z2,spacing)
+    local flowers = {M.flower_red,M.flower_blue,M.flower_gold}
+    for x=x1,x2,spacing or 3 do
+        for z=z1,z2,spacing or 3 do
+            local hash = math.abs(x*37+z*19)
+            if hash%4 == 0 then
+                local surface = find_surface_y(x,z)
+                if surface then
+                    local name = flowers[(hash%#flowers)+1]
+                    put(x,surface-BASE_Y+1,z,name)
+                end
+            end
+        end
+    end
+end
+
 local function build_exterior_landscape()
     -- Les collines restent à distance de l'enceinte ; elles se fondent dans le relief v6.
     build_rolling_hill(-91,-84,23,25,12)
@@ -1422,7 +1438,7 @@ local function build_exterior_landscape()
     -- Ferme en lisière de campagne, loin des talus du château.
     build_farmstead(78,128)
 
-    -- Chemin de terre et de pavés qui sort du pont-levis vers la campagne.
+    -- Chemin de terre et de pavés depuis le pont-levis vers la campagne.
     for step=0,58 do
         local z = 73+step
         local x = round_number(4+5*math.sin(step*0.085))
@@ -1431,14 +1447,30 @@ local function build_exterior_landscape()
             local y = surface-BASE_Y
             clear(x,y+1,z,x,y+3,z)
             put(x,y,z,M.path)
-            if step%3 == 0 then
-                put(x+1,y,z,M.path)
-            end
-            if step%11 == 0 then
-                lamp(x+2,y+2,z)
-            end
+            if step%3 == 0 then put(x+1,y,z,M.path) end
+            if step%11 == 0 then lamp(x+2,y+2,z) end
         end
     end
+
+    -- Branche de campagne qui rejoint la ferme et traverse la prairie.
+    for step=0,79 do
+        local x = round_number(-1+step)
+        local z = 128+round_number(2*math.sin(step*0.07))
+        if step >= 75 then z = 128+(step-75) end
+        local surface = find_surface_y(x,z)
+        if surface then
+            local y = surface-BASE_Y
+            clear(x,y+1,z,x,y+3,z)
+            put(x,y,z,M.path)
+            if step%4 == 0 then put(x,y,z+1,M.path) end
+        end
+    end
+
+    -- Prairies fleuries autour des bosquets et de la ferme.
+    scatter_wildflowers(-118,-120,-66,-48,4)
+    scatter_wildflowers(62,-112,118,-55,4)
+    scatter_wildflowers(-120,80,-62,135,4)
+    scatter_wildflowers(60,84,120,140,4)
 end
 
 
@@ -1477,7 +1509,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 30
+local VERSION = 31
 
 local generation_started = false
 local function generate_if_needed()
