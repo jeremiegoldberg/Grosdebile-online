@@ -359,7 +359,7 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
             local x,z = cx+p.x,cz+p.z
 
             -- Dégagement de 2,5 blocs au-dessus de chaque marche.
-            clear(x,node_y+1,z,x,node_y+3,z)
+            clear(x,node_y+1,z,x,node_y+2,z)
             put(x,node_y,z,M.stair,level)
             staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
         end
@@ -558,7 +558,7 @@ local function place_logis_switchback()
             local target_height = 2 + cycle*7 + (i-1)*0.5
             local node_y = math.floor(target_height)
             local level = (target_height-node_y > 0.25) and 64 or 32
-            clear(p.x,node_y+1,p.z,p.x,node_y+3,p.z)
+            clear(p.x,node_y+1,p.z,p.x,node_y+2,p.z)
             put(p.x,node_y,p.z,M.stair,level)
             staircase_cells[#staircase_cells+1] = {x=p.x,y=node_y,z=p.z}
         end
@@ -851,7 +851,14 @@ local function build_courtyard_buildings()
     put(6,2,9,M.bench)
     put(12,2,9,M.bench)
     -- Jardins bas, arbres et bordures dans les coins de la cour.
-    fill(-17,1,17,-11,1,23,M.wood)
+    for x=-17,-11 do
+        put(x,1,17,M.wood)
+        put(x,1,23,M.wood)
+    end
+    for z=17,23 do
+        put(-17,1,z,M.wood)
+        put(-11,1,z,M.wood)
+    end
     for x=-16,-12 do
         for z=18,22 do
             if x==-16 or x==-12 or z==18 or z==22 then put(x,2,z,M.leaves) end
@@ -971,7 +978,7 @@ local function audit_geometry()
     local repaired = 0
     -- Vérification du dégagement de chaque marche : 2 nodes libres au-dessus.
     for _,p in ipairs(staircase_cells) do
-        for dy=1,3 do
+        for dy=1,2 do
             local q = {x=p.x,y=p.y+dy,z=p.z}
             local node = minetest.get_node({x=q.x,y=q.y+BASE_Y,z=q.z})
             if node and node.name ~= "air" then
@@ -1116,7 +1123,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 19
+local VERSION = 20
 
 local generation_started = false
 local function generate_if_needed()
