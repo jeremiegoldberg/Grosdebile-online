@@ -407,11 +407,12 @@ local function stair_facedir(dx,dz)
 end
 
 local function place_spiral_stair(cx,cz,r,height,entry_side)
-    -- Un seul chemin octogonal continu, et non des secteurs remplis.
-    -- Chaque cellule est adjacente à la suivante ; 14 demi-marches par tour.
+    -- Escalier en vis continu : une seule file de marches, sans plateforme par secteur.
+    -- Une marche tous les nodes, montée de 0,5 ; le joueur la franchit avec stepheight=0.6.
     local outer = r-3
     local path = make_octagonal_ring(outer,entry_side)
     local count = #path
+    local total_steps = 2*(height-1)+1
     if count < 24 then
         minetest.log("error","[GDO] Périmètre trop court pour une vis praticable.")
         return
@@ -426,54 +427,43 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
         end
     end
 
-    -- La progression suit l'ordre du chemin, du seuil vers le haut.
-    -- Les marches hautes regardent toujours vers la cellule suivante.
-    local revolutions = math.floor((height-1)/7)
-    for turn=0,revolutions-1 do
-        for i,p in ipairs(path) do
-            local q = path[(i % count)+1]
-            local step_index = 1 + turn*14 + math.floor((i-1)*14/count)
-            local node_y = 1 + math.floor(step_index/2)
-            local node_name = (step_index % 2 == 1) and M.stair_high or M.stair_low
-            local dx,dz = q.x-p.x,q.z-p.z
-            local facedir = node_name == M.stair_high and stair_facedir(dx,dz) or 0
-
-            -- Deux cellules de large vers le centre ; la rampe reste annulaire.
-            local ix,iz = p.x,p.z
-            if math.abs(p.x) >= math.abs(p.z) then
-                ix = p.x - (p.x >= 0 and 1 or -1)
-            else
-                iz = p.z - (p.z >= 0 and 1 or -1)
-            end
-
-            for _,cell in ipairs({{x=p.x,z=p.z},{x=ix,z=iz}}) do
-                local x,z = cx+cell.x,cz+cell.z
-                clear(x,node_y+1,z,x,node_y+2,z)
-                -- Chaque marche repose sur un bloc porteur ; la vis ne flotte pas.
-                put(x,node_y-1,z,M.stone)
-                put(x,node_y,z,node_name,facedir)
-                staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
-            end
-        end
-    end
-
-    -- Dernière demi-marche alignée avec le plancher de la terrasse.
-    local p,q = path[1],path[2]
-    local final_index = 1 + revolutions*14
-    local final_y = 1 + math.floor(final_index/2)
-    local ix,iz = p.x,p.z
-    if math.abs(p.x) >= math.abs(p.z) then
-        ix = p.x - (p.x >= 0 and 1 or -1)
+    -- Palier d'entrée à hauteur du dallage, juste derrière la porte.
+    local first = path[1]
+    local first_inner_x,first_inner_z = first.x,first.z
+    if math.abs(first.x) >= math.abs(first.z) then
+        first_inner_x = first.x - (first.x >= 0 and 1 or -1)
     else
-        iz = p.z - (p.z >= 0 and 1 or -1)
+        first_inner_z = first.z - (first.z >= 0 and 1 or -1)
     end
-    local facing = stair_facedir(q.x-p.x,q.z-p.z)
-    for _,cell in ipairs({{x=p.x,z=p.z},{x=ix,z=iz}}) do
-        local x,z = cx+cell.x,cz+cell.z
-        clear(x,final_y+1,z,x,final_y+2,z)
-        put(x,final_y-1,z,M.stone)
-        put(x,final_y,z,M.stair_high,facing)
-        staircase_cells[#staircase_cells+1] = {x=x,y=final_y,z=z}
+    put(cx+first.x,1,cz+first.z,M.floor)
+    put(cx+first_inner_x,1,cz+first_inner_z,M.floor)
+
+    -- Le chemin tourne le long du mur et monte réellement à chaque demi-marche.
+    -- Les niveaux 8, 15 et 22 coïncident avec les planchers intermédiaires.
+    for step=1,total_steps do
+        local index = ((step) % count)+1
+        local next_index = (index % count)+1
+        local p,q = path[index],path[next_index]
+        local node_y = 1 + math.floor(step/2)
+        local node_name = (step % 2 == 1) and M.stair_high or M.stair_low
+        local dx,dz = q.x-p.x,q.z-p.z
+        local facedir = node_name == M.stair_high and stair_facedir(dx,dz) or 0
+
+        -- Deux cellules de large vers le centre de la tour.
+        local ix,iz = p.x,p.z
+        if math.abs(p.x) >= math.abs(p.z) then
+            ix = p.x - (p.x >= 0 and 1 or -1)
+        else
+            iz = p.z - (p.z >= 0 and 1 or -1)
+        end
+
+        for _,cell in ipairs({{x=p.x,z=p.z},{x=ix,z=iz}}) do
+            local x,z = cx+cell.x,cz+cell.z
+            clear(x,node_y+1,z,x,node_y+2,z)
+            put(x,node_y-1,z,M.stone)
+            put(x,node_y,z,node_name,facedir)
+            staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
+        end
     end
 end
 
@@ -1554,7 +1544,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 35
+local VERSION = 36
 
 local generation_started = false
 local function generate_if_needed()
