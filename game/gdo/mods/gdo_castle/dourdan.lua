@@ -270,18 +270,22 @@ local function tower_door(cx,cz,r,side,level,threshold_steps)
             if side == "east" then
                 put(cx+reach,1,cz+lateral,M.stair_low)
                 put(cx+reach-1,1,cz+lateral,M.stair_high)
+                put(cx+inner+1,1,cz+lateral,M.floor)
                 put(cx+inner,1,cz+lateral,M.floor)
             elseif side == "west" then
                 put(cx-reach,1,cz+lateral,M.stair_low)
                 put(cx-reach+1,1,cz+lateral,M.stair_high)
+                put(cx-inner-1,1,cz+lateral,M.floor)
                 put(cx-inner,1,cz+lateral,M.floor)
             elseif side == "north" then
                 put(cx+lateral,1,cz-reach,M.stair_low)
                 put(cx+lateral,1,cz-reach+1,M.stair_high)
+                put(cx+lateral,1,cz-inner-1,M.floor)
                 put(cx+lateral,1,cz-inner,M.floor)
             elseif side == "south" then
                 put(cx+lateral,1,cz+reach,M.stair_low)
                 put(cx+lateral,1,cz+reach-1,M.stair_high)
+                put(cx+lateral,1,cz+inner+1,M.floor)
                 put(cx+lateral,1,cz+inner,M.floor)
             end
         end
@@ -429,7 +433,7 @@ local function build_logis()
 
     -- Porte principale ouverte sur la cour, avec deux demi-marches de seuil.
     clear(-6,2,-12,-1,5,-10)
-    for x=-4,0 do
+    for x=-5,-2 do
         put(x,1,-11,M.stair_low)
         put(x,1,-12,M.stair_high)
     end
