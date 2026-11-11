@@ -555,8 +555,9 @@ local function build_gatehouse()
     fill(4,1,25,5,11,38,M.trim)
     fill(-5,11,25,5,12,38,M.trim)
     fill(-4,13,25,4,14,38,M.roof)
-    -- Passage intérieur libéré après les éléments d'arc.
-    clear(-3,2,25,3,10,42)
+    -- Passage traversant intégral : inclure z=24, qui est le mur nord
+    -- du volume du châtelet. Sans cette rangée, le tunnel finit en cul-de-sac.
+    clear(-2,2,23,2,10,42)
     -- Vantaux massifs ouverts le long des piédroits : porte visible, passage libre.
     for y=2,7 do
         for z=28,34 do
@@ -712,9 +713,9 @@ local function build_towers()
 end
 
 local function final_connections()
-    -- Portail traversant : aucun élément du châtelet ne doit le reboucher.
-    -- Conserver les vantaux latéraux ; seul le passage central est évidé.
-    clear(-2,2,25,2,10,42)
+    -- Portail traversant : dégager aussi le mur intérieur du châtelet (z=24)
+    -- et une courte sortie dans la cour. Les vantaux restent sur les côtés.
+    clear(-2,2,23,2,10,42)
     -- Accès du logis depuis la cour, sans effacer les vantaux.
     clear(-5,2,-13,-2,5,-10)
     -- Liaison logis/donjon à chaque niveau habitable.
@@ -738,7 +739,7 @@ local function final_connections()
     tower_door(24,-20,10,"north",15,false)
 
     -- Dégagement vertical et horizontal des passages vitaux.
-    clear(-2,2,25,2,10,42)
+    clear(-2,2,23,2,10,42)
     clear(-5,2,-13,-2,5,-10)
     clear(13,2,-22,18,5,-18)
     clear(13,9,-22,18,12,-18)
@@ -761,7 +762,7 @@ local function audit_geometry()
 
     -- Contrôle des trois traversées principales après assemblage des zones.
     local corridors = {
-        {name="portail", x1=-2,y1=2,z1=25,x2=2,y2=10,z2=42},
+        {name="portail", x1=-2,y1=2,z1=23,x2=2,y2=10,z2=42},
         {name="entrée du logis", x1=-5,y1=2,z1=-13,x2=-2,y2=5,z2=-10},
         {name="liaison logis-donjon", x1=13,y1=2,z1=-22,x2=18,y2=5,z2=-18},
     }
@@ -824,7 +825,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 11
+local VERSION = 12
 
 local function generate_if_needed()
     if not storage or storage:get_int("dourdan_plan_version") < VERSION then
