@@ -213,6 +213,8 @@ local function radial_inner_cell(p)
     return {x=p.x, z=p.z-signum(p.z)}
 end
 
+local staircase_cells = {}
+
 local function place_spiral_stair(cx,cz,r,height,entry_side)
     local radius = r-3
     local ring = make_octagonal_ring(radius,entry_side)
@@ -242,6 +244,7 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
             for _,cell in ipairs(cells) do
                 clear(cell.x,y,cell.z,cell.x,y+2,cell.z)
                 put(cell.x,y,cell.z,M.stair,param2)
+                staircase_cells[#staircase_cells+1] = {x=cell.x,y=y,z=cell.z}
             end
         end
         base = base+7
@@ -626,6 +629,43 @@ local function final_connections()
     clear(13,16,-22,18,19,-18)
 end
 
+local function audit_geometry()
+    local repaired = 0
+    -- Vérification du dégagement de chaque marche : 2 nodes libres au-dessus.
+    for _,p in ipairs(staircase_cells) do
+        for dy=1,2 do
+            local q = {x=p.x,y=p.y+dy,z=p.z}
+            local node = minetest.get_node(q)
+            if node and node.name ~= "air" then
+                put(q.x,q.y,q.z,"air")
+                repaired = repaired + 1
+            end
+        end
+    end
+
+    -- Contrôle des trois traversées principales après assemblage des zones.
+    local corridors = {
+        {name="portail", x1=-3,y1=2,z1=25,x2=3,y2=10,z2=42},
+        {name="entrée du logis", x1=-6,y1=2,z1=-13,x2=-1,y2=5,z2=-10},
+        {name="liaison logis-donjon", x1=13,y1=2,z1=-22,x2=18,y2=5,z2=-18},
+    }
+    local blocked = 0
+    for _,c in ipairs(corridors) do
+        for x=c.x1,c.x2 do
+            for y=c.y1,c.y2 do
+                for z=c.z1,c.z2 do
+                    local n = minetest.get_node({x=x,y=y,z=z})
+                    if not n or n.name ~= "air" then blocked = blocked + 1 end
+                end
+            end
+        end
+    end
+
+    minetest.log("action","[GDO] Audit géométrique : "..#staircase_cells..
+        " cellules d'escalier contrôlées, "..repaired..
+        " dégagements corrigés, "..blocked.." blocs dans les couloirs.")
+end
+
 local function safe_spawn(player)
     if not player or not player:is_player() then return end
     player:set_pos({x=0,y=1,z=68})
@@ -655,6 +695,7 @@ local function build()
 
     -- La passe d'assemblage intervient après toutes les zones.
     final_connections()
+    audit_geometry()
 
     if minetest.fix_light then
         minetest.fix_light({x=-44,y=-2,z=-43},{x=44,y=48,z=76})
