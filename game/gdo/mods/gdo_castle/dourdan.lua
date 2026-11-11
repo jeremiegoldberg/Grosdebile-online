@@ -30,6 +30,9 @@ local M = {
     bench = "gdo_castle:refit_bench",
     rug = "gdo_castle:refit_rug",
     pillar = "gdo_castle:refit_pillar",
+    flower_red = "gdo_castle:refit_flower_red",
+    flower_blue = "gdo_castle:refit_flower_blue",
+    flower_gold = "gdo_castle:refit_flower_gold",
 }
 
 local textures = {
@@ -85,6 +88,25 @@ register_textured(M.water, "Eau du fossé", {cracky = 3}, {
     walkable = false,
     pointable = false,
 })
+
+local function register_flower(name, description, texture)
+    minetest.register_node(name, {
+        description = S(description),
+        drawtype = "plantlike",
+        tiles = {texture},
+        inventory_image = texture,
+        wield_image = texture,
+        paramtype = "light",
+        sunlight_propagates = true,
+        walkable = false,
+        buildable_to = true,
+        groups = {snappy = 3, oddly_breakable_by_hand = 3, flora = 1},
+        selection_box = {type = "fixed", fixed = {-0.25,-0.5,-0.25,0.25,0.35,0.25}},
+    })
+end
+register_flower(M.flower_red, "Coquelicot", textures.refit_roof)
+register_flower(M.flower_blue, "Iris bleu", textures.refit_glass)
+register_flower(M.flower_gold, "Fleur dorée", textures.refit_gold)
 -- Lanterne compacte en nodebox : source lumineuse visible, sans occuper
 -- tout le bloc ni gêner la circulation. Compatible Luanti 5.4.1.
 minetest.register_node(M.lamp, {
@@ -219,6 +241,39 @@ register_furniture(M.pillar, "Colonne sculptée", textures.refit_trim, {
 
 local function put(x,y,z,name,param2)
     minetest.set_node({x=x,y=y+BASE_Y,z=z}, {name=name, param2=param2 or 0})
+end
+
+local function build_tree(x,y,z,height)
+    -- Tronc continu et houppier étagé : plus de feuillage suspendu.
+    height = height or 4
+    for dy=1,height do
+        put(x,y+dy,z,"gdo_core:arbre")
+    end
+    for layer=0,3 do
+        local yy = y+height-1+layer
+        local radius = (layer == 3) and 1 or (layer == 0 and 2 or 2.4)
+        for dx=-2,2 do
+            for dz=-2,2 do
+                if dx*dx+dz*dz <= radius*radius and not (dx==0 and dz==0 and layer<3) then
+                    put(x+dx,yy,z+dz,"gdo_core:feuilles")
+                end
+            end
+        end
+    end
+    put(x,y+height+3,z,"gdo_core:feuilles")
+end
+
+local function flower_patch(x1,z1,x2,z2,spacing)
+    local types = {M.flower_red,M.flower_blue,M.flower_gold}
+    local index = 1
+    for x=x1,x2,spacing or 2 do
+        for z=z1,z2,spacing or 2 do
+            if (x+z)%3 ~= 0 then
+                put(x,1,z,types[index])
+                index = index%#types+1
+            end
+        end
+    end
 end
 
 local function fill(x1,y1,z1,x2,y2,z2,name)
@@ -1157,7 +1212,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 23
+local VERSION = 24
 
 local generation_started = false
 local function generate_if_needed()
