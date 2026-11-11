@@ -618,6 +618,9 @@ local function build_courtyard_buildings()
     fill(-26,2,-5,-18,2,-3,M.wood)
     put(-18,3,-5,"gdo_castle:forge_station")
     lamp(-17,7,0)
+    for _,p in ipairs({{-24,7,-4},{-20,7,-4},{-24,7,8},{-20,7,8}}) do
+        lamp(p[1],p[2],p[3])
+    end
 
     -- Chapelle et salle des novices au sud-est.
     small_building(16,28,2,19,11,"west",M.roof)
@@ -626,6 +629,9 @@ local function build_courtyard_buildings()
     for z=9,15,3 do
         put(16,6,z,M.glass)
         lamp(17,7,z)
+    end
+    for _,p in ipairs({{20,8,5},{24,8,5},{20,8,15},{24,8,15}}) do
+        lamp(p[1],p[2],p[3])
     end
 
     -- Puits central décalé de l'axe de circulation.
@@ -815,7 +821,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 8
+local VERSION = 9
 
 local function generate_if_needed()
     if not storage or storage:get_int("dourdan_plan_version") < VERSION then
