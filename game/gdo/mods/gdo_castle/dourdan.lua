@@ -597,6 +597,11 @@ local function build_round_tower(spec)
     if spec.wall_side then
         tower_door(cx,cz,r,spec.wall_side,15,false)
     end
+    if spec.extra_doors then
+        for _,level in ipairs(spec.extra_doors) do
+            tower_door(cx,cz,r,spec.entry,level,false)
+        end
+    end
 
     -- Quatre meurtrières vitrées et lanternes murales à chaque niveau.
     for y=5,h-3,7 do
@@ -696,7 +701,7 @@ local function place_logis_switchback()
 
     for cycle=0,2 do
         for i,p in ipairs(path) do
-            local step_index = cycle*14 + (i-1)
+            local step_index = 1 + cycle*14 + (i-1)
             if step_index <= 29 then
                 local node_y = 1 + math.floor(step_index/2)
                 local node_name = (step_index%2 == 0) and M.stair_low or M.stair_high
@@ -1546,7 +1551,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 33
+local VERSION = 34
 
 local generation_started = false
 local function generate_if_needed()
