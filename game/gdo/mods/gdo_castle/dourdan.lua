@@ -77,13 +77,53 @@ register_textured(M.water, "Eau du fossé", {cracky = 3}, {
     walkable = false,
     pointable = false,
 })
-register_textured(M.lamp, "Lanterne murale", {cracky = 2}, {
+-- Lanterne compacte en nodebox : source lumineuse visible, sans occuper
+-- tout le bloc ni gêner la circulation. Compatible Luanti 5.4.1.
+minetest.register_node(M.lamp, {
+    description = S("Lanterne murale"),
+    drawtype = "nodebox",
     tiles = {textures.refit_gold},
-    drawtype = "glasslike",
     paramtype = "light",
     sunlight_propagates = true,
-    light_source = 12,
+    light_source = 14,
+    walkable = false,
+    groups = {cracky = 2, oddly_breakable_by_hand = 2},
+    node_box = {
+        type = "fixed",
+        fixed = {
+            {-0.22,-0.22,-0.22,0.22,0.22,0.22},
+            {-0.08,-0.5,-0.08,0.08,-0.22,0.08},
+        },
+    },
+    selection_box = {
+        type = "fixed",
+        fixed = {-0.22,-0.22,-0.22,0.22,0.22,0.22},
+    },
 })
+
+-- Deux vantaux de chêne représentés ouverts contre les piédroits :
+-- ils restent visibles, mais ne barrent jamais le passage central.
+local function register_open_gate_leaf(name, side)
+    local x1,x2
+    if side == "left" then
+        x1,x2 = 0.28,0.46
+    else
+        x1,x2 = -0.46,-0.28
+    end
+    minetest.register_node(name, {
+        description = S("Vantail de porte ouvert"),
+        drawtype = "nodebox",
+        tiles = {textures.refit_wood},
+        paramtype = "light",
+        sunlight_propagates = true,
+        walkable = false,
+        groups = {choppy = 2, not_in_creative_inventory = 1},
+        node_box = {type = "fixed", fixed = {x1,-0.5,-0.5,x2,0.5,0.5}},
+        selection_box = {type = "fixed", fixed = {x1,-0.5,-0.5,x2,0.5,0.5}},
+    })
+end
+register_open_gate_leaf("gdo_castle:open_gate_left", "left")
+register_open_gate_leaf("gdo_castle:open_gate_right", "right")
 local function register_step_node(name, description, box)
     minetest.register_node(name, {
         description = S(description),
@@ -309,6 +349,8 @@ local function build_round_tower(spec)
     -- Planchers de niveaux ; la spirale découpe sa propre trémie ensuite.
     for y=1,h,7 do
         disk_floor(cx,cz,inner,y,M.floor)
+        -- Une lanterne centrale par niveau ; le noyau reste libre de la spirale.
+        if y+3 < h then lamp(cx,y+3,cz) end
     end
 
     place_spiral_stair(cx,cz,r,h,spec.entry)
@@ -419,6 +461,17 @@ local function build_logis()
         put(x,1,-11,M.stair_low)
         put(x,1,-12,M.stair_high)
     end
+    -- Deux vantaux en chêne ouverts contre les jambages de l'entrée du logis.
+    for y=2,5 do
+        for z=-12,-10 do
+            put(-6,y,z,"gdo_castle:open_gate_left")
+            put(-1,y,z,"gdo_castle:open_gate_right")
+        end
+    end
+    for y=2,4,2 do
+        put(-6,y,-11,M.gold)
+        put(-1,y,-11,M.gold)
+    end
     -- Grande salle au rez-de-chaussée, cloison de cuisine au nord-est.
     wall_z(-24,-14,2,7,-3,M.trim,1)
     clear(-3,2,-20,-3,5,-18)
@@ -428,6 +481,13 @@ local function build_logis()
     fill(-18,2,-25,-15,6,-25,M.trim)
     fill(-17,3,-24,-16,5,-24,M.roof)
     lamp(-16,6,-24)
+    -- Éclairage réparti au-dessus des espaces de réception.
+    for _,p in ipairs({{-20,6,-22},{-12,6,-22},{-4,6,-22},
+                       {-20,6,-34},{-12,6,-34},{-4,6,-34},
+                       {-20,13,-22},{-12,13,-22},{-4,13,-22},
+                       {-20,20,-22},{-12,20,-22},{-4,20,-22}}) do
+        lamp(p[1],p[2],p[3])
+    end
     -- Réfectoire et cuisine sur le côté est.
     fill(3,2,-24,9,2,-22,M.wood)
     fill(4,2,-18,10,2,-17,M.wood)
@@ -489,10 +549,28 @@ local function build_gatehouse()
     fill(-4,13,25,4,14,38,M.roof)
     -- Passage intérieur libéré après les éléments d'arc.
     clear(-3,2,25,3,10,42)
+    -- Vantaux massifs ouverts le long des piédroits : porte visible, passage libre.
+    for y=2,7 do
+        for z=28,34 do
+            put(-3,y,z,"gdo_castle:open_gate_left")
+            put(3,y,z,"gdo_castle:open_gate_right")
+        end
+    end
+    -- Ferrures et clous dorés sur les vantaux.
+    for y=2,6,2 do
+        put(-3,y,31,M.gold)
+        put(3,y,31,M.gold)
+    end
+
     -- Herse relevée au-dessus du volume de passage, jamais à hauteur du joueur.
     for x=-2,2,2 do
         fill(x,11,31,x,13,31,M.wood)
         put(x,14,31,M.gold)
+    end
+    -- Lanternes encastrées dans les deux murs du tunnel.
+    for z=27,39,6 do
+        lamp(-3,8,z)
+        lamp(3,8,z)
     end
     -- Galerie supérieure de garde.
     deck(-9,27,9,37,15,M.wood)
@@ -552,6 +630,11 @@ local function build_courtyard_buildings()
     fill(-13,3,1,-9,3,1,M.wood)
     fill(-13,3,5,-9,3,5,M.wood)
     lamp(-11,5,3)
+    -- Appliques au niveau des galeries et des portes de la cour.
+    for _,p in ipairs({{-20,5,-5},{20,5,-5},{-20,5,20},{20,5,20},
+                       {-30,8,0},{30,8,0},{-30,8,25},{30,8,25}}) do
+        lamp(p[1],p[2],p[3])
+    end
 end
 
 local function build_gardens_and_approach()
@@ -580,6 +663,9 @@ local function build_gardens_and_approach()
         lamp(-12,4,z)
         lamp(12,4,z)
     end
+    -- Lumières du chemin d'accès et de la herse.
+    lamp(-3,5,42); lamp(3,5,42)
+    lamp(-3,5,55); lamp(3,5,55)
     -- Plateforme de spawn entièrement dégagée.
     deck(-4,64,4,72,0,M.floor)
     clear(-3,1,64,3,5,72)
@@ -723,7 +809,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 6
+local VERSION = 7
 
 local function generate_if_needed()
     if not storage or storage:get_int("dourdan_plan_version") < VERSION then
