@@ -177,12 +177,11 @@ end
 register_step_node(M.stair_low, "Marche basse en pierre", {
     {-0.5,-0.5,-0.5,0.5,0,0.5},
 })
--- Marche haute : même emprise au sol, avec une surélévation de 1/2 node
--- sur la moitié avant. Le haut doit être dans la direction de progression.
+-- Marche haute : dalle pleine au niveau supérieur (+0,5 node).
+-- Une face horizontale uniforme évite les conflits de collision sur les angles.
 register_step_node(M.stair_high, "Marche haute en pierre", {
-    {-0.5,-0.5,-0.5,0.5,0,0.5},
-    {-0.5,0,-0.5,0.5,0,0.5},
-}, true)
+    {-0.5,0,-0.5,0.5,0.5,0.5},
+})
 
 local function register_furniture(name, description, texture, boxes, walkable)
     minetest.register_node(name, {
@@ -558,9 +557,16 @@ local function build_round_tower(spec)
         end
     end
 
-    -- Planchers à chaque niveau ; la rampe annulaire découpe sa trémie.
+    -- Planchers intermédiaires avec une trémie conservée sous la rampe.
+    local stair_path = make_octagonal_ring(r-3,spec.entry)
     for y=1,h,7 do
         disk_floor(cx,cz,inner,y,M.floor)
+        if y > 1 then
+            for _,p in ipairs(stair_path) do
+                put(cx+p.x,y,cz+p.z,"air")
+                put(cx+p.x,y+1,cz+p.z,"air")
+            end
+        end
     end
 
     -- Petit noyau central d'un seul bloc : la cage reste lisible et lumineuse.
@@ -570,18 +576,6 @@ local function build_round_tower(spec)
             lamp(cx,level+2,cz)
             put(cx,level+1,cz-1,M.gold)
             put(cx,level+1,cz+1,M.gold)
-        end
-    end
-
-    -- Réserver la trémie annulaire sur chaque palier : sans cette découpe,
-    -- les disques de plancher recouvrent les marches à leur passage de niveau.
-    local stair_ring = make_octagonal_ring(r-3,spec.entry)
-    local ring_count = #stair_ring
-    for _,level in ipairs({8,15,22,29,36,43,50}) do
-        if level < h then
-            for _,p in ipairs(stair_ring) do
-                put(cx+p.x,level,cz+p.z,"air")
-            end
         end
     end
 
