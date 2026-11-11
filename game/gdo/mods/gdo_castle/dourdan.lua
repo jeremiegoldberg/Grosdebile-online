@@ -1147,7 +1147,7 @@ local function safe_spawn(player)
 end
 
 local function find_surface_y(x,z)
-    for y=80,-16,-1 do
+    for y=128,-32,-1 do
         local node = minetest.get_node_or_nil({x=x,y=y,z=z})
         if node and node.name ~= "air" and node.name ~= "ignore" then
             local def = minetest.registered_nodes[node.name]
@@ -1160,6 +1160,41 @@ local function find_surface_y(x,z)
         end
     end
     return nil
+end
+
+local TERRAIN_STEP = 4
+local TERRAIN_MIN_X, TERRAIN_MAX_X = -124,124
+local TERRAIN_MIN_Z, TERRAIN_MAX_Z = -160,160
+local terrain_samples = {}
+
+local function sample_natural_heights()
+    terrain_samples = {}
+    for x=TERRAIN_MIN_X,TERRAIN_MAX_X,TERRAIN_STEP do
+        local row = {}
+        for z=TERRAIN_MIN_Z,TERRAIN_MAX_Z,TERRAIN_STEP do
+            row[z] = find_surface_y(x,z)
+        end
+        terrain_samples[x] = row
+    end
+end
+
+local function sampled_surface_y(x,z)
+    local x0 = TERRAIN_MIN_X + math.floor((x-TERRAIN_MIN_X)/TERRAIN_STEP)*TERRAIN_STEP
+    local z0 = TERRAIN_MIN_Z + math.floor((z-TERRAIN_MIN_Z)/TERRAIN_STEP)*TERRAIN_STEP
+    local x1 = math.min(TERRAIN_MAX_X,x0+TERRAIN_STEP)
+    local z1 = math.min(TERRAIN_MAX_Z,z0+TERRAIN_STEP)
+    local h00 = terrain_samples[x0] and terrain_samples[x0][z0]
+    local h10 = terrain_samples[x1] and terrain_samples[x1][z0]
+    local h01 = terrain_samples[x0] and terrain_samples[x0][z1]
+    local h11 = terrain_samples[x1] and terrain_samples[x1][z1]
+    if not h00 or not h10 or not h01 or not h11 then
+        return find_surface_y(x,z)
+    end
+    local tx = (x-x0)/(x1-x0)
+    local tz = (z-z0)/(z1-z0)
+    local top = h00*(1-tx)+h10*tx
+    local bottom = h01*(1-tx)+h11*tx
+    return math.floor(top*(1-tz)+bottom*tz+0.5)
 end
 
 local function choose_base_y()
@@ -1182,28 +1217,143 @@ local function choose_base_y()
 end
 
 local function prepare_level_pad()
-    -- Plateau ovale sous l'enceinte : 94 x 104 nodes environ.
-    -- En dehors, le relief généré par la carte est conservé.
-    local rx,rz,cz = 47,52,2
-    for x=-50,50 do
-        for z=-56,76 do
-            local d = (x/rx)*(x/rx) + ((z-cz)/rz)*((z-cz)/rz)
-            local apron = math.abs(x) <= 17 and z >= 44 and z <= 72
-            if d <= 1 or apron then
-                clear(x,1,z,x,82,z)
+    -- Plateau ovale : l'emprise construite est plane, mais son raccord
+    -- au terrain naturel s'étale sur près de 70 nodes au lieu d'un talus vertical.
+    local rx,rz,cz = 47,68,5
+    for x=-108,108 do
+        for z=-144,144 do
+            local d = math.sqrt((x/rx)*(x/rx)+((z-cz)/rz)*((z-cz)/rz))
+            local original = sampled_surface_y(x,z)
+            if d <= 1 then
+                local old_rel = original and (original-BASE_Y) or 0
+                local top = math.max(82,old_rel+18)
+                clear(x,1,z,x,top,z)
                 fill(x,-5,z,x,-1,z,"gdo_core:terre")
                 put(x,0,z,M.grass)
-            elseif d <= 1.18 then
-                -- Talus enherbé de cinq niveaux : raccord du plateau au relief.
-                local drop = math.min(5,math.max(1,math.floor((d-1)*28)+1))
-                local top = -drop
-                clear(x,top+1,z,x,82,z)
-                fill(x,top-4,z,x,top-1,z,"gdo_core:terre")
-                put(x,top,z,M.grass)
+            elseif d <= 2.0 and original then
+                local old_rel = original-BASE_Y
+                local t = math.max(0,math.min(1,d-1))
+                t = t*t*(3-2*t)
+                local target = math.floor(old_rel*t+0.5)
+                local high = math.max(old_rel,target)+16
+
+                -- Coupe ou remblai par colonne, avec une pente douce et continue.
+                clear(x,target+1,z,x,high,z)
+                if target > old_rel then
+                    fill(x,old_rel+1,z,x,target-1,z,"gdo_core:terre")
+                end
+                fill(x,target-4,z,x,target-1,z,"gdo_core:terre")
+                put(x,target,z,M.grass)
             end
         end
     end
 end
+
+local function build_rolling_hill(cx,cz,rx,rz,height)
+    for dx=-rx,rx do
+        for dz=-rz,rz do
+            local d = (dx/rx)*(dx/rx)+(dz/rz)*(dz/rz)
+            if d < 1 then
+                local x,z = cx+dx,cz+dz
+                local surface = find_surface_y(x,z)
+                if surface then
+                    local rel = surface-BASE_Y
+                    local lift = math.floor(height*math.pow(1-d,1.35))
+                    if lift > 0 then
+                        clear(x,rel+1,z,x,rel+lift+12,z)
+                        if lift > 1 then
+                            fill(x,rel+1,z,x,rel+lift-1,z,"gdo_core:terre")
+                        end
+                        put(x,rel+lift,z,M.grass)
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function plant_grove(cx,cz,radius)
+    for dx=-radius,radius,7 do
+        for dz=-radius,radius,7 do
+            if dx*dx+dz*dz <= radius*radius then
+                local hash = math.abs((cx+dx)*17+(cz+dz)*31)
+                if hash%5 ~= 0 then
+                    local x,z = cx+dx,cz+dz
+                    local surface = find_surface_y(x,z)
+                    if surface then
+                        build_tree(x,surface-BASE_Y,z,4+(hash%2))
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function build_natural_pond(cx,cz,rx,rz)
+    local center = find_surface_y(cx,cz)
+    if not center then return end
+    local water_y = center-BASE_Y-1
+    for dx=-rx,rx do
+        for dz=-rz,rz do
+            local d = (dx/rx)*(dx/rx)+(dz/rz)*(dz/rz)
+            local x,z = cx+dx,cz+dz
+            if d <= 1 then
+                local surface = find_surface_y(x,z)
+                if surface then
+                    local rel = surface-BASE_Y
+                    if rel < water_y then
+                        fill(x,rel+1,z,x,water_y-1,z,"gdo_core:terre")
+                    end
+                    clear(x,water_y,z,x,math.max(rel,water_y)+12,z)
+                    put(x,water_y,z,"gdo_core:eau")
+                end
+            elseif d <= 1.22 then
+                local surface = find_surface_y(x,z)
+                if surface then
+                    put(x,surface-BASE_Y,z,M.trim)
+                end
+            end
+        end
+    end
+end
+
+local function build_exterior_landscape()
+    -- Les collines restent à distance de l'enceinte ; elles se fondent dans le relief v6.
+    build_rolling_hill(-91,-84,23,25,12)
+    build_rolling_hill(92,-74,24,22,13)
+    build_rolling_hill(-91,104,25,22,11)
+    build_rolling_hill(91,108,26,24,14)
+    build_rolling_hill(6,-121,18,17,8)
+
+    -- Bosquets irréguliers et clairières fleuries autour du chemin.
+    plant_grove(-91,-84,17)
+    plant_grove(92,-74,16)
+    plant_grove(-91,104,17)
+    plant_grove(91,108,18)
+    plant_grove(5,-121,11)
+
+    -- Petit étang naturel dans la prairie sud-est.
+    build_natural_pond(28,112,8,6)
+
+    -- Chemin de terre et de pavés qui sort du pont-levis vers la campagne.
+    for step=0,58 do
+        local z = 73+step
+        local x = round_number(4+5*math.sin(step*0.085))
+        local surface = find_surface_y(x,z)
+        if surface then
+            local y = surface-BASE_Y
+            clear(x,y+1,z,x,y+3,z)
+            put(x,y,z,M.path)
+            if step%3 == 0 then
+                put(x+1,y,z,M.path)
+            end
+            if step%11 == 0 then
+                lamp(x+2,y+2,z)
+            end
+        end
+    end
+end
+
 
 local function build()
     -- Les joueurs sont déplacés au-dessus de la zone pendant les travaux.
@@ -1212,8 +1362,9 @@ local function build()
         if player.set_velocity then player:set_velocity({x=0,y=0,z=0}) end
     end
 
-    -- Aplanir seulement l'emprise bâtie et le parvis ; garder collines et plaines autour.
+    -- Plateau et pente de raccord ; le paysage naturel demeure au-delà.
     prepare_level_pad()
+    build_exterior_landscape()
 
     -- Construction par zones, dans l'ordre des structures porteuses.
     build_enclosure()
@@ -1230,7 +1381,7 @@ local function build()
     ensure_gerard()
 
     if minetest.fix_light then
-        minetest.fix_light({x=-50,y=BASE_Y-6,z=-56},{x=50,y=BASE_Y+82,z=76})
+        minetest.fix_light({x=-124,y=BASE_Y-8,z=-160},{x=124,y=BASE_Y+160,z=160})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
 
@@ -1239,7 +1390,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 25
+local VERSION = 26
 
 local generation_started = false
 local function generate_if_needed()
