@@ -85,13 +85,36 @@ local function lantern(x,y,z)
     put(x,y,z,"gdo_castle:castle_lantern")
 end
 
--- Tour octogonale massive, avec ouvertures, mâchicoulis et toit conique étagé.
--- Escalier en blocs pleins : une marche par niveau, avec palier à chaque étage.
-local function stair_flight(x1,z,y0,count,dir,material)
-    for i=1,count do
-        local x=x1+(i-1)*dir
-        fill(x,y0+i,z,x,y0+i,z,material or M.trim)
-        clear(x,y0+i+1,z,x,y0+i+2,z)
+-- Tour circulaire avec escalier hélicoïdal intégré contre la paroi intérieure.
+-- Les marches suivent un anneau octogonal : une révolution complète par étage.
+local function spiral_stair(cx, cz, r, h)
+    local radius = math.max(1, r - 2)
+    local ring = {
+        {0,-radius}, {radius,-radius}, {radius,0}, {radius,radius},
+        {0,radius}, {-radius,radius}, {-radius,0}, {-radius,-radius}
+    }
+    -- Un palier horizontal au départ, puis sept marches montantes :
+    -- la boucle fait un tour complet et gagne exactement sept blocs.
+    local y = 2
+    for base=1,h-5,7 do
+        for i,p in ipairs(ring) do
+            local rise = (i == 1) and 0 or 1
+            y = y + rise
+            local x, z = cx+p[1], cz+p[2]
+            -- Dégager le volume de passage et remplacer le plancher traversé.
+            clear(x,y,z,x,y+2,z)
+            put(x,y,z,M.trim)
+            -- Dégager aussi le bloc au-dessus du pas suivant pour éviter
+            -- les plafonds trop bas dans les petites tours.
+            local nextp = ring[(i % #ring)+1]
+            clear(cx+nextp[1],y+1,cz+nextp[2],cx+nextp[1],y+2,cz+nextp[2])
+        end
+        -- Le palier de sortie rejoint le plancher supérieur.
+        local exit = ring[1]
+        local ey = base + 7
+        clear(cx+exit[1],ey,cx+exit[1],cz+exit[2],ey+2,cz+exit[2])
+        put(cx+exit[1],ey,cz+exit[2],M.wood)
+        y = base + 7
     end
 end
 
@@ -104,7 +127,7 @@ local function room_light_grid(x1,x2,z1,z2,y,step)
 end
 
 local function round_tower(cx,cz,r,h)
-    -- Fût circulaire.
+    -- Fût circulaire épais, avec un intérieur réellement accessible.
     for y=1,h do
         for x=-r,r do for z=-r,r do
             local d=x*x+z*z
@@ -114,30 +137,18 @@ local function round_tower(cx,cz,r,h)
         end end
     end
 
-    -- Planchers intermédiaires, puis trémies alignées sur la cage d'escalier.
+    -- Planchers d'étage ; la cage hélicoïdale les traverse ensuite.
     for y=7,h-4,7 do
         deck(cx-r+1,cz-r+1,cx+r-1,cz+r-1,y,M.wood)
         put(cx,y,cz-r,M.glass); put(cx,y,cz+r,M.glass)
         put(cx-r,y,cz,M.glass); put(cx+r,y,cz,M.glass)
         lantern(cx,y+1,cz)
-        -- Trémie traversante : les marches peuvent déboucher à l'étage.
-        clear(cx-r+1,y,cz-1,cx+r-1,y,cz+1)
     end
 
-    -- Escalier droit alterné, d'une largeur de 3 blocs, au centre de la tour.
-    -- Chaque volée monte de 6 blocs et arrive sur un palier au niveau suivant.
-    for base=1,h-8,7 do
-        local reverse=(math.floor((base-1)/7)%2==1)
-        for i=1,6 do
-            local x=reverse and (cx+r-1-i) or (cx-r+ i)
-            fill(x,base+i,cz-1,x,base+i,cz+1,M.trim)
-            clear(x,base+i+1,cz-1,x,base+i+2,cz+1)
-        end
-        local landing_x=reverse and (cx-r+1) or (cx+r-1)
-        fill(landing_x-1,base+7,cz-1,landing_x+1,base+7,cz+1,M.wood)
-    end
+    -- Escalier en colimaçon : marches sur l'anneau intérieur, vide au centre.
+    spiral_stair(cx,cz,r,h)
 
-    -- Porte au pied de chaque tour, tournée vers le centre du château.
+    -- Portes au pied, orientées vers le centre du château.
     if cx < -5 then
         clear(cx+r-1,2,cz-1,cx+r,5,cz+1)
     elseif cx > 5 then
@@ -147,7 +158,6 @@ local function round_tower(cx,cz,r,h)
     elseif cz > 10 then
         clear(cx-1,2,cz-r,cx+1,5,cz-r+1)
     else
-        -- Tourelle centrale : accès depuis l'étage noble.
         clear(cx-1,18,cz+r-1,cx+1,22,cz+r)
     end
 
@@ -164,13 +174,12 @@ local function round_tower(cx,cz,r,h)
         end
     end
 
-    -- Corniche en pierre claire.
+    -- Corniche en pierre claire et toit conique.
     for x=-r-1,r+1 do for z=-r-1,r+1 do
         if x*x+z*z <= (r+1)*(r+1) and x*x+z*z >= (r-2)*(r-2) then
             put(cx+x,h+1,cz+z,M.trim)
         end
     end end
-    -- Toit conique bleu.
     for layer=0,r+2 do
         local rr=r+1-layer
         if rr>=0 then
