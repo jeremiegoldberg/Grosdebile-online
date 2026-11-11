@@ -358,22 +358,10 @@ local function ensure_gerard()
     minetest.add_entity(pos, "gdo_core:gerard")
 end
 
+-- Le château Dourdan construit désormais le plateau d'arrivée.
+-- On ne génère plus de clairière ni de plateforme volante à altitude fixe ici.
 minetest.register_on_mods_loaded(function()
-    minetest.after(1, function()
-        -- Le stockage de mod n'est pas disponible sur certaines anciennes
-        -- versions/forks de Minetest : on évite alors de faire planter le jeu.
-        local marker = minetest.get_mod_storage and minetest.get_mod_storage() or nil
-        local already_built = marker and marker:get_int("starting_area_built") == 1
-
-        if not already_built then
-            build_starting_area()
-            if marker then
-                marker:set_int("starting_area_built", 1)
-            end
-            minetest.log("action", "[GDO] Zone de départ construite.")
-        end
-        ensure_gerard()
-    end)
+    minetest.log("action", "[GDO] Les points d'arrivée et la cour sont gérés par gdo_castle.")
 end)
 
 minetest.register_on_joinplayer(function(player)
@@ -383,51 +371,9 @@ minetest.register_on_joinplayer(function(player)
 
     local meta = player:get_meta()
     local first_spawn = meta:get_int("gdo_spawned") ~= 1
-
     minetest.after(2, function()
-        if not player or not player:is_player() then
-            return
-        end
-
-        -- Spawn sur la place extérieure, hors de l'emprise des bâtiments et des remparts.
-        -- La zone d'arrivée du château se trouve en z=32..49 ; on utilise z=45,
-        -- au-delà du mur transversal situé en z=39.
-        for x = -4, 4 do
-            for z = 60, 68 do
-                minetest.set_node({x = x, y = 24, z = z}, {name = "gdo_castle:castle_marble"})
-                for y = 25, 36 do
-                    minetest.set_node({x = x, y = y, z = z}, {name = "air"})
-                end
-            end
-        end
-
-        if minetest.fix_light then
-            minetest.fix_light(
-                {x = -6, y = 24, z = 39},
-                {x = 6, y = 38, z = 75}
-            )
-        end
-
-        -- Position centrée sur le joueur : pieds au niveau du dallage (y=0).
-        player:set_pos({x = 0, y = 25, z = 64})
-        player:set_velocity({x = 0, y = 0, z = 0})
-        if player.set_look_horizontal then
-            player:set_look_horizontal(0)
-        end
-        if player.set_look_vertical then
-            player:set_look_vertical(0)
-        end
-        if player.override_day_night_ratio then
-            player:override_day_night_ratio(1)
-        end
+        if not player or not player:is_player() then return end
         meta:set_int("gdo_spawned", 1)
-
-        local feet = minetest.get_node({x = 0, y = 24, z = 64}).name
-        local body = minetest.get_node({x = 0, y = 26, z = 64}).name
-        minetest.chat_send_player(player:get_player_name(),
-            string.format("[GDO] Spawn sur le parvis sud | sol=%s | espace=%s",
-                feet, body))
-
         if first_spawn then
             minetest.chat_send_player(player:get_player_name(),
                 "Bienvenue dans le Royaume du Nawak ! Tu es au centre de la cour du château.")
