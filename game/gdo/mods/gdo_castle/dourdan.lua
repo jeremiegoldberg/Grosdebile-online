@@ -483,10 +483,13 @@ local function build_round_tower(spec)
 
     -- Quatre meurtrières vitrées et lanternes murales à chaque niveau.
     for y=5,h-3,7 do
-        tower_window(cx,cz,r,"north",y)
-        tower_window(cx,cz,r,"east",y)
-        tower_window(cx,cz,r,"south",y)
-        tower_window(cx,cz,r,"west",y)
+        -- Ne pas réouvrir une meurtrière dans le portail de raccord au rempart.
+        if not (spec.wall_side and y >= 15 and y <= 19) then
+            tower_window(cx,cz,r,"north",y)
+            tower_window(cx,cz,r,"east",y)
+            tower_window(cx,cz,r,"south",y)
+            tower_window(cx,cz,r,"west",y)
+        end
         lamp(cx,y+2,cz-r+1)
         lamp(cx+r-1,y+2,cz)
         lamp(cx,y+2,cz+r-1)
@@ -494,14 +497,14 @@ local function build_round_tower(spec)
     end
 
     -- Terrasse supérieure avec un véritable sol continu et des créneaux.
-    disk_floor(cx,cz,inner,h+1,M.floor)
+    -- Le dernier plancher est celui du dernier niveau, pas une dalle au-dessus.
     for x=-r-1,r+1 do
         for z=-r-1,r+1 do
             local d=x*x+z*z
             if d <= (r+1)*(r+1) and d >= (r-1)*(r-1) then
-                put(cx+x,h+2,cz+z,M.trim)
+                put(cx+x,h+1,cz+z,M.trim)
                 if (x+z)%2 == 0 then
-                    put(cx+x,h+3,cz+z,M.trim)
+                    put(cx+x,h+2,cz+z,M.trim)
                 end
             end
         end
@@ -1144,7 +1147,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 21
+local VERSION = 22
 
 local generation_started = false
 local function generate_if_needed()
