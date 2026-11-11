@@ -539,8 +539,11 @@ local function build_round_tower(spec)
 
     -- Porte du rez-de-chaussée et accès au chemin de ronde au niveau haut.
     tower_door(cx,cz,r,spec.entry,1,spec.threshold_steps)
+    if spec.ground_side then
+        tower_door(cx,cz,r,spec.ground_side,1,false)
+    end
     if spec.wall_side then
-        tower_door(cx,cz,r,spec.wall_side,15)
+        tower_door(cx,cz,r,spec.wall_side,15,false)
     end
 
     -- Quatre meurtrières vitrées et lanternes murales à chaque niveau.
@@ -639,17 +642,19 @@ local function place_logis_switchback()
     for z=-24,-18 do path[#path+1] = {x=8,z=z} end
     for z=-18,-24,-1 do path[#path+1] = {x=9,z=z} end
 
-    for cycle=0,1 do
+    for cycle=0,2 do
         for i,p in ipairs(path) do
             local step_index = cycle*14 + (i-1)
-            local node_y = 1 + math.floor(step_index/2)
-            local node_name = (step_index%2 == 0) and M.stair_low or M.stair_high
-            local nextp = path[(i % #path)+1]
-            local dx,dz = nextp.x-p.x,nextp.z-p.z
-            clear(p.x,node_y+1,p.z,p.x,node_y+2,p.z)
-            put(p.x,node_y,p.z,node_name,
-                node_name == M.stair_high and stair_facedir(dx,dz) or 0)
-            staircase_cells[#staircase_cells+1] = {x=p.x,y=node_y,z=p.z}
+            if step_index <= 29 then
+                local node_y = 1 + math.floor(step_index/2)
+                local node_name = (step_index%2 == 0) and M.stair_low or M.stair_high
+                local nextp = path[(i % #path)+1]
+                local dx,dz = nextp.x-p.x,nextp.z-p.z
+                clear(p.x,node_y+1,p.z,p.x,node_y+2,p.z)
+                put(p.x,node_y,p.z,node_name,
+                    node_name == M.stair_high and stair_facedir(dx,dz) or 0)
+                staircase_cells[#staircase_cells+1] = {x=p.x,y=node_y,z=p.z}
+            end
         end
     end
 end
@@ -807,6 +812,7 @@ local function build_keep()
     build_round_tower({
         x=24,z=-20,r=12,h=29,
         entry="west",wall_side="north",threshold_steps=false,
+        extra_doors={8},
     })
 end
 
@@ -964,6 +970,24 @@ local function build_courtyard_buildings()
     build_tree(-14,0,21,4)
     flower_patch(-17,18,-11,24,2)
 
+    -- Marché de la cour : étals couverts, caisses et tonneaux.
+    for _,sx in ipairs({-10,10}) do
+        fill(sx-2,2,14,sx+2,2,14,M.wood)
+        fill(sx-2,4,13,sx+2,4,15,M.roof)
+        fill(sx-2,5,13,sx+2,5,15,M.wood)
+        put(sx-2,3,13,M.wood); put(sx+2,3,13,M.wood)
+        put(sx-2,3,15,M.wood); put(sx+2,3,15,M.wood)
+        put(sx-1,3,14,M.crate)
+        put(sx+1,3,14,M.barrel)
+        lamp(sx,6,14)
+    end
+    -- Bannières héraldiques suspendues sur les murs de la cour.
+    for _,p in ipairs({{-32,7,-20},{32,7,-20},{-32,7,20},{32,7,20}}) do
+        put(p[1],p[2],p[3],M.banner)
+        put(p[1],p[2]+1,p[3],M.gold)
+        lamp(p[1]+(p[1]>0 and -1 or 1),p[2]+2,p[3])
+    end
+
     -- Trois navets héroïques du tutoriel, replacés dans le jardin de la cour.
     put(-8,1,21,"gdo_core:navet_sur_pied")
     put(-10,1,22,"gdo_core:navet_sur_pied")
@@ -1048,11 +1072,11 @@ local function build_towers()
     -- Tours jumelles du châtelet : sorties raccordées à la galerie haute.
     build_round_tower({
         x=-13,z=32,r=8,h=22,
-        entry="south",wall_side="east",
+        entry="south",ground_side="north",wall_side="east",
     })
     build_round_tower({
         x=13,z=32,r=8,h=22,
-        entry="south",wall_side="west",
+        entry="south",ground_side="north",wall_side="west",
     })
 end
 
@@ -1070,17 +1094,9 @@ local function final_connections()
     deck(13,-22,16,-18,1,M.floor)
     deck(13,-22,16,-18,8,M.floor)
     deck(13,-22,16,-18,15,M.floor)
-    -- Entrée des tours d'angle après construction des courtines et bâtiments.
-    tower_door(-31,-27,7,"east",1)
-    tower_door(-31,31,7,"east",1)
-    tower_door(31,31,7,"west",1)
-    -- Tours du portail : accès depuis la cour et vers la galerie de garde.
-    tower_door(-10,32,7,"north",1)
-    tower_door(10,32,7,"north",1)
-    -- Refaire les fenêtres/portes du donjon en dernier pour garder les seuils nets.
-    tower_door(24,-20,10,"west",1,false)
-    tower_door(24,-20,10,"west",8,false)
-    tower_door(24,-20,10,"north",15,false)
+    -- Les portes des tours sont déjà découpées après les courtines dans
+    -- build_round_tower ; ne pas les rouvrir ici à d'anciennes coordonnées.
+    -- Le donjon reçoit son accès intermédiaire au niveau 8 par extra_doors.
 
     -- Dégagement vertical et horizontal des passages vitaux.
     clear(-2,2,23,2,10,42)
@@ -1142,6 +1158,8 @@ end
 
 local function safe_spawn(player)
     if not player or not player:is_player() then return end
+    -- Le joueur doit pouvoir franchir les marches de 0,5 node sans sauter.
+    if player.set_properties then player:set_properties({stepheight=0.6}) end
     player:set_pos({x=0,y=BASE_Y+1,z=68})
     if player.set_velocity then player:set_velocity({x=0,y=0,z=0}) end
 end
@@ -1317,6 +1335,56 @@ local function build_natural_pond(cx,cz,rx,rz)
     end
 end
 
+local function build_farmstead(cx,cz)
+    local surface = find_surface_y(cx,cz)
+    if not surface then return end
+    local fy = surface-BASE_Y
+
+    -- Petite clairière plane sur le terrain naturel.
+    for x=cx-7,cx+7 do
+        for z=cz-7,cz+10 do
+            local y = fy
+            clear(x,y+1,z,x,y+14,z)
+            fill(x,y-4,z,x,y-1,z,"gdo_core:terre")
+            put(x,y,z,M.grass)
+        end
+    end
+
+    -- Maison rurale à colombages et soubassement de pierre.
+    fill(cx-5,fy+1,cz-4,cx+5,fy+2,cz+4,M.stone)
+    fill(cx-5,fy+3,cz-4,cx+5,fy+7,cz+4,M.wood)
+    clear(cx-4,fy+3,cz-3,cx+4,fy+6,cz+3)
+    deck(cx-4,cz-3,cx+4,cz+3,fy+3,M.floor)
+    for dx=-5,5,10 do
+        for dz=-4,4,8 do
+            fill(cx+dx,fy+3,cz+dz,cx+dx,fy+7,cz+dz,M.wood)
+        end
+    end
+    clear(cx-1,fy+4,cz+4,cx+1,fy+6,cz+4)
+    clear(cx-5,fy+4,cz-1,cx-5,fy+5,cz+1)
+    clear(cx+5,fy+4,cz-1,cx+5,fy+5,cz+1)
+    put(cx-5,fy+4,cz,M.glass)
+    put(cx+5,fy+4,cz,M.glass)
+    for layer=0,4 do
+        fill(cx-5+layer,fy+8+layer,cz-5,cx+5-layer,fy+8+layer,cz+5,M.roof)
+    end
+    fill(cx-1,fy+12,cz-4,cx+1,fy+12,cz+4,M.trim)
+    lamp(cx,fy+6,cz)
+
+    -- Potager en lignes, clôture basse et réserves agricoles.
+    for dx=-7,7,2 do
+        put(cx+dx,fy+1,cz+7,M.wood)
+        put(cx+dx,fy+2,cz+7,M.wood)
+    end
+    for row=0,3 do
+        for dx=-6,6,2 do
+            put(cx+dx,fy+1,cz+9+row,"gdo_core:navet_sur_pied")
+        end
+    end
+    put(cx-7,fy+1,cz-3,M.crate)
+    put(cx+7,fy+1,cz-3,M.barrel)
+end
+
 local function build_exterior_landscape()
     -- Les collines restent à distance de l'enceinte ; elles se fondent dans le relief v6.
     build_rolling_hill(-91,-84,23,25,12)
@@ -1334,6 +1402,8 @@ local function build_exterior_landscape()
 
     -- Petit étang naturel dans la prairie sud-est.
     build_natural_pond(28,112,8,6)
+    -- Ferme en lisière de campagne, loin des talus du château.
+    build_farmstead(78,128)
 
     -- Chemin de terre et de pavés qui sort du pont-levis vers la campagne.
     for step=0,58 do
@@ -1390,7 +1460,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 28
+local VERSION = 29
 
 local generation_started = false
 local function generate_if_needed()
