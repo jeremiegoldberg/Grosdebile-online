@@ -82,7 +82,7 @@ minetest.register_node("gdo_castle:refit_water_flowing",{
     liquid_alternative_source=M.water,liquid_viscosity=1})
 
 local function lantern(x,y,z)
-    put(x,y,z,"gdo_castle:castle_lantern")
+    put(x,y,z,"gdo_castle:refit_lamp")
 end
 
 -- Tour circulaire avec escalier hélicoïdal intégré contre la paroi intérieure.
@@ -982,11 +982,11 @@ local function build()
         minetest.fix_light({x=-58,y=-2,z=-64},{x=58,y=88,z=86})
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
-    minetest.log("action","[GDO] Château des Brumes v29 généré : zones assemblées, tours élargies, escaliers hélicoïdaux continus.")
+    minetest.log("action","[GDO] Château des Brumes v30 généré : zones assemblées, tours élargies, escaliers hélicoïdaux continus.")
 end
 
 local storage = gdo_castle_storage
-local VERSION = 29
+local VERSION = 30
 local function generate_if_needed()
     if not storage or storage:get_int("refit_version") < VERSION then
         build()
@@ -1013,11 +1013,11 @@ minetest.register_on_respawnplayer(function(player)
 end)
 
 minetest.register_chatcommand("refairechateau",{
-    description="Reconstruit le Château des Brumes (version architecturale 29)",
+    description="Reconstruit le Château des Brumes (version architecturale 30)",
     privs={interact=true},
     func=function()
         build()
         if storage then storage:set_int("refit_version",VERSION) end
-        return true,"Château des Brumes v29 reconstruit. Retourne sur le parvis sud."
+        return true,"Château des Brumes v30 reconstruit. Retourne sur le parvis sud."
     end,
 })
