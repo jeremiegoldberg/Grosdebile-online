@@ -428,8 +428,8 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
         local p = path[((step-1) % count)+1]
         local q = path[(step % count)+1]
         local x,z = cx+p.x,cz+p.z
-        local node_y = 1 + math.floor((step-1)/2)
-        local node_name = (step % 2 == 1) and M.stair_low or M.stair_high
+        local node_y = step
+        local node_name = M.stair_low
         local dx,dz = q.x-p.x,q.z-p.z
 
         -- Une marche en L, orientée dans le sens de progression.
@@ -441,7 +441,7 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
 
     -- Le palier supérieur rejoint le chemin de ronde sans marche isolée.
     local last = path[((total_steps-1) % count)+1]
-    put(cx+last.x,1+math.floor(total_steps/2),cz+last.z,M.floor)
+    put(cx+last.x,total_steps+1,cz+last.z,M.floor)
 end
 
 local function tower_door(cx,cz,r,side,level,threshold_steps)
