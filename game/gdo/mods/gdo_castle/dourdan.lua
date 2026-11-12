@@ -1527,7 +1527,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 36
+local VERSION = 37
 
 local generation_started = false
 local function generate_if_needed()
