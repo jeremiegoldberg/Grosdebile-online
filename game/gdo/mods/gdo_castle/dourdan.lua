@@ -175,12 +175,15 @@ end
 
 -- Marches en pierre à profil classique : moitié basse pleine et moitié haute
 -- sur le fond de la marche. Le facedir oriente le nez dans le sens de la montée.
-local stair_shape = {
+-- Deux profils simples et non chevauchants :
+-- stair_low est une marche pleine ; stair_high est une demi-marche basse.
+-- Leur alternance produit une montée régulière de 0,5 node par pas.
+register_step_node(M.stair_low, "Marche d'escalier en pierre", {
+    {-0.5,-0.5,-0.5,0.5,0.5,0.5},
+}, false)
+register_step_node(M.stair_high, "Demi-marche d'escalier en pierre", {
     {-0.5,-0.5,-0.5,0.5,0,0.5},
-    {-0.5,0,0,0.5,0.5,0.5},
-}
-register_step_node(M.stair_low, "Marche d'escalier en pierre", stair_shape, true)
-register_step_node(M.stair_high, "Marche d'escalier en pierre", stair_shape, true)
+}, false)
 
 local function register_furniture(name, description, texture, boxes, walkable)
     minetest.register_node(name, {
@@ -405,11 +408,13 @@ local function stair_facedir(dx,dz)
 end
 
 local function place_spiral_stair(cx,cz,r,height,entry_side)
-    -- Escalier hélicoïdal à pente 1/2 : deux marches horizontales par niveau.
-    -- Le profil en L offre une surface basse et une surface haute orientée.
+    -- Escalier hélicoïdal à pente constante : une marche tous les nodes,
+    -- avec une élévation de 0,5 node à chaque pas.
+    -- Les marches pleines et demi-marches alternent sans géométrie en L.
     local path = make_octagonal_ring(r-3,entry_side)
     local count = #path
-    local total_steps = 2*height
+    -- Le dernier pas est plein et rejoint exactement le plancher sommital.
+    local total_steps = 2*height-1
     if count < 20 then
         minetest.log("error","[GDO] Périmètre trop court pour l'escalier de tour.")
         return
@@ -424,22 +429,21 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
 
     for step=1,total_steps do
         local p = path[((step-1) % count)+1]
-        local q = path[(step % count)+1]
         local x,z = cx+p.x,cz+p.z
-        local node_y = 1 + math.floor((step-1)/2)
-        local dx,dz = q.x-p.x,q.z-p.z
+        -- Pas impair : marche pleine. Pas pair : demi-marche à +0,5.
+        local node_y = 1 + math.floor(step/2)
+        local node_name = (step % 2 == 1) and M.stair_low or M.stair_high
 
-        -- Ne jamais effacer une marche d'un tour inférieur : chaque tour
-        -- réutilise le même tracé à une altitude supérieure.
+        -- Dégager deux nodes au-dessus de chaque marche pour garantir le passage.
         clear(x,node_y+1,z,x,node_y+2,z)
         put(x,node_y-1,z,M.stone)
-        put(x,node_y,z,M.stair_low,stair_facedir(dx,dz))
+        put(x,node_y,z,node_name)
         staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
     end
 
-    -- Palier au même niveau que la dernière surface de marche.
+    -- Le dernier pas plein est remplacé par le palier, à la même altitude.
     local last = path[((total_steps-1) % count)+1]
-    local landing_y = 1 + math.floor((total_steps-1)/2)
+    local landing_y = 1 + math.floor(total_steps/2)
     put(cx+last.x,landing_y,cz+last.z,M.floor)
 end
 
@@ -1534,7 +1538,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 38
+local VERSION = 39
 
 local generation_started = false
 local function generate_if_needed()
