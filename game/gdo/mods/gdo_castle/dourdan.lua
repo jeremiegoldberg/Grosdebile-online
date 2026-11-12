@@ -173,15 +173,14 @@ local function register_step_node(name, description, boxes, facedir)
     minetest.register_node(name, def)
 end
 
--- Marche basse : demi-bloc inférieur, plateau horizontal stable.
-register_step_node(M.stair_low, "Marche basse en pierre", {
+-- Marches en pierre à profil classique : moitié basse pleine et moitié haute
+-- sur le fond de la marche. Le facedir oriente le nez dans le sens de la montée.
+local stair_shape = {
     {-0.5,-0.5,-0.5,0.5,0,0.5},
-})
--- Marche haute : dalle pleine au niveau supérieur (+0,5 node).
--- Une face horizontale uniforme évite les conflits de collision sur les angles.
-register_step_node(M.stair_high, "Marche haute en pierre", {
-    {-0.5,0,-0.5,0.5,0.5,0.5},
-})
+    {-0.5,0,0,0.5,0.5,0.5},
+}
+register_step_node(M.stair_low, "Marche d'escalier en pierre", stair_shape, true)
+register_step_node(M.stair_high, "Marche d'escalier en pierre", stair_shape, true)
 
 local function register_furniture(name, description, texture, boxes, walkable)
     minetest.register_node(name, {
@@ -406,45 +405,43 @@ local function stair_facedir(dx,dz)
 end
 
 local function place_spiral_stair(cx,cz,r,height,entry_side)
-    -- Escalier à vis lisible : chemin orthogonal continu, largeur 1 bloc.
-    -- Le node haut est un cube plein placé sur le niveau supérieur ; le node
-    -- bas est une dalle basse. Une marche tous les deux pas horizontaux donne
-    -- une montée de 0,5 node compatible avec le stepheight du joueur.
+    -- Escalier hélicoïdal à vraies marches, et non une succession de dalles.
+    -- Chaque marche gagne un demi-niveau ; le chemin tourne autour du noyau.
     local path = make_octagonal_ring(r-3,entry_side)
     local count = #path
-    local total_steps = 2*(height-1)
-    if count < 24 then
-        minetest.log("error","[GDO] Périmètre trop court pour une vis praticable.")
+    local total_steps = math.max(1,height-2)
+    if count < 20 then
+        minetest.log("error","[GDO] Périmètre trop court pour l'escalier de tour.")
         return
     end
     for i,p in ipairs(path) do
         local q = path[(i % count)+1]
         if math.abs(p.x-q.x)+math.abs(p.z-q.z) ~= 1 then
-            minetest.log("error","[GDO] Vis refusée : chemin non orthogonal.")
+            minetest.log("error","[GDO] Escalier refusé : chemin non orthogonal.")
             return
         end
     end
 
-    -- Le chemin commence dans la direction de la porte, avec deux marches
-    -- d'approche au même niveau que le plancher.
-    local first = path[1]
-    put(cx+first.x,1,cz+first.z,M.floor)
-
+    -- Départ au niveau du plancher ; le premier bloc de marche est posé
+    -- sur un support plein, puis chaque marche monte d'un demi-niveau.
     for step=1,total_steps do
         local p = path[((step-1) % count)+1]
-        local node_y = 1 + math.floor(step/2)
-        local node_name = (step % 2 == 1) and M.stair_high or M.stair_low
         local q = path[(step % count)+1]
-        local dx,dz = q.x-p.x,q.z-p.z
         local x,z = cx+p.x,cz+p.z
+        local node_y = 1 + math.floor((step-1)/2)
+        local node_name = (step % 2 == 1) and M.stair_low or M.stair_high
+        local dx,dz = q.x-p.x,q.z-p.z
 
-        -- Dégager deux blocs au-dessus avant de poser la marche.
+        -- Une marche en L, orientée dans le sens de progression.
         clear(x,node_y+1,z,x,node_y+2,z)
         put(x,node_y-1,z,M.stone)
-        put(x,node_y,z,node_name,
-            node_name == M.stair_high and stair_facedir(dx,dz) or 0)
+        put(x,node_y,z,node_name,stair_facedir(dx,dz))
         staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
     end
+
+    -- Le palier supérieur rejoint le chemin de ronde sans marche isolée.
+    local last = path[((total_steps-1) % count)+1]
+    put(cx+last.x,1+math.floor(total_steps/2),cz+last.z,M.floor)
 end
 
 local function tower_door(cx,cz,r,side,level,threshold_steps)
