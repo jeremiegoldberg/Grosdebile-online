@@ -173,16 +173,15 @@ local function register_step_node(name, description, boxes, facedir)
     minetest.register_node(name, def)
 end
 
--- Marche basse : dalle de 1/2 bloc.
+-- Marche basse : demi-bloc inférieur, plateau horizontal stable.
 register_step_node(M.stair_low, "Marche basse en pierre", {
     {-0.5,-0.5,-0.5,0.5,0,0.5},
 })
--- Marche haute : socle bas + demi-marche en avant (+Z local).
--- Le paramtype2 facedir oriente cette demi-marche vers la marche suivante.
+-- Marche haute : dalle pleine au niveau supérieur (+0,5 node).
+-- Une face horizontale uniforme évite les conflits de collision sur les angles.
 register_step_node(M.stair_high, "Marche haute en pierre", {
-    {-0.5,-0.5,-0.5,0.5,0,0.5},
-    {-0.5,0,0,0.5,0.5,0.5},
-}, true)
+    {-0.5,0,-0.5,0.5,0.5,0.5},
+})
 
 local function register_furniture(name, description, texture, boxes, walkable)
     minetest.register_node(name, {
@@ -407,63 +406,44 @@ local function stair_facedir(dx,dz)
 end
 
 local function place_spiral_stair(cx,cz,r,height,entry_side)
-    -- Escalier en vis continu : une seule file de marches, sans plateforme par secteur.
-    -- Une marche tous les nodes, montée de 0,5 ; le joueur la franchit avec stepheight=0.6.
-    local outer = r-3
-    local path = make_octagonal_ring(outer,entry_side)
+    -- Escalier à vis lisible : chemin orthogonal continu, largeur 1 bloc.
+    -- Le node haut est un cube plein placé sur le niveau supérieur ; le node
+    -- bas est une dalle basse. Une marche tous les deux pas horizontaux donne
+    -- une montée de 0,5 node compatible avec le stepheight du joueur.
+    local path = make_octagonal_ring(r-3,entry_side)
     local count = #path
-    local total_steps = 2*(height-1)+1
+    local total_steps = 2*(height-1)
     if count < 24 then
         minetest.log("error","[GDO] Périmètre trop court pour une vis praticable.")
         return
     end
-
     for i,p in ipairs(path) do
         local q = path[(i % count)+1]
-        local gap = math.abs(p.x-q.x)+math.abs(p.z-q.z)
-        if gap ~= 1 then
-            minetest.log("error","[GDO] Vis refusée : rupture de "..gap.." blocs dans le chemin.")
+        if math.abs(p.x-q.x)+math.abs(p.z-q.z) ~= 1 then
+            minetest.log("error","[GDO] Vis refusée : chemin non orthogonal.")
             return
         end
     end
 
-    -- Palier d'entrée à hauteur du dallage, juste derrière la porte.
+    -- Le chemin commence dans la direction de la porte, avec deux marches
+    -- d'approche au même niveau que le plancher.
     local first = path[1]
-    local first_inner_x,first_inner_z = first.x,first.z
-    if math.abs(first.x) >= math.abs(first.z) then
-        first_inner_x = first.x - (first.x >= 0 and 1 or -1)
-    else
-        first_inner_z = first.z - (first.z >= 0 and 1 or -1)
-    end
     put(cx+first.x,1,cz+first.z,M.floor)
-    put(cx+first_inner_x,1,cz+first_inner_z,M.floor)
 
-    -- Le chemin tourne le long du mur et monte réellement à chaque demi-marche.
-    -- Les niveaux 8, 15 et 22 coïncident avec les planchers intermédiaires.
     for step=1,total_steps do
-        local index = ((step) % count)+1
-        local next_index = (index % count)+1
-        local p,q = path[index],path[next_index]
+        local p = path[((step-1) % count)+1]
         local node_y = 1 + math.floor(step/2)
         local node_name = (step % 2 == 1) and M.stair_high or M.stair_low
+        local q = path[(step % count)+1]
         local dx,dz = q.x-p.x,q.z-p.z
-        local facedir = node_name == M.stair_high and stair_facedir(dx,dz) or 0
+        local x,z = cx+p.x,cz+p.z
 
-        -- Deux cellules de large vers le centre de la tour.
-        local ix,iz = p.x,p.z
-        if math.abs(p.x) >= math.abs(p.z) then
-            ix = p.x - (p.x >= 0 and 1 or -1)
-        else
-            iz = p.z - (p.z >= 0 and 1 or -1)
-        end
-
-        for _,cell in ipairs({{x=p.x,z=p.z},{x=ix,z=iz}}) do
-            local x,z = cx+cell.x,cz+cell.z
-            clear(x,node_y+1,z,x,node_y+2,z)
-            put(x,node_y-1,z,M.stone)
-            put(x,node_y,z,node_name,facedir)
-            staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
-        end
+        -- Dégager deux blocs au-dessus avant de poser la marche.
+        clear(x,node_y+1,z,x,node_y+2,z)
+        put(x,node_y-1,z,M.stone)
+        put(x,node_y,z,node_name,
+            node_name == M.stair_high and stair_facedir(dx,dz) or 0)
+        staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
     end
 end
 
@@ -564,9 +544,16 @@ local function build_round_tower(spec)
         end
     end
 
-    -- Planchers à chaque niveau ; la rampe annulaire découpe sa trémie.
+    -- Planchers intermédiaires avec une trémie conservée sous la rampe.
+    local stair_path = make_octagonal_ring(r-3,spec.entry)
     for y=1,h,7 do
         disk_floor(cx,cz,inner,y,M.floor)
+        if y > 1 then
+            for _,p in ipairs(stair_path) do
+                put(cx+p.x,y,cz+p.z,"air")
+                put(cx+p.x,y+1,cz+p.z,"air")
+            end
+        end
     end
 
     -- Petit noyau central d'un seul bloc : la cage reste lisible et lumineuse.
@@ -692,22 +679,21 @@ local function place_logis_switchback()
     for z=-24,-18 do path[#path+1] = {x=8,z=z} end
     for z=-18,-24,-1 do path[#path+1] = {x=9,z=z} end
 
-    for cycle=0,2 do
-        for i,p in ipairs(path) do
-            local step_index = 1 + cycle*14 + (i-1)
-            if step_index <= 29 then
-                local node_y = 1 + math.floor(step_index/2)
-                local node_name = (step_index%2 == 0) and M.stair_low or M.stair_high
-                local nextp = path[(i % #path)+1]
-                local dx,dz = nextp.x-p.x,nextp.z-p.z
-                clear(p.x,node_y+1,p.z,p.x,node_y+2,p.z)
-                -- Limon plein sous chaque demi-marche : elles ne flottent plus.
-                put(p.x,node_y-1,p.z,M.stone)
-                put(p.x,node_y,p.z,node_name,
-                    node_name == M.stair_high and stair_facedir(dx,dz) or 0)
-                staircase_cells[#staircase_cells+1] = {x=p.x,y=node_y,z=p.z}
-            end
-        end
+    -- Deux volées parallèles : monter la première, traverser le palier,
+    -- puis redescendre en coordonnées pour reprendre la seconde volée.
+    -- Chaque position ne reçoit qu'une seule marche ; les cycles précédents
+    -- superposaient parfois plusieurs nodebox au même emplacement.
+    for step_index=1,29 do
+        local p = path[((step_index-1)%#path)+1]
+        local node_y = 1 + math.floor(step_index/2)
+        local node_name = (step_index%2 == 0) and M.stair_low or M.stair_high
+        local nextp = path[(step_index % #path)+1]
+        local dx,dz = nextp.x-p.x,nextp.z-p.z
+        clear(p.x,node_y+1,p.z,p.x,node_y+2,p.z)
+        put(p.x,node_y-1,p.z,M.stone)
+        put(p.x,node_y,p.z,node_name,
+            node_name == M.stair_high and stair_facedir(dx,dz) or 0)
+        staircase_cells[#staircase_cells+1] = {x=p.x,y=node_y,z=p.z}
     end
 end
 
