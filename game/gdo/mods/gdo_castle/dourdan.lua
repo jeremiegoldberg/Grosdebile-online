@@ -405,11 +405,11 @@ local function stair_facedir(dx,dz)
 end
 
 local function place_spiral_stair(cx,cz,r,height,entry_side)
-    -- Escalier hélicoïdal à vraies marches, et non une succession de dalles.
-    -- Chaque marche gagne un demi-niveau ; le chemin tourne autour du noyau.
+    -- Escalier hélicoïdal à pente 1/2 : deux marches horizontales par niveau.
+    -- Le profil en L offre une surface basse et une surface haute orientée.
     local path = make_octagonal_ring(r-3,entry_side)
     local count = #path
-    local total_steps = math.max(1,height-2)
+    local total_steps = 2*height
     if count < 20 then
         minetest.log("error","[GDO] Périmètre trop court pour l'escalier de tour.")
         return
@@ -422,26 +422,25 @@ local function place_spiral_stair(cx,cz,r,height,entry_side)
         end
     end
 
-    -- Départ au niveau du plancher ; le premier bloc de marche est posé
-    -- sur un support plein, puis chaque marche monte d'un demi-niveau.
     for step=1,total_steps do
         local p = path[((step-1) % count)+1]
         local q = path[(step % count)+1]
         local x,z = cx+p.x,cz+p.z
-        local node_y = step
-        local node_name = M.stair_low
+        local node_y = 1 + math.floor((step-1)/2)
         local dx,dz = q.x-p.x,q.z-p.z
 
-        -- Une marche en L, orientée dans le sens de progression.
+        -- Ne jamais effacer une marche d'un tour inférieur : chaque tour
+        -- réutilise le même tracé à une altitude supérieure.
         clear(x,node_y+1,z,x,node_y+2,z)
         put(x,node_y-1,z,M.stone)
-        put(x,node_y,z,node_name,stair_facedir(dx,dz))
+        put(x,node_y,z,M.stair_low,stair_facedir(dx,dz))
         staircase_cells[#staircase_cells+1] = {x=x,y=node_y,z=z}
     end
 
-    -- Le palier supérieur rejoint le chemin de ronde sans marche isolée.
+    -- Palier au même niveau que la dernière surface de marche.
     local last = path[((total_steps-1) % count)+1]
-    put(cx+last.x,total_steps+1,cz+last.z,M.floor)
+    local landing_y = 1 + math.floor((total_steps-1)/2)
+    put(cx+last.x,landing_y,cz+last.z,M.floor)
 end
 
 local function tower_door(cx,cz,r,side,level,threshold_steps)
@@ -1143,14 +1142,22 @@ end
 
 local function audit_geometry()
     local repaired = 0
-    -- Vérification du dégagement de chaque marche : 2 nodes libres au-dessus.
+    -- Les tours se superposent en projection : une marche du tour supérieur
+    -- peut se trouver au-dessus d'une marche inférieure. Ne jamais la vider.
+    local stair_occupancy = {}
+    for _,p in ipairs(staircase_cells) do
+        stair_occupancy[p.x..":"..p.y..":"..p.z] = true
+    end
     for _,p in ipairs(staircase_cells) do
         for dy=1,2 do
             local q = {x=p.x,y=p.y+dy,z=p.z}
-            local node = minetest.get_node({x=q.x,y=q.y+BASE_Y,z=q.z})
-            if node and node.name ~= "air" then
-                put(q.x,q.y,q.z,"air")
-                repaired = repaired + 1
+            local key = q.x..":"..q.y..":"..q.z
+            if not stair_occupancy[key] then
+                local node = minetest.get_node({x=q.x,y=q.y+BASE_Y,z=q.z})
+                if node and node.name ~= "air" then
+                    put(q.x,q.y,q.z,"air")
+                    repaired = repaired + 1
+                end
             end
         end
     end
@@ -1527,7 +1534,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 37
+local VERSION = 38
 
 local generation_started = false
 local function generate_if_needed()
