@@ -863,7 +863,9 @@ local function build_gatehouse()
     fill(-5,1,25,-4,11,38,M.trim)
     fill(4,1,25,5,11,38,M.trim)
     fill(-5,11,25,5,12,38,M.trim)
-    fill(-4,13,25,4,14,38,M.roof)
+    -- Le passage reste ouvert au-dessus : une dalle pleine à y=13..14
+    -- formait un plafond massif et masquait visuellement la cour du château.
+    -- Les piédroits et le linteau conservent la structure du portail.
     -- Passage traversant intégral : inclure z=24, qui est le mur nord
     -- du volume du châtelet. Sans cette rangée, le tunnel finit en cul-de-sac.
     clear(-2,2,23,2,10,42)
@@ -1538,7 +1540,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 39
+local VERSION = 40
 
 local generation_started = false
 local function generate_if_needed()
