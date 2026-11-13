@@ -1295,7 +1295,10 @@ local function prepare_level_pad()
             local original = sampled_surface_y(x,z)
             if d <= 1 then
                 local old_rel = original and (original-BASE_Y) or 0
-                local top = math.max(82,old_rel+18)
+                -- La zone de départ doit être entièrement ouverte vers le ciel.
+                -- Le plafond résiduel observé était au-dessus de l'ancienne limite
+                -- de dégagement (82 nodes) : on nettoie désormais jusqu'à 192.
+                local top = math.max(192,old_rel+24)
                 clear(x,1,z,x,top,z)
                 fill(x,-5,z,x,-1,z,"gdo_core:terre")
                 put(x,0,z,M.grass)
@@ -1546,7 +1549,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 41
+local VERSION = 42
 
 local generation_started = false
 local function generate_if_needed()
