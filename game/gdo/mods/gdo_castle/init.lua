@@ -761,8 +761,9 @@ minetest.register_chatcommand("chateau", {
 
 minetest.log("action", "[GDO] Le module du Château des Brumes est chargé.")
 
--- Stockage unique partagé avec la refonte (Luanti interdit deux instances du même mod storage).
+-- Stockage unique partagé avec l'architecture modulaire.
 gdo_castle_storage = minetest.get_mod_storage()
 
--- Refonte visuelle et remise à niveau du terrain de départ.
-dofile(minetest.get_modpath(modname) .. "/dourdan.lua")
+-- Seule la zone 00 (terrain et socle) est active pour cette première étape.
+-- Les anciens constructeurs restent archivés dans dourdan.lua mais ne sont plus exécutés.
+dofile(minetest.get_modpath(modname) .. "/architecture/init.lua")
