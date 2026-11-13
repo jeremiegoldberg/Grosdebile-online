@@ -1,5 +1,5 @@
 -- GDO Castle Architecture bootstrap.
-local modpath=minetest.get_modpath(minetest.get_current_modname())
+local modpath=minetest.get_modpath("gdo_castle")
 local A=dofile(modpath.."/architecture/common.lua")
 A.storage=gdo_castle_storage or minetest.get_mod_storage()
 A.Site=dofile(modpath.."/architecture/zones/00_site.lua")(A)
@@ -32,12 +32,14 @@ minetest.register_chatcommand("gdo_site",{
     description="Reconstruit uniquement la zone 00 : terrain et socle",
     privs={server=true},
     func=function()
-        local levels={
-            castle_y=storage:get_int(LEVEL_CASTLE_KEY),
-            village_y=storage:get_int(LEVEL_VILLAGE_KEY),
-        }
-        if levels.castle_y==0 then levels.castle_y=nil end
-        if levels.village_y==0 then levels.village_y=nil end
+        local levels=nil
+        if storage:get_int(SITE_KEY)>=A.Site.VERSION then
+            -- Zero is a valid world altitude and must not be treated as "unset".
+            levels={
+                castle_y=storage:get_int(LEVEL_CASTLE_KEY),
+                village_y=storage:get_int(LEVEL_VILLAGE_KEY),
+            }
+        end
         return build_site(levels)
     end,
 })
