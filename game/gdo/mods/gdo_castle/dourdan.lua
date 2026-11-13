@@ -1538,7 +1538,8 @@ local function build()
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
 
-    if storage then storage:set_int("dourdan_base_y", BASE_Y) end
+    local build_storage = gdo_castle_storage or minetest.get_mod_storage()
+    if build_storage then build_storage:set_int("dourdan_base_y", BASE_Y) end
     castle_ready = true
     for _,player in ipairs(minetest.get_connected_players()) do safe_spawn(player) end
     minetest.log("action","[GDO] Plan Dourdan assemblé : enceinte, châtelet, cour, logis et donjon.")
