@@ -1,7 +1,6 @@
 -- GDO Castle Architecture - shared materials and world-space helpers.
 -- Every zone uses absolute world coordinates. No hidden Y offsets.
-local modname = minetest.get_current_modname()
-local S = minetest.get_translator and minetest.get_translator(modname) or function(s) return s end
+local S = minetest.get_translator and minetest.get_translator("gdo_castle") or function(s) return s end
 
 local A = {}
 A.materials = {
@@ -104,6 +103,9 @@ minetest.register_node(M.stair,{
         {-0.5,0,0,0.5,0.5,0.5},
     }},
 })
+-- Compatibility aliases for the abandoned two-node stair implementation.
+minetest.register_alias("gdo_castle:refit_stair_low",M.stair)
+minetest.register_alias("gdo_castle:refit_stair_high",M.stair)
 
 local function register_furniture(name,desc,texture,boxes,walkable)
     minetest.register_node(name,{
