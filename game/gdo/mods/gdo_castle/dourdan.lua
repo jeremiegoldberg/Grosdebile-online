@@ -1204,7 +1204,10 @@ local function ensure_gerard()
     end
 end
 
+local castle_ready = false
+
 local function safe_spawn(player)
+    if not castle_ready then return end
     if not player or not player:is_player() then return end
     -- Le joueur doit pouvoir franchir les marches de 0,5 node sans sauter.
     if player.set_properties then player:set_properties({stepheight=0.6}) end
@@ -1535,16 +1538,24 @@ local function build()
     end
     if minetest.set_timeofday then minetest.set_timeofday(0.5) end
 
+    if storage then storage:set_int("dourdan_base_y", BASE_Y) end
+    castle_ready = true
     for _,player in ipairs(minetest.get_connected_players()) do safe_spawn(player) end
     minetest.log("action","[GDO] Plan Dourdan assemblé : enceinte, châtelet, cour, logis et donjon.")
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 40
+local VERSION = 41
 
 local generation_started = false
 local function generate_if_needed()
     if generation_started then return end
+    if storage and storage:get_int("dourdan_plan_version") >= VERSION then
+        BASE_Y = storage:get_int("dourdan_base_y")
+        castle_ready = true
+        for _,player in ipairs(minetest.get_connected_players()) do safe_spawn(player) end
+        return
+    end
     if not storage or storage:get_int("dourdan_plan_version") < VERSION then
         local mapgen = minetest.get_mapgen_setting and minetest.get_mapgen_setting("mg_name")
         if mapgen == "flat" then
