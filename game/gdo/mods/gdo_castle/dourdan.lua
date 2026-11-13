@@ -1512,6 +1512,8 @@ local function prepare_village_plateau()
 end
 
 -- Village d'accueil au sud du pont-levis, autour de la route principale.
+local VILLAGE_LEVEL = nil
+
 local function build_village_house(cx,cz,door_side,kind)
     -- Toutes les maisons partagent le niveau du plateau préparé en amont.
     local surface = VILLAGE_LEVEL
@@ -1586,8 +1588,6 @@ local function build_village_house(cx,cz,door_side,kind)
     flower_patch(cx-6,cz-6,cx-5,cz-5,1)
     flower_patch(cx+5,cz-6,cx+6,cz-5,1)
 end
-
-local VILLAGE_LEVEL = nil
 
 local function build_entrance_village()
     VILLAGE_LEVEL = prepare_village_plateau()
