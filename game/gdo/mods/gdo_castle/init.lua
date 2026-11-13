@@ -10,8 +10,8 @@ local S = minetest.get_translator and minetest.get_translator(modname) or functi
 gdo_zones.register_readonly_zone({
     name = "Château des Brumes",
     description = "Château, cour, pavillons des maisons, jardin des navets et parcours d'initiation",
-    min = {x = -52, y = -10, z = -58},
-    max = {x = 52, y = 100, z = 85},
+    min = {x = -52, y = -32, z = -58},
+    max = {x = 52, y = 192, z = 132},
 })
 
 local nodes = {
