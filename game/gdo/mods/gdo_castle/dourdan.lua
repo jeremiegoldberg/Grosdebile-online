@@ -1455,6 +1455,152 @@ local function scatter_wildflowers(x1,z1,x2,z2,spacing)
     end
 end
 
+-- Village d'accueil au sud du pont-levis, autour de la route principale.
+local function build_village_house(cx,cz,door_side,kind)
+    local surface = find_surface_y(cx,cz)
+    if not surface then return end
+    local fy = surface-BASE_Y
+
+    -- Terrain aplani et dégagé pour éviter les arbres ou le relief dans les maisons.
+    for x=cx-7,cx+7 do
+        for z=cz-7,cz+7 do
+            clear(x,fy+1,z,x,fy+16,z)
+            fill(x,fy-3,z,x,fy-1,z,"gdo_core:terre")
+            put(x,fy,z,M.grass)
+        end
+    end
+
+    -- Maison à colombages, soubassement en pierre et volume intérieur habitable.
+    fill(cx-5,fy+1,cz-5,cx+5,fy+2,cz+5,M.stone)
+    fill(cx-5,fy+3,cz-5,cx+5,fy+7,cz+5,M.wood)
+    clear(cx-4,fy+3,cz-4,cx+4,fy+6,cz+4)
+    deck(cx-4,cz-4,cx+4,cz+4,fy+3,M.floor)
+
+    -- Poteaux d'angle et sablières apparentes.
+    for dx=-5,5,10 do
+        for dz=-5,5,10 do
+            fill(cx+dx,fy+3,cz+dz,cx+dx,fy+7,cz+dz,M.trim)
+        end
+    end
+    fill(cx-5,fy+7,cz-5,cx+5,fy+7,cz-5,M.trim)
+    fill(cx-5,fy+7,cz+5,cx+5,fy+7,cz+5,M.trim)
+    fill(cx-5,fy+7,cz-5,cx-5,fy+7,cz+5,M.trim)
+    fill(cx+5,fy+7,cz-5,cx+5,fy+7,cz+5,M.trim)
+
+    -- Porte orientée vers la rue centrale.
+    if door_side == "east" then
+        clear(cx+5,fy+4,cz-1,cx+5,fy+6,cz+1)
+    elseif door_side == "west" then
+        clear(cx-5,fy+4,cz-1,cx-5,fy+6,cz+1)
+    elseif door_side == "north" then
+        clear(cx-1,fy+4,cz-5,cx+1,fy+6,cz-5)
+    else
+        clear(cx-1,fy+4,cz+5,cx+1,fy+6,cz+5)
+    end
+
+    -- Fenêtres encadrées, toiture à deux versants stylisée.
+    for _,p in ipairs({{-5,0},{5,0},{0,-5},{0,5}}) do
+        if not ((door_side=="east" and p[1]==5) or
+                (door_side=="west" and p[1]==-5) or
+                (door_side=="north" and p[2]==-5) or
+                (door_side=="south" and p[2]==5)) then
+            put(cx+p[1],fy+5,cz+p[2],M.glass)
+        end
+    end
+    for layer=0,4 do
+        fill(cx-5+layer,fy+8+layer,cz-6,cx+5-layer,fy+8+layer,cz+6,M.roof)
+    end
+    fill(cx-1,fy+12,cz-4,cx+1,fy+12,cz+4,M.trim)
+    lamp(cx,fy+6,cz)
+    if kind=="auberge" then
+        fill(cx-3,fy+4,cz-2,cx-1,fy+4,cz-2,M.wood)
+        put(cx+2,fy+4,cz-2,M.table)
+        put(cx+2,fy+4,cz+2,M.barrel)
+        put(cx,fy+8,cz+6,M.banner)
+    elseif kind=="atelier" then
+        put(cx-2,fy+4,cz-2,"gdo_castle:forge_station")
+        put(cx+2,fy+4,cz-2,M.crate)
+        put(cx+2,fy+4,cz+2,M.barrel)
+    else
+        put(cx-2,fy+4,cz-2,M.table)
+        put(cx+2,fy+4,cz+2,M.crate)
+    end
+    -- Petit porche, banc et jardinières.
+    put(cx,fy+1,cz+7,M.bench)
+    flower_patch(cx-6,cz-6,cx-5,cz-5,1)
+    flower_patch(cx+5,cz-6,cx+6,cz-5,1)
+end
+
+local function build_entrance_village()
+    -- Quatre parcelles de part et d'autre de la route, sans empiéter sur le château.
+    build_village_house(-24,88,"east","maison")
+    build_village_house(24,88,"west","maison")
+    build_village_house(-24,111,"east","atelier")
+    build_village_house(24,111,"west","auberge")
+
+    -- Place du village, pavée et ouverte sur la route du château.
+    local center = find_surface_y(0,101)
+    if center then
+        local y=center-BASE_Y
+        for x=-10,10 do
+            for z=96,106 do
+                local sy=find_surface_y(x,z)
+                if sy then
+                    local rel=sy-BASE_Y
+                    clear(x,rel+1,z,x,rel+5,z)
+                    put(x,rel,z,M.path)
+                end
+            end
+        end
+        -- Puits public et quatre bornes lumineuses.
+        fill(-2,y,99,2,y,103,M.trim)
+        fill(-1,y+1,100,1,y+1,102,M.water)
+        fill(-2,y+2,99,2,y+2,99,M.wood)
+        fill(-2,y+2,103,2,y+2,103,M.wood)
+        fill(-2,y+2,99,-2,y+2,103,M.wood)
+        fill(2,y+2,99,2,y+2,103,M.wood)
+        lamp(0,y+3,101)
+        for _,p in ipairs({{-9,97},{9,97},{-9,105},{9,105}}) do
+            lamp(p[1],y+2,p[2])
+        end
+        put(-5,y+1,101,M.bench)
+        put(5,y+1,101,M.bench)
+        put(-7,y+1,99,M.crate)
+        put(7,y+1,103,M.barrel)
+    end
+
+    -- Rue principale pavée reliant la place, le pont-levis et la campagne.
+    for step=0,62 do
+        local z=73+step
+        local x=round_number(4+5*math.sin(step*0.085))
+        local surface=find_surface_y(x,z)
+        if surface then
+            local y=surface-BASE_Y
+            for dx=-2,2 do
+                local sx=x+dx
+                local sy=find_surface_y(sx,z)
+                if sy then
+                    local ry=sy-BASE_Y
+                    clear(sx,ry+1,z,sx,ry+4,z)
+                    put(sx,ry,z,M.path)
+                end
+            end
+            if step%10==0 then
+                lamp(x-3,y+2,z)
+                lamp(x+3,y+2,z)
+            end
+        end
+    end
+
+    -- Petits jardins et arbres sur les bords de la place.
+    build_tree(-11,0,91,4)
+    build_tree(11,0,91,4)
+    build_tree(-11,0,113,4)
+    build_tree(11,0,113,4)
+    flower_patch(-14,96,-12,104,2)
+    flower_patch(12,96,14,104,2)
+end
+
 local function build_exterior_landscape()
     -- Les collines restent à distance de l'enceinte ; elles se fondent dans le relief v6.
     build_rolling_hill(-91,-84,23,25,12)
@@ -1472,7 +1618,8 @@ local function build_exterior_landscape()
 
     -- Petit étang naturel dans la prairie sud-est.
     build_natural_pond(28,112,8,6)
-    -- Ferme en lisière de campagne, loin des talus du château.
+    -- Village d'accueil au pied du château, puis ferme en lisière de campagne.
+    build_entrance_village()
     build_farmstead(78,128)
 
     -- Chemin de terre et de pavés depuis le pont-levis vers la campagne.
@@ -1549,7 +1696,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 42
+local VERSION = 43
 
 local generation_started = false
 local function generate_if_needed()
