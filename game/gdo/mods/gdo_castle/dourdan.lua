@@ -1593,10 +1593,10 @@ local function build_entrance_village()
     end
 
     -- Petits jardins et arbres sur les bords de la place.
-    build_tree(-11,0,91,4)
-    build_tree(11,0,91,4)
-    build_tree(-11,0,113,4)
-    build_tree(11,0,113,4)
+    for _,p in ipairs({{-11,91},{11,91},{-11,113},{11,113}}) do
+        local surface=find_surface_y(p[1],p[2])
+        if surface then build_tree(p[1],surface-BASE_Y,p[2],4) end
+    end
     flower_patch(-14,96,-12,104,2)
     flower_patch(12,96,14,104,2)
 end
