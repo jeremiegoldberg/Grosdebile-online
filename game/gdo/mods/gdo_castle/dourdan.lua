@@ -1455,17 +1455,73 @@ local function scatter_wildflowers(x1,z1,x2,z2,spacing)
     end
 end
 
+-- Terrasse commune du village : toutes les constructions reposent sur un seul niveau.
+local VILLAGE_X1, VILLAGE_X2 = -42, 42
+local VILLAGE_Z1, VILLAGE_Z2 = 78, 126
+
+local function prepare_village_plateau()
+    -- Choisir la médiane des hauteurs naturelles pour équilibrer déblais et remblais.
+    local heights = {}
+    for x=VILLAGE_X1,VILLAGE_X2 do
+        for z=VILLAGE_Z1,VILLAGE_Z2 do
+            local h=find_surface_y(x,z)
+            if h then heights[#heights+1]=h end
+        end
+    end
+    if #heights==0 then
+        minetest.log("error","[GDO] Impossible de trouver le terrain pour la terrasse du village.")
+        return nil
+    end
+    table.sort(heights)
+    local target=heights[math.floor((#heights+1)/2)]
+    local base=target-BASE_Y
+
+    -- Mise à niveau cellule par cellule : déblais dans la colline, remblais en terre.
+    for x=VILLAGE_X1,VILLAGE_X2 do
+        for z=VILLAGE_Z1,VILLAGE_Z2 do
+            local natural=find_surface_y(x,z)
+            if natural then
+                local rel=natural-BASE_Y
+                if natural>target then
+                    clear(x,base+1,z,x,rel+18,z)
+                elseif natural<target then
+                    fill(x,rel+1,z,x,base-1,z,"gdo_core:terre")
+                end
+                put(x,base,z,M.grass)
+                clear(x,base+1,z,x,base+18,z)
+            else
+                fill(x,base-4,z,x,base-1,z,"gdo_core:terre")
+                put(x,base,z,M.grass)
+                clear(x,base+1,z,x,base+18,z)
+            end
+        end
+    end
+
+    -- Mur de soutènement bas sur le pourtour, avec parement en pierre.
+    for x=VILLAGE_X1,VILLAGE_X2 do
+        for _,z in ipairs({VILLAGE_Z1,VILLAGE_Z2}) do
+            fill(x,base-5,z,x,base-1,z,M.stone)
+        end
+    end
+    for z=VILLAGE_Z1,VILLAGE_Z2 do
+        for _,x in ipairs({VILLAGE_X1,VILLAGE_X2}) do
+            fill(x,base-5,z,x,base-1,z,M.stone)
+        end
+    end
+    return target
+end
+
 -- Village d'accueil au sud du pont-levis, autour de la route principale.
 local function build_village_house(cx,cz,door_side,kind)
-    local surface = find_surface_y(cx,cz)
+    -- Toutes les maisons partagent le niveau du plateau préparé en amont.
+    local surface = VILLAGE_LEVEL
     if not surface then return end
     local fy = surface-BASE_Y
 
-    -- Terrain aplani et dégagé pour éviter les arbres ou le relief dans les maisons.
+    -- Nettoyage local sans modifier l'altitude commune du terrain.
     for x=cx-7,cx+7 do
         for z=cz-7,cz+7 do
             clear(x,fy+1,z,x,fy+16,z)
-            fill(x,fy-3,z,x,fy-1,z,"gdo_core:terre")
             put(x,fy,z,M.grass)
         end
     end
@@ -1531,25 +1587,26 @@ local function build_village_house(cx,cz,door_side,kind)
     flower_patch(cx+5,cz-6,cx+6,cz-5,1)
 end
 
+local VILLAGE_LEVEL = nil
+
 local function build_entrance_village()
-    -- Quatre parcelles de part et d'autre de la route, sans empiéter sur le château.
+    VILLAGE_LEVEL = prepare_village_plateau()
+    if not VILLAGE_LEVEL then return end
+    -- Quatre parcelles de part et d'autre de la route, sur la même terrasse.
     build_village_house(-24,88,"east","maison")
     build_village_house(24,88,"west","maison")
     build_village_house(-24,111,"east","atelier")
     build_village_house(24,111,"west","auberge")
 
     -- Place du village, pavée et ouverte sur la route du château.
-    local center = find_surface_y(0,101)
+    local center = VILLAGE_LEVEL
     if center then
         local y=center-BASE_Y
         for x=-10,10 do
             for z=96,106 do
-                local sy=find_surface_y(x,z)
-                if sy then
-                    local rel=sy-BASE_Y
-                    clear(x,rel+1,z,x,rel+5,z)
-                    put(x,rel,z,M.path)
-                end
+                local rel=center-BASE_Y
+                clear(x,rel+1,z,x,rel+5,z)
+                put(x,rel,z,M.path)
             end
         end
         -- Puits public et quatre bornes lumineuses.
@@ -1575,15 +1632,12 @@ local function build_entrance_village()
         local x=round_number(4+5*math.sin(step*0.085))
         local surface=find_surface_y(x,z)
         if surface then
-            local y=surface-BASE_Y
+            local y=(z>=VILLAGE_Z1 and z<=VILLAGE_Z2 and VILLAGE_LEVEL or surface)-BASE_Y
             for dx=-2,2 do
                 local sx=x+dx
-                local sy=find_surface_y(sx,z)
-                if sy then
-                    local ry=sy-BASE_Y
-                    clear(sx,ry+1,z,sx,ry+4,z)
-                    put(sx,ry,z,M.path)
-                end
+                local ry=(z>=VILLAGE_Z1 and z<=VILLAGE_Z2 and VILLAGE_LEVEL or find_surface_y(sx,z))-BASE_Y
+                clear(sx,ry+1,z,sx,ry+4,z)
+                put(sx,ry,z,M.path)
             end
             if step%10==0 then
                 lamp(x-3,y+2,z)
@@ -1696,7 +1750,7 @@ local function build()
 end
 
 local storage = gdo_castle_storage or minetest.get_mod_storage()
-local VERSION = 43
+local VERSION = 44
 
 local generation_started = false
 local function generate_if_needed()
