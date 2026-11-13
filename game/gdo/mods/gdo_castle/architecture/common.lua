@@ -173,6 +173,31 @@ A.find_surface_y=function(x,z)
     return nil
 end
 
+-- Inspect each column once: topmost block includes old buildings/ceilings,
+-- while natural_surface skips our own generated castle nodes.
+A.inspect_column=function(x,z,from_y,to_y)
+    from_y=from_y or 192
+    to_y=to_y or -32
+    local highest,natural=nil,nil
+    for y=from_y,to_y,-1 do
+        local node=minetest.get_node_or_nil({x=x,y=y,z=z})
+        if node and node.name~="air" and node.name~="ignore" then
+            if not highest then highest=y end
+            if not natural and not node.name:match("^gdo_castle:") then
+                local def=minetest.registered_nodes[node.name]
+                if def and def.walkable and (not def.liquidtype or def.liquidtype=="none") then
+                    local tree=minetest.get_item_group(node.name,"tree")
+                    local leaves=minetest.get_item_group(node.name,"leaves")
+                    local plant=minetest.get_item_group(node.name,"plant")
+                    if tree==0 and leaves==0 and plant==0 then natural=y end
+                end
+            end
+            if highest and natural then break end
+        end
+    end
+    return natural,highest
+end
+
 A.median_surface=function(bounds,step)
     local values={}
     step=step or 4
@@ -192,10 +217,12 @@ A.flatten_rect=function(bounds,target_y,clear_to)
     local filled=0
     for x=bounds.x1,bounds.x2 do
         for z=bounds.z1,bounds.z2 do
-            local natural=A.find_surface_y(x,z)
+            local natural,highest=A.inspect_column(x,z,clear_to,-32)
+            if highest and highest>target_y then
+                -- Remove only occupied vertical range, not hundreds of empty air nodes.
+                A.clear(x,target_y+1,z,x,highest,z)
+            end
             if natural then
-                -- Cut every old structure and every overhanging terrain column.
-                A.clear(x,target_y+1,z,x,clear_to,z)
                 if natural<target_y then
                     if target_y-natural>64 then
                         minetest.log("warning","[GDO] Gros remblai au socle ("..(target_y-natural).." blocs) en "..x..","..z)
@@ -203,7 +230,6 @@ A.flatten_rect=function(bounds,target_y,clear_to)
                     A.fill(x,natural+1,z,x,target_y-1,z,"gdo_core:terre")
                 end
             else
-                A.clear(x,target_y+1,z,x,clear_to,z)
                 A.fill(x,target_y-4,z,x,target_y-1,z,"gdo_core:terre")
             end
             A.put(x,target_y,z,M.grass)
