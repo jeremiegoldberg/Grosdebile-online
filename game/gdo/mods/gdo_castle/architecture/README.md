@@ -1,6 +1,6 @@
 # GDO Castle Architecture
 
-The replacement castle is built zone by zone. The replacement castle is active only through the current validated construction step; zones 00, 10 and 20 are implemented.
+The replacement castle is built zone by zone. The modular castle is built incrementally. Zones 00, 10, 20, 30 and the first gatehouse stair implementation in 70 are in code; all still require in-game validation.
 
 ## Rules
 
@@ -19,11 +19,11 @@ The replacement castle is built zone by zone. The replacement castle is active o
 | 00 | `00_site.lua` | Natural terrain survey, castle platform, forecourt, level village platform | Implemented; requires in-game validation |
 | 10 | `10_enclosure.lua` | Curtain walls, battlements, wall walks | Implemented; requires in-game validation |
 | 20 | `20_gatehouse.lua` | Twin gate towers, upper guard gallery, portal, portcullis and drawbridge | Updated with wall tie-ins and walk-in tower doors; requires in-game validation |
-| 30 | `30_towers.lua` | Independent corner and gate towers | Not started |
+| 30 | `30_towers.lua` | Four chamfered corner towers integrated with the curtain walls and wall walks | Implemented; requires in-game validation |
 | 40 | `40_keep.lua` | Keep structure, floors, rooms and roof | Not started |
 | 50 | `50_residential.lua` | Great hall and lord's residence | Not started |
 | 60 | `60_courtyard_buildings.lua` | Chapel, workshops, school and service buildings | Not started |
-| 70 | `70_stairs.lua` | Straight stair, U stair, spiral stair as separately testable modules | Not started |
+| 70 | `70_stairs.lua` | Two 2-wide stair flights from the gatehouse ground floor to its +9 first floor; future stair types remain planned | Partially implemented; requires in-game validation |
 | 80 | `80_courtyard.lua` | Paving, wells, gardens and props | Not started |
 | 90 | `90_village.lua` | Village streets, houses, inn, shops and workshops | Not started |
 | 95 | `95_landscape.lua` | Terrain blending, trees, fields, ponds and paths | Not started |
@@ -62,3 +62,21 @@ The replacement castle is built zone by zone. The replacement castle is active o
 - The portcullis is raised above the walking clearance. The drawbridge and both approaches form one continuous, level walking surface.
 - Staircases are intentionally excluded; floors are reserved for the independent zone 70 staircase module.
 - Commands: `/gdo_zone20` rebuilds only the gatehouse; `/gdo_zone20_info` reports its version and elevation.
+
+## Zone 30
+
+- Four chamfered towers are centered at (-37,-39), (37,-39), (-37,37) and (37,37).
+- Each tower replaces the old corner core and the intersecting end of its two curtain walls.
+- Courtyard-facing doorways enter the ground-floor chambers.
+- Two upper openings per tower connect the two wall-walks that meet at that corner; the exterior-facing sides remain closed.
+- The wall-walk floor at +10 continues through both connections. Upper lintels are at +15.
+- Commands: `/gdo_zone30` rebuilds the four towers; `/gdo_zone30_info` reports their version and elevation.
+
+## Zone 70 — Gatehouse stair flights
+
+- Two stair flights are built inside the gatehouse towers, each two blocks wide.
+- The west tower flight uses X -15..-14; the east tower flight uses X 14..15.
+- Both flights rise toward +Z, from Z 27 to Z 35, and reach the first-floor landing at `base_y + 9`.
+- Only `gdo_castle:refit_stair` nodes are used for the treads; no full-cube blocks are placed underneath them.
+- The stair module owns only its stair columns and the small landing. Rebuilding zone 20 invalidates and regenerates these stairs.
+- Commands: `/gdo_stairs` rebuilds the stair flights; `/gdo_stairs_info` reports their version and elevation.
