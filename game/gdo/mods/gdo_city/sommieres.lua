@@ -4,8 +4,18 @@
 return function(C)
     local S = C.sommieres
     local M = C.materials
-    local function put(x,y,z,n) C.put(x,y,z,n) end
-    local function fill(x1,y1,z1,x2,y2,z2,n) C.fill(x1,y1,z1,x2,y2,z2,n) end
+    local function put(x,y,z,n)
+        assert(type(n) == "string" and n ~= "",
+            "[GDO Sommières] Nom de bloc absent dans put() aux coordonnées locales "
+                .. tostring(x) .. "," .. tostring(y) .. "," .. tostring(z))
+        C.put(x,y,z,n)
+    end
+    local function fill(x1,y1,z1,x2,y2,z2,n)
+        assert(type(n) == "string" and n ~= "",
+            "[GDO Sommières] Nom de bloc absent dans fill() pour le volume "
+                .. table.concat({x1,y1,z1,x2,y2,z2}, ","))
+        C.fill(x1,y1,z1,x2,y2,z2,n)
+    end
     local function clear(x1,y1,z1,x2,y2,z2) C.clear(x1,y1,z1,x2,y2,z2) end
     local function lamp(x,y,z) C.lamp(x,y,z) end
 
@@ -16,29 +26,29 @@ return function(C)
         local mid=math.floor((x+x2)/2)
         local faceZ=(front=="north") and z or ((front=="south") and z2 or nil)
         local faceX=(front=="west") and x or ((front=="east") and x2 or nil)
-        fill(x,0,z,x2,0,z2,M.paving)
+        fill(x,0,z,x2,0,z2,S.paving)
         fill(x,1,z,x2,levels*5,z2,wall or S.plaster)
         clear(x+1,1,z+1,x2-1,levels*5-1,z2-1)
 
         -- Soubassement en pierre de taille et bandeaux d'étage.
         for _,px in ipairs({x,x+1,x2-1,x2}) do
-            fill(px,1,z,px,3,z,M.limestone)
-            fill(px,1,z2,px,3,z2,M.limestone)
+            fill(px,1,z,px,3,z,S.limestone)
+            fill(px,1,z2,px,3,z2,S.limestone)
         end
         for floor=1,levels do
             local fy=floor*5
-            fill(x,fy,z,x2,fy,z,M.ashlar)
-            fill(x,fy,z2,x2,fy,z2,M.ashlar)
+            fill(x,fy,z,x2,fy,z,S.ashlar)
+            fill(x,fy,z2,x2,fy,z2,S.ashlar)
         end
 
         -- Colombages sur certaines maisons, sinon enduit à la chaux ou pierre claire.
         if frame then
             for _,px in ipairs({x,x+3,mid,x2-3,x2}) do
-                fill(px,1,z,px,levels*5,z,M.timber)
-                fill(px,1,z2,px,levels*5,z2,M.timber)
+                fill(px,1,z,px,levels*5,z,S.timber)
+                fill(px,1,z2,px,levels*5,z2,S.timber)
             end
-            fill(x,levels*5,z,x2,levels*5,z,M.timber)
-            fill(x,levels*5,z2,x2,levels*5,z2,M.timber)
+            fill(x,levels*5,z,x2,levels*5,z,S.timber)
+            fill(x,levels*5,z2,x2,levels*5,z2,S.timber)
         end
 
         -- Vitrines et portes du rez-de-chaussée.
@@ -72,7 +82,7 @@ return function(C)
         if variant%3==1 and levels>=2 then
             if faceZ then
                 local bz=(front=="north") and z-1 or z2+1
-                fill(x+1,6,bz,x2-1,6,bz,M.timber)
+                fill(x+1,6,bz,x2-1,6,bz,S.timber)
             end
         end
 
@@ -93,7 +103,7 @@ return function(C)
             fill(x2-k,y,z-1,x2-k,y,z2+1,roof or S.roof)
         end
         fill(mid,roofY+half,z-1,mid,roofY+half,z2+1,S.limestone)
-        fill(x+2,roofY+1,z+2,x+3,roofY+4,z+3,M.ashlar)
+        fill(x+2,roofY+1,z+2,x+3,roofY+4,z+3,S.ashlar)
         lamp(x2-2,4,z2-2)
     end
 
@@ -101,7 +111,7 @@ return function(C)
     local function arcaded_house(x,z,w,d,levels,front,roof,variant)
         local x2,z2=x+w-1,z+d-1
         local mid=math.floor((x+x2)/2)
-        fill(x,0,z,x2,0,z2,M.paving)
+        fill(x,0,z,x2,0,z2,S.paving)
         -- Arcades ouvertes : piliers, impostes et arcs en pierre.
         for _,px in ipairs({x,x+math.floor(w/3),x+math.floor(2*w/3),x2}) do
             fill(px,1,z,px,5,z,S.limestone)
