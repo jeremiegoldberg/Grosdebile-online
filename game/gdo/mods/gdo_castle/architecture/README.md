@@ -1,6 +1,6 @@
 # GDO Castle Architecture
 
-The replacement castle is built zone by zone. Only zone 00 is active until it has been checked in-game.
+The replacement castle is built zone by zone. The replacement castle is active only through the current validated construction step; zones 00 and 10 are implemented.
 
 ## Rules
 
@@ -17,7 +17,7 @@ The replacement castle is built zone by zone. Only zone 00 is active until it ha
 | ID | Module | Contents | Status |
 |---|---|---|---|
 | 00 | `00_site.lua` | Natural terrain survey, castle platform, forecourt, level village platform | Implemented; requires in-game validation |
-| 10 | `10_enclosure.lua` | Curtain walls, battlements, wall walks | Not started |
+| 10 | `10_enclosure.lua` | Curtain walls, battlements, wall walks | Implemented; requires in-game validation |
 | 20 | `20_gatehouse.lua` | Gate passage, drawbridge, portcullis, moat | Not started |
 | 30 | `30_towers.lua` | Independent corner and gate towers | Not started |
 | 40 | `40_keep.lua` | Keep structure, floors, rooms and roof | Not started |
@@ -37,3 +37,12 @@ The replacement castle is built zone by zone. Only zone 00 is active until it ha
 - Existing castle-prefixed nodes above the target surface are removed from these footprints.
 - The player is moved to the castle forecourt only after the site build completes.
 - Commands: `/gdo_site` rebuilds zone 00; `/gdo_site_info` reports saved elevations.
+
+## Zone 10
+
+- Bounds: X -39..39, Z -41..39.
+- Four curtain-wall runs form the perimeter; the south wall intentionally has an 11-block gap at X -5..5 for the future gatehouse.
+- Wall body rises 9 blocks above the site surface; the continuous wall walk is at +10, with alternating crenels at +11 and +12.
+- Corner cores are structural only; future towers are separate modules.
+- The zone does not construct stairs, towers, gates, roofs, or courtyard buildings.
+- Commands: `/gdo_zone10` rebuilds only the enceinte; `/gdo_zone10_info` reports its version and elevation.
