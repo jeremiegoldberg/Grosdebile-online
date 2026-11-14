@@ -1,6 +1,6 @@
 # GDO Castle Architecture
 
-The replacement castle is built zone by zone. The replacement castle is active only through the current validated construction step; zones 00 and 10 are implemented.
+The replacement castle is built zone by zone. The replacement castle is active only through the current validated construction step; zones 00, 10 and 20 are implemented.
 
 ## Rules
 
@@ -18,7 +18,7 @@ The replacement castle is built zone by zone. The replacement castle is active o
 |---|---|---|---|
 | 00 | `00_site.lua` | Natural terrain survey, castle platform, forecourt, level village platform | Implemented; requires in-game validation |
 | 10 | `10_enclosure.lua` | Curtain walls, battlements, wall walks | Implemented; requires in-game validation |
-| 20 | `20_gatehouse.lua` | Gate passage, drawbridge, portcullis, moat | Not started |
+| 20 | `20_gatehouse.lua` | Gate passage, drawbridge, portcullis, moat | Implemented; requires in-game validation |
 | 30 | `30_towers.lua` | Independent corner and gate towers | Not started |
 | 40 | `40_keep.lua` | Keep structure, floors, rooms and roof | Not started |
 | 50 | `50_residential.lua` | Great hall and lord's residence | Not started |
@@ -46,3 +46,14 @@ The replacement castle is built zone by zone. The replacement castle is active o
 - Corner cores are structural only; future towers are separate modules.
 - The zone does not construct stairs, towers, gates, roofs, or courtyard buildings.
 - Commands: `/gdo_zone10` rebuilds only the enceinte; `/gdo_zone10_info` reports its version and elevation.
+
+## Zone 20
+
+- Bounds: X -18..18, Z 24..61.
+- Passage is 7 blocks wide, from X -3..3, and remains open from the floor through Y +8.
+- Paired stone jambs are at X -5..-4 and X 4..5; portal frames are at Z 33 and Z 40.
+- The raised portcullis is above head height at Z 37; it does not fill the walking passage.
+- The drawbridge is a flat 7-wide timber deck from Z 42..58, on the same level as the site platform.
+- Side moat channels are at X -17..-4 and X 4..17, Z 49..55.
+- Gate towers, stairs, and upper gatehouse rooms are intentionally excluded.
+- Commands: `/gdo_zone20` rebuilds only the gatehouse; `/gdo_zone20_info` reports its version and elevation.
