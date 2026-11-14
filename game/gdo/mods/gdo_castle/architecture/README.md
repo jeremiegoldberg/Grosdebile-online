@@ -18,7 +18,7 @@ The replacement castle is built zone by zone. The replacement castle is active o
 |---|---|---|---|
 | 00 | `00_site.lua` | Natural terrain survey, castle platform, forecourt, level village platform | Implemented; requires in-game validation |
 | 10 | `10_enclosure.lua` | Curtain walls, battlements, wall walks | Implemented; requires in-game validation |
-| 20 | `20_gatehouse.lua` | Twin gate towers, upper guard gallery, portal, portcullis and drawbridge | Redesigned; requires in-game validation |
+| 20 | `20_gatehouse.lua` | Twin gate towers, upper guard gallery, portal, portcullis and drawbridge | Updated with wall tie-ins and walk-in tower doors; requires in-game validation |
 | 30 | `30_towers.lua` | Independent corner and gate towers | Not started |
 | 40 | `40_keep.lua` | Keep structure, floors, rooms and roof | Not started |
 | 50 | `50_residential.lua` | Great hall and lord's residence | Not started |
@@ -55,7 +55,8 @@ The replacement castle is built zone by zone. The replacement castle is active o
 - The raised portcullis is above head height at Z 37; it does not fill the walking passage.
 - The drawbridge is a flat 7-wide timber deck from Z 42..58, exactly level with the castle forecourt and approach path. The two end thresholds are flush deck planks; no raised step crosses the walking lane.
 - Side moat channels are at X -17..-4 and X 4..17, Z 49..55.
-- Includes two integral gate towers (X -17..-7 and 7..17), each with two interior levels, arrow slits, corner quoins and crenellated roof walk.
+- Includes two integral gate towers (X -17..-7 and 7..17), each with two interior levels, arrow slits, corner quoins and crenellated roof walk. Ground-level 3-wide doorways on the courtyard-facing sides open directly into the lower tower rooms.
+- Short connector piers at X=-18 and X=18 close the one-node gaps between the two gate towers and the south curtain wall; the wall-walk and exterior trim continue across these joints.
 - Includes an upper guard gallery spanning the portal at Y +15..+26, with windows, interior lights and a crenellated roof terrace.
 - The portal has a stepped pointed-arch profile; the ground passage remains 7 blocks wide and 8 blocks high.
 - The portcullis is raised above the walking clearance. The drawbridge and both approaches form one continuous, level walking surface.
