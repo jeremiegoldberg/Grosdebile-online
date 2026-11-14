@@ -53,11 +53,11 @@ The replacement castle is built zone by zone. The replacement castle is active o
 - Passage is 7 blocks wide, from X -3..3, and remains open from the floor through Y +8.
 - Paired stone jambs are at X -5..-4 and X 4..5; portal frames are at Z 33 and Z 40.
 - The raised portcullis is above head height at Z 37; it does not fill the walking passage.
-- The drawbridge is a flat 7-wide timber deck from Z 42..58, on the same level as the site platform.
+- The drawbridge is a flat 7-wide timber deck from Z 42..58, exactly level with the castle forecourt and approach path. The two end thresholds are flush deck planks; no raised step crosses the walking lane.
 - Side moat channels are at X -17..-4 and X 4..17, Z 49..55.
 - Includes two integral gate towers (X -17..-7 and 7..17), each with two interior levels, arrow slits, corner quoins and crenellated roof walk.
 - Includes an upper guard gallery spanning the portal at Y +15..+26, with windows, interior lights and a crenellated roof terrace.
 - The portal has a stepped pointed-arch profile; the ground passage remains 7 blocks wide and 8 blocks high.
-- The portcullis is raised above the walking clearance. The drawbridge remains a level 7-wide timber deck.
+- The portcullis is raised above the walking clearance. The drawbridge and both approaches form one continuous, level walking surface.
 - Staircases are intentionally excluded; floors are reserved for the independent zone 70 staircase module.
 - Commands: `/gdo_zone20` rebuilds only the gatehouse; `/gdo_zone20_info` reports its version and elevation.
