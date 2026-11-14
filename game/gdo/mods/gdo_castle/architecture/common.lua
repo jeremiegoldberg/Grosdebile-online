@@ -27,6 +27,8 @@ A.materials = {
     flower_red="gdo_castle:refit_flower_red",
     flower_blue="gdo_castle:refit_flower_blue",
     flower_gold="gdo_castle:refit_flower_gold",
+    plaster="gdo_castle:refit_plaster",
+    tile_red="gdo_castle:refit_tile_red",
 }
 
 local T = {
@@ -59,6 +61,18 @@ register_textured(M.leaves,"Feuillage",{snappy=3},{drawtype="allfaces_optional",
     paramtype="light",sunlight_propagates=true})
 register_textured(M.water,"Eau décorative",{cracky=3},{drawtype="glasslike",
     paramtype="light",sunlight_propagates=true,walkable=false,pointable=false})
+
+-- Warm plaster and terracotta roof tiles for the compact medieval town district.
+minetest.register_node(M.plaster,{
+    description=S("Enduit à la chaux"),
+    tiles={"refit_stone.png^[colorize:#d8c9a9:175"},
+    groups={cracky=3},
+})
+minetest.register_node(M.tile_red,{
+    description=S("Tuile rouge cuite"),
+    tiles={"refit_roof.png^[colorize:#934a36:180"},
+    groups={cracky=2},
+})
 
 local function register_flower(name,desc,texture)
     minetest.register_node(name,{
