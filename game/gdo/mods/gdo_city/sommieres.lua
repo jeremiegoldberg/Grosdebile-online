@@ -76,6 +76,13 @@ return function(C)
                 put(faceX,wy,z+4,S.shutter_green)
                 put(faceX,wy,z2-4,S.shutter_blue)
             end
+            -- Baies latérales : les façades de profil ne doivent jamais devenir des murs aveugles.
+            for _,pz in ipairs({z+5,math.floor((z+z2)/2),z2-5}) do
+                if math.abs(pz-math.floor((z+z2)/2))>2 or f>1 then
+                    put(x,wy,pz,(variant%2==0) and S.shutter_blue or S.shutter_green)
+                    put(x2,wy,pz,(variant%2==0) and S.shutter_green or S.shutter_blue)
+                end
+            end
         end
 
         -- Encorbellement d'un étage sur deux, typique des façades anciennes.
@@ -289,22 +296,24 @@ return function(C)
 
     -- Place des Docteurs-Dax / place du Marché : trois côtés d'arcades et halle.
     local function build_market_arcades()
-        arcaded_house(49,815,34,20,2,"south",S.terracotta,31)
-        arcaded_house(49,884,34,20,2,"north",S.roof,32)
-        arcaded_house(49,835,18,49,2,"east",S.terracotta,33)
-        arcaded_house(84,835,14,49,2,"west",S.roof,34)
-        -- Place ouverte, dallage clair et espace de marché.
-        fill(67,0,838,84,0,881,S.paving)
-        -- Halle démontable, étals en bois et couvertures en tuiles.
-        for _,x in ipairs({70,79}) do
-            fill(x,1,847,x,5,847,M.wood)
-            fill(x,1,870,x,5,870,M.wood)
+        -- Place des Docteurs-Dax : trois côtés d'arcades, ouverte vers le pont.
+        -- La place reste hors du tablier surélevé (qui traverse Z=840..861).
+        arcaded_house(49,780,34,18,2,"south",S.terracotta,31)
+        arcaded_house(49,800,18,18,2,"east",S.terracotta,33)
+        arcaded_house(84,800,18,18,2,"west",S.roof,34)
+        fill(67,0,800,83,0,817,S.paving)
+        -- Auvent léger de marché, volontairement placé sur le côté pour libérer le passage.
+        fill(68,5,802,82,5,803,S.terracotta)
+        fill(68,5,814,82,5,815,S.terracotta)
+        for _,x in ipairs({68,82}) do
+            fill(x,1,802,x,4,802,M.wood)
+            fill(x,1,815,x,4,815,M.wood)
         end
-        fill(70,5,847,79,5,870,S.terracotta)
-        fill(70,6,858,79,6,858,S.limestone)
-        put(73,1,851,M.table)
-        put(77,1,851,M.barrel)
-        lamp(75,7,857)
+        fill(72,1,805,72,2,805,M.wood)
+        fill(78,1,811,78,2,811,M.wood)
+        put(74,1,811,M.table)
+        put(79,1,811,M.barrel)
+        lamp(75,4,806)
     end
 
     -- Maison consulaire de la rue Marx-Dormoy, sur le pont habité.
@@ -469,7 +478,7 @@ return function(C)
         put(111,1,812,M.banner)
         put(153,1,892,M.banner)
         -- Pierre de passage sur la place du Marché : retour au Château des Brumes.
-        put(77,1,858,"gdo_city:waystone")
+        put(77,1,808,"gdo_city:waystone")
     end
 
     return function()

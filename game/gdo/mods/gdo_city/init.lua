@@ -7,11 +7,11 @@ local A = gdo_castle_architecture
 assert(A and A.materials, "[GDO Sommières] gdo_castle_architecture doit être chargé avant la ville.")
 
 local storage = minetest.get_mod_storage()
-local VERSION = 3
+local VERSION = 4
 local LEGACY_BOUNDS = {x1 = -58, x2 = 58, z1 = 780, z2 = 920}
 local RADIUS = 180
 local BOUNDS = LEGACY_BOUNDS
-local SPAWN = {x = 76, z = 858}
+local SPAWN = {x = 76, z = 808}
 local center_x, center_z = 0, 850
 local SITE_Y_MIN, SITE_Y_MAX = -32, 192
 local SITE_CANDIDATES = {
