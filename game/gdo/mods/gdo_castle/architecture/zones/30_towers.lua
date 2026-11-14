@@ -85,6 +85,7 @@ return function(A)
             x1,x2=cx-6,cx-5
         end
         A.clear(x1,y(11),cz-1,x2,y(14),cz+1)
+        A.fill(x1,y(10),cz-1,x2,y(10),cz+1,M.floor)
 
         local z1,z2
         if courtyard_side=="south" then
@@ -93,6 +94,7 @@ return function(A)
             z1,z2=cz-6,cz-5
         end
         A.clear(cx-1,y(11),z1,cx+1,y(14),z2)
+        A.fill(cx-1,y(10),z1,cx+1,y(10),z2,M.floor)
 
         -- Stone lintels above the two wall-walk connections.
         A.fill(x1,y(15),cz-2,x2,y(15),cz+2,M.trim)
