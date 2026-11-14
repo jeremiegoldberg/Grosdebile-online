@@ -162,6 +162,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     meta:set_int("gdo_stamina", chosen_stats.stamina_max)
     meta:set_string("gdo_resources_initialized", "1")
     gdo_rpg.apply_player(player)
+    player:set_hp(chosen_stats.hp_max)
     local race, class = races[race_id], classes[class_id]
     minetest.chat_send_player(player:get_player_name(),
         "Personnage créé : " .. race.name .. " " .. class.name .. ". Capacité : /gdo_ability — " .. race.ability .. ".")
