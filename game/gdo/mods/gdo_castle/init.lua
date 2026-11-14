@@ -712,8 +712,9 @@ local function generate_castle()
     minetest.log("action", "[GDO] Le Château des Brumes a été construit.")
 end
 
--- La génération du château est désormais entièrement gérée par refit.lua.
--- Un seul stockage de mod est initialisé, dans ce fichier de refonte.
+-- Les anciens constructeurs monolithiques ci-dessus sont conservés comme références
+-- historiques, mais ne sont pas appelés. La carte active est générée par
+-- l'architecture modulaire chargée en fin de fichier.
 
 minetest.register_chatcommand("maison", {
     description = "Affiche ta maison ou explique comment en rejoindre une",
