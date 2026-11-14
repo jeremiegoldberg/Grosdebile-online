@@ -224,7 +224,7 @@ minetest.register_chatcommand("gdo_guild_create",{
         local title=(param or ""):match("^%s*(.-)%s*$")
         if not title or #title<3 or #title>32 then return false,"Le nom doit contenir 3 à 32 caractères." end
         local p=minetest.get_player_by_name(name); if not p then return false,"Joueur introuvable." end
-        if math.max(1,p:get_meta():get_int("gdo_level"))<10 then return false,"Niveau 10 requis. Progression : /gdo_progression." end
+        if math.max(1,p:get_meta():get_int("gdo_level"))<2 then return false,"Niveau 2 requis. Progression : /gdo_progression." end
         if find_guild(name) then return false,"Quitte d'abord ta guilde avec /gdo_guild_leave." end
         for _,g in pairs(guilds) do if g.name:lower()==title:lower() then return false,"Ce nom est déjà utilisé." end end
         local id="player_"..name:lower():gsub("[^%w_]","_")

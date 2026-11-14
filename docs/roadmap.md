@@ -8,31 +8,46 @@ Les étapes sont indicatives. Une fonctionnalité n'est considérée comme livr�
 - [x] Architecture cible et séparation code/contenus/données privées
 - [ ] Ajouter les textes complets des licences et notices tierces
 - [ ] CI de lint et tests de base
-- [ ] Premier prototype Luanti minimal et reproductible
+- [x] Prototype Luanti minimal et reproductible
 
-## Phase 1 — Prototype jouable
-- [ ] Jeu Luanti `gdo` chargeable
-- [ ] Spawn, déplacement et première région
-- [ ] Trois classes initiales : guerrier, mage, chasseur
-- [ ] Combat PvE simple, inventaire et équipement
-- [ ] PNJ et premières quêtes humoristiques
-- [ ] Sauvegarde et persistance validées
+## Phase 1 — Prototype RPG (portage NLite)
+- [x] Création de personnage et choix parmi 10 races et 3 classes
+- [x] XP, niveaux, statistiques, mana et endurance
+- [x] Capacités raciales avec coûts et recharge
+- [x] Quatre sorts natifs et armes de départ
+- [x] Trois créatures hostiles de test, spawn sauvage plafonné et récompenses XP/butin
+- [x] Première quête de chasse et portefeuille local
+- [x] Monture terrestre et monture volante de test
+- [ ] Tests en jeu sous Luanti 5.17/5.18 et équilibrage multi-joueur
+- [ ] UI RPG intégrée, équipement, raretés, affixes et arbres de compétences
+- [ ] Animation de combat et feedback visuel final
 
 ## Phase 2 — Monde du Nawak
 - [ ] Géographie et régions documentées
 - [ ] Biomes, villages et points d'intérêt
-- [ ] Bestiaire, boss et donjons
+- [ ] Bestiaire élargi, élites, boss et donjons
 - [ ] Construction limitée et protection des zones
 - [ ] Outils de création et validation des cartes
 
-## Phase 3 — Comptes et services
+## Phase 3 — Services et économie
 - [ ] API Go et PostgreSQL
 - [ ] Inscription et authentification sécurisées
 - [ ] Liaison sûre entre compte web et identité Luanti
-- [x] Guildes fondatrices, parcelles personnelles et maisons de départ (prototype local)\n- [x] Création de guildes au niveau 2, invitations et rôles de construction (prototype local)\n- [x] Villages de guildes avec bâtiments communs et croissance par effectif (prototype visuel)\n- [ ] Persistance centralisée des personnages, guildes et économie
+- [x] Guildes fondatrices, parcelles personnelles et maisons de départ (prototype local)
+- [x] Création de guildes, invitations et rôles (prototype local)
+- [x] Portefeuille local et transferts entre joueurs
+- [ ] Marchands, hôtel des ventes, crafting avancé et économie persistante centralisée
+- [ ] Persistance centralisée des personnages, guildes et économie
 - [ ] Sauvegardes, observabilité et procédures d'exploitation
 
-## Phase 4 — Clients et accessibilité
+## Phase 4 — Import des contenus NLite
+- [ ] Audit des droits et provenances pour les modèles, textures, animations et sons
+- [ ] Convertisseur et pipeline de validation Geo/Bedrock vers glTF/GLB
+- [ ] Import progressif des créatures et montures
+- [ ] Animation, morphologie et optimisation mobile
+- [ ] Vérification du budget mémoire et du coût réseau des médias
+
+## Phase 5 — Clients et accessibilité
 - [ ] Interface PC
 - [ ] Interface tactile Android
 - [ ] Support manette
@@ -40,7 +55,7 @@ Les étapes sont indicatives. Une fonctionnalité n'est considérée comme livr�
 - [ ] Prototype VR Meta Quest via OpenXR, sous réserve du portage client
 - [ ] Options de confort VR et tests de cybersickness
 
-## Phase 5 — Fediverse
+## Phase 6 — Fediverse
 - [ ] Modèle d'acteurs et de profils publics
 - [ ] WebFinger et ActivityPub
 - [ ] Profils de joueurs et guildes
@@ -48,7 +63,7 @@ Les étapes sont indicatives. Une fonctionnalité n'est considérée comme livr�
 - [ ] Modération, blocage et protection anti-abus
 - [ ] Connecteurs Bluesky/Nostr éventuels, séparés d'ActivityPub
 
-## Phase 6 — Communauté et fédération de mondes
+## Phase 7 — Communauté et fédération de mondes
 - [ ] Guide d'auto-hébergement
 - [ ] Serveurs communautaires indépendants
 - [ ] Annuaire de serveurs
@@ -57,7 +72,6 @@ Les étapes sont indicatives. Une fonctionnalité n'est considérée comme livr�
 - [ ] Ouverture publique progressive et audit sécurité
 
 ## Hors périmètre initial
-
 - Monde infini ou dépassement des limites natives Luanti
 - Synchronisation automatique des inventaires entre serveurs arbitraires
 - Compatibilité garantie avec tous les casques VR

@@ -11,11 +11,28 @@
 
 ## Composants
 
-### Luanti et game Lua
+### Luanti et jeu Lua
 
-Le serveur Luanti héberge le monde et exécute les règles de jeu. Le jeu `gdo` regroupe les mods propres au projet : noyau, personnages, combat, entités, objets, quêtes, progression, monde et interface.
+Le serveur Luanti héberge le monde et exécute les règles de jeu. Le jeu `gdo` est composé de modules autonomes :
 
-La caméra troisième personne est l'expérience de référence sur PC/mobile. Une expérience VR immersive est une cible expérimentale qui devra être testée sur un portage Luanti compatible OpenXR ; elle ne doit pas être considérée comme acquise par le seul fait que le serveur est Luanti.
+| Module | Responsabilité |
+|---|---|
+| `gdo_core` | Monde de départ, objets fondamentaux et premier PNJ |
+| `gdo_rpg` | Races, classes, statistiques, XP, niveaux, mana, endurance et capacités |
+| `gdo_combat` | Armes, dégâts et consommables de combat |
+| `gdo_magic` | Sorts et effets magiques |
+| `gdo_bestiary` | Créatures, IA, butin et récompenses |
+| `gdo_npcs` | Quêtes, interactions et dialogues à étendre |
+| `gdo_mounts` | Montures terrestres et aériennes |
+| `gdo_economy` | Portefeuille local et transferts |
+| `gdo_society` | Maisons, guildes, villages et parcelles |
+| `gdo_zones` / `gdo_castle` | Protection et génération du Château des Brumes |
+
+Les modules RPG sont natifs Lua, sans framework de mobs obligatoire. La caméra troisième personne est l'expérience de référence sur PC/mobile. Une expérience VR immersive est une cible expérimentale qui devra être testée sur un portage Luanti compatible OpenXR.
+
+### Données et progression
+
+Les valeurs de personnage sont conservées dans les métadonnées Luanti, côté serveur. Les clés de niveau et d'expérience `gdo_level` et `gdo_xp` déjà utilisées par GDO restent la source de vérité pour éviter une migration destructive. Le backend Go pourra ensuite fournir une synchronisation transactionnelle, sans devenir nécessaire pour jouer en local.
 
 ### Backend Go
 

@@ -1,0 +1,2 @@
+# Désactive les apparitions naturelles si le serveur préfère distribuer les créatures manuellement.
+gdo_bestiary_natural_spawn (Apparition naturelle limitée dans les terres sauvages) bool true

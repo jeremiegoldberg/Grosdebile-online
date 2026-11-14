@@ -1,10 +1,10 @@
 # Lancer le prototype GDO sous Linux
 
-Cette première ébauche est un **jeu Luanti autonome** : elle ne nécessite ni Minetest Game, ni mod externe, ni backend Go, ni serveur distant.
+Cette première ébauche est un **jeu Luanti autonome** : elle ne nécessite ni Minetest Game, ni framework de mobs externe, ni backend Go, ni serveur distant.
 
 ## 1. Prérequis
 
-- Luanti installé (version récente recommandée).
+- Luanti 5.17 ou supérieur (5.18 recommandé pour les nouvelles fonctionnalités du moteur).
 - Git.
 
 Sur Debian/Ubuntu, selon la version de ta distribution, le paquet peut s'appeler `luanti` ou `minetest`. Sur Debian, les dépôts peuvent fournir une version ancienne ; Flatpak ou le paquet officiel peut alors être préférable.
@@ -20,67 +20,50 @@ cp -a game/gdo ~/.minetest/games/gdo
 luanti
 ```
 
-Si ton installation utilise un répertoire de données personnalisé, ouvre Luanti puis **À propos → Ouvrir le répertoire de données** et adapte le chemin.
-
 Dans le menu, crée un monde et sélectionne **Gros Débile Online** comme jeu. Si la commande `luanti` n'existe pas, essaie `minetest` selon le nom du paquet installé.
 
-## 3. Visite guidée : le Château des Brumes
+## 3. Créer son personnage
+
+À la première connexion, la fenêtre de création s'ouvre automatiquement. Choisis l'une des dix races et l'une des trois classes. Tu peux rouvrir les informations de ton personnage avec `/gdo_character`.
+
+- **Races** : Centaure, Né-de-la-flamme, Endérien, Félin, Golem, Arachnide, Merling, Nain, Sang-dragon et Elfe.
+- **Classes** : Guerrier (résistance), Mage (mana) et Rôdeur (mobilité).
+- Les choix sont définitifs pour cette version.
+- `/gdo_stats` affiche les statistiques ; `/gdo_ability` déclenche la capacité raciale.
+
+## 4. Combat et magie
+
+Le clic gauche permet d'attaquer avec l'arme tenue. Les armes de départ se fabriquent avec les ressources GDO :
+- Épée en bois : deux bois.
+- Épée de pierre : deux pierres et un bois.
+- Bandage : deux navets héroïques.
+
+Les quatre sorts disponibles sont `firebolt`, `heal`, `frostnova` et `arcane_burst`. Utilise `/gdo_spells` pour les détails et `/gdo_spell <nom>` pour lancer un sort. Le mana se régénère automatiquement.
+
+## 5. Monstres, quêtes et montures
+
+Le bestiaire contient trois créatures : gelée des marais, gobelin pillard et loup des brumes. Un spawn naturel limité est activé dans les terres sauvages, loin du Château des Brumes : le nombre d'entités reste plafonné autour des joueurs. Il peut être désactivé dans `minetest.conf` avec `gdo_bestiary_natural_spawn = false`. Les œufs d'apparition sont aussi disponibles en mode créatif.
+
+La commande `/gdo_quests` ouvre le tableau des aventuriers : accepte la prime aux gobelins, élimine trois gobelins et réclame ton XP et tes pièces. `/gdo_wallet` affiche ton solde et `/gdo_pay <joueur> <montant>` transfère des pièces à un joueur connecté.
+
+Les administrateurs peuvent faire apparaître un cheval ou un drake volant avec `/gdo_mount horse` ou `/gdo_mount dragon`. Clic droit pour monter ; ZQSD/WASD pour piloter. À cheval, Maj permet de descendre ; sur le drake, Espace fait monter, Maj fait descendre et Aux1 permet de descendre de monture. Un second clic droit permet aussi de descendre.
+
+## 6. Visite guidée : le Château des Brumes
 
 - Tu apparais devant le château. Traverse le pont et la grande porte.
-- Dans la cour, cherche le **Bureau des Quêtes** : les dragons attendront, le formulaire est prioritaire.
-- Visite l'aile gauche et sa grande salle de banquet. La table est prévue pour un roi ; le budget, pour trois navets.
-- Dans l'aile droite, la bibliothèque possède des rayonnages, une passerelle et des tables de lecture. Certains grimoires sont probablement maudits, mais correctement catalogués.
-- Rejoins la salle de cours et la galerie des trophées.
-- Clique droit sur les panneaux officiels pour découvrir les décrets absurdes de l’administration royale.
-- Visite les quatre pavillons de la cour : Bras Cassés, Mages du Dimanche, Rats de Bibliothèque et Seigneurs du Navet. Chaque blason est interactif : clique droit pour rejoindre la maison. Le choix est définitif dans cette version.
-- Utilise `/maisons` pour lire les devises et `/maison` pour consulter ton affectation. Si tu n’as pas encore choisi, `/maison` te rappelle comment faire.
-- Gérard le Magnifique t'attend près de l'entrée de la cour. Clique droit sur lui pour accepter sa quête.
-- Récolte les trois navets héroïques du jardin près de la grande porte, puis retourne voir Gérard.
-- Tu reçois le Badge officiel du Nawak. Il ne donne aucun pouvoir, mais il est officiellement officiel.
-
-La commande `/gdo` rappelle l'objectif, `/chateau` affiche la présentation du château et `/gdo_zones` liste les zones protégées ainsi que les règles de construction.
-
-## 4. Touches utiles
-
-- ZQSD ou WASD : déplacement (selon la configuration).
-- Espace : sauter.
-- Souris : regarder autour de soi.
-- Clic droit : interagir / parler / récolter.
-- E : inventaire.
-- Échap : menu.
-
-## 5. Mise à jour du prototype
-
-Pour mettre à jour une installation existante :
-
-```bash
-cd Grosdebile-online
-git pull
-rm -rf ~/.minetest/games/gdo
-cp -a game/gdo ~/.minetest/games/gdo
-```
-
-La mise à jour active la protection du Château des Brumes (environ X=-52..52, Y=-10..100, Z=-58..52). Les blocs de cette zone deviennent intouchables par les joueurs. Fais une sauvegarde avant toute mise à jour importante.
-
-## 6. Construction libre et zones protégées
-
-Le Château des Brumes, ses pavillons, son jardin de quête et le parcours d'initiation sont en lecture seule : impossible d'y poser ou d'y retirer des blocs.
-
-En dehors de ces zones, le monde est entièrement libre :
-- construis ta base où tu veux ;
-- creuse, aménage et transforme le terrain ;
-- tu peux aussi démolir ou modifier les constructions d'autres joueurs ;
-- aucun claim, terrain privé ou protection automatique ne te met à l'abri.
-
-C'est intentionnel : GDO assume un bac à sable collectif et destructible. La commande `/gdo_zones` affiche les limites actuellement sanctuarisées.
+- Dans la cour, cherche le **Bureau des Quêtes**.
+- Visite la grande salle de banquet, la bibliothèque, la salle de cours et la galerie des trophées.
+- Visite les quatre pavillons : Bras Cassés, Mages du Dimanche, Rats de Bibliothèque et Seigneurs du Navet. Chaque blason est interactif.
+- Gérard le Magnifique t'attend près de l'entrée de la cour. Clique droit sur lui pour accepter sa quête des trois navets héroïques.
+- La commande `/gdo` rappelle l'objectif, `/maisons` présente les maisons et `/gdo_zones` affiche les règles de construction.
 
 ## 7. Limites connues
 
-- C'est une démo locale mono-monde, pas encore un MMORPG.
-- Le château est généré en blocs procéduraux ; le mobilier est stylisé et les textures sont provisoires.
-- Le personnage de Gérard et les blocs utilisent des textures de remplacement ; les modèles et graphismes originaux viendront ensuite.
-- Pas encore de compte web, classes, combat, sauvegarde centralisée, multijoueur public ou fédération ActivityPub.
-- Le code n'a pas encore été validé par un lancement automatisé de Luanti sur une machine de test indépendante.
+- Prototype local : les classes, races, sorts, monstres et montures constituent une première tranche, pas encore un MMORPG complet.
+- Les créatures utilisent des formes cubiques et des textures temporaires ; aucune ressource graphique NLite n'est redistribuée dans cette tranche.
+- Le spawn naturel est volontairement limité ; les boss, donjons complets, marchands, inventaire d'équipement avancé et hôtel des ventes restent à développer.
+- Les montures n'ont pas encore de selles, d'inventaire cargo, de lien, d'évolution ni d'animations dédiées.
+- Le code doit encore être testé dans le client Luanti réel sur PC et Android.
 
 ## Dépannage
 
