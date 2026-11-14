@@ -34,9 +34,13 @@ return function(A)
         for _,p in ipairs({
             {x1,z1},{x1,z2},{x2,z1},{x2,z2},
         }) do
-            A.fill(p[1],y(1),p[2],p[1],y(16),p[2],M.trim)
-            A.fill(p[1]-((p[1]==x1) and 1 or 0),y(1),p[2],
-                p[1]+((p[1]==x2) and 1 or 0),y(2),p[2],M.trim)
+            local bx1=(p[1]==x1) and (x1-1) or x2
+            local bx2=(p[1]==x1) and x1 or (x2+1)
+            local bz1=(p[2]==z1) and (z1-1) or z2
+            local bz2=(p[2]==z1) and z1 or (z2+1)
+            -- Full-height two-by-two corner buttress, visibly projecting from the tower.
+            A.fill(bx1,y(1),bz1,bx2,y(16),bz2,M.trim)
+            A.fill(bx1,y(1),bz1,bx2,y(2),bz2,M.gold)
         end
 
         -- Door from the gate passage into the ground-floor tower room.
