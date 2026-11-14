@@ -73,6 +73,7 @@ renderer_source = replace_once(
     "local W, D = math.max(0.5, w / 2 + 0.4), math.max(0.5, d / 2 + 0.4)",
     "local W, D = math.max(0.5, w / 2), math.max(0.5, d / 2)"
 )
+renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 7")
 renderer_source = replace_once(
     renderer_source,
     "for y = math.max(y_min, top_y + 1), math.min(y_max, roof_y) do set_block(x, y, z, roof_id) end",
