@@ -3,7 +3,7 @@
 -- No staircases are generated here. Interior levels are reserved for zone 70.
 return function(A)
     local Z={}
-    Z.VERSION=2
+    Z.VERSION=3
     Z.bounds={x1=-18,x2=18,z1=24,z2=61}
     Z.opening={x1=-3,x2=3,z1=33,z2=40}
     Z.drawbridge={x1=-3,x2=3,z1=42,z2=58}
@@ -228,12 +228,14 @@ return function(A)
 
         -- Distinct oak planks make the deck read as a bridge, not a road.
         for z=42,58 do
-            A.fill(-3,y(0),z,3,y(0),z,(z%3==0) and M.trim or M.wood)
+            -- The deck and the two approaches share exactly the same walking level.
+            -- Flush threshold planks mark both ends without creating a raised step.
+            local plank=(z==42 or z==58 or z%3==0) and M.trim or M.wood
+            A.fill(-3,y(0),z,3,y(0),z,plank)
         end
+        -- Structural stone sits below the deck, never above the walking surface.
         A.fill(-4,y(-1),42,4,y(-1),43,M.stone)
         A.fill(-4,y(-1),57,4,y(-1),58,M.stone)
-        A.fill(-4,y(1),42,4,y(1),42,M.trim)
-        A.fill(-4,y(1),58,4,y(1),58,M.trim)
 
         -- Side chains and anchor posts are outside the walking width.
         for _,x in ipairs({-4,4}) do
