@@ -4,14 +4,17 @@ local A=dofile(modpath.."/architecture/common.lua")
 A.storage=gdo_castle_storage or minetest.get_mod_storage()
 A.Site=dofile(modpath.."/architecture/zones/00_site.lua")(A)
 A.Enclosure=dofile(modpath.."/architecture/zones/10_enclosure.lua")(A)
+A.Gatehouse=dofile(modpath.."/architecture/zones/20_gatehouse.lua")(A)
 
 local storage=A.storage
 local SITE_KEY="architecture_site_version"
 local LEVEL_CASTLE_KEY="architecture_castle_level"
 local LEVEL_VILLAGE_KEY="architecture_village_level"
 local ENCLOSURE_KEY="architecture_zone10_version"
+local GATEHOUSE_KEY="architecture_zone20_version"
 local building=false
 local building_enclosure=false
+local building_gatehouse=false
 
 local function build_enclosure(force)
     if not A.Site.ready then
@@ -32,6 +35,28 @@ local function build_enclosure(force)
     return ok,message
 end
 
+local function build_gatehouse(force)
+    if not A.Site.ready then
+        return false,"La zone 00 doit être construite avant le châtelet."
+    end
+    if storage:get_int(ENCLOSURE_KEY)<A.Enclosure.VERSION then
+        return false,"La zone 10 doit être construite avant le châtelet."
+    end
+    if building_gatehouse then
+        return false,"La génération de la zone 20 est déjà en cours."
+    end
+    if not force and storage:get_int(GATEHOUSE_KEY)>=A.Gatehouse.VERSION then
+        A.base_y=A.Site.castle_y
+        A.Gatehouse.ready=true
+        return true,"Zone 20 déjà construite."
+    end
+    building_gatehouse=true
+    local ok,message=A.Gatehouse.build(A.Site.castle_y)
+    if ok then storage:set_int(GATEHOUSE_KEY,A.Gatehouse.VERSION) end
+    building_gatehouse=false
+    return ok,message
+end
+
 local function apply_spawn(player)
     if A.Site.ready then A.Site.spawn(player) end
 end
@@ -48,6 +73,9 @@ local function build_site(saved_levels)
         local enclosure_ok,enclosure_message=build_enclosure(false)
         if not enclosure_ok then
             minetest.log("error","[GDO] "..enclosure_message)
+        else
+            local gate_ok,gate_message=build_gatehouse(false)
+            if not gate_ok then minetest.log("error","[GDO] "..gate_message) end
         end
     end
     building=false
@@ -87,6 +115,23 @@ minetest.register_chatcommand("gdo_zone10_info",{
     end,
 })
 
+minetest.register_chatcommand("gdo_zone20",{
+    description="Reconstruit uniquement la zone 20 : châtelet, herse et pont-levis",
+    privs={server=true},
+    func=function()
+        return build_gatehouse(true)
+    end,
+})
+
+minetest.register_chatcommand("gdo_zone20_info",{
+    description="Affiche l'état du châtelet",
+    func=function()
+        return true,string.format("Zone 20: version %d/%d, prête=%s, altitude=%d",
+            storage:get_int(GATEHOUSE_KEY),A.Gatehouse.VERSION,
+            A.Gatehouse.ready and "oui" or "non",storage:get_int(LEVEL_CASTLE_KEY))
+    end,
+})
+
 minetest.register_chatcommand("gdo_site_info",{
     description="Affiche l'état du socle architectural",
     func=function()
@@ -114,7 +159,12 @@ local function prepare_site()
         A.base_y=A.Site.castle_y
         for _,player in ipairs(minetest.get_connected_players()) do apply_spawn(player) end
         local enclosure_ok,enclosure_message=build_enclosure(false)
-        if not enclosure_ok then minetest.log("error","[GDO] "..enclosure_message) end
+        if not enclosure_ok then
+            minetest.log("error","[GDO] "..enclosure_message)
+        else
+            local gate_ok,gate_message=build_gatehouse(false)
+            if not gate_ok then minetest.log("error","[GDO] "..gate_message) end
+        end
         minetest.log("action","[GDO] Zone 00 déjà construite; altitude restaurée.")
         return
     end
