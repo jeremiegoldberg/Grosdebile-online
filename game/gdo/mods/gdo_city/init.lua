@@ -79,6 +79,35 @@ renderer_source = replace_once(
     "set_block(x, roof_y, z, roof_id)"
 )
 
+-- Preserve surveyed road corridors when a GIS building polygon touches or
+-- overlaps a road raster cell. The road layer is authoritative for walkable
+-- streets; building floors, walls, windows and roofs must not overwrite it.
+renderer_source = replace_once(
+    renderer_source,
+    "local tile_cache = {}",
+    "local tile_cache = {}\n        local road_mask = {}"
+)
+renderer_source = replace_once(
+    renderer_source,
+    "set_block(x, road_y, z, surface_id)",
+    "set_block(x, road_y, z, surface_id)\n                            road_mask[(z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1] = true"
+)
+renderer_source = replace_once(
+    renderer_source,
+    "-- 4) Individual building footprints, measured heights and oriented roof planes.",
+    "local function set_building_block(x, y, z, id)\n            if x < lx1 or x > lx2 or z < lz1 or z > lz2 then return end\n            local key = (z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1\n            if road_mask[key] then return end\n            set_block(x, y, z, id)\n        end\n\n        -- 4) Individual building footprints, measured heights and oriented roof planes."
+)
+renderer_source = replace_once(renderer_source, "set_block(x, floor_y, z, ids.floor)", "set_building_block(x, floor_y, z, ids.floor)")
+renderer_source = replace_once(renderer_source, "set_block(x, roof_y, z, roof_id)", "set_building_block(x, roof_y, z, roof_id)")
+renderer_source = replace_once(renderer_source, "set_block(x, y, z, wall_id)", "set_building_block(x, y, z, wall_id)")
+renderer_source = replace_once(renderer_source, "set_block(x, top_y, z, ids.limestone_trim)", "set_building_block(x, top_y, z, ids.limestone_trim)")
+renderer_source = replace_once(renderer_source, "set_block(x, floor_y + 2, z, ids.limestone_trim)", "set_building_block(x, floor_y + 2, z, ids.limestone_trim)")
+renderer_source = replace_once(
+    renderer_source,
+    "register_wall_windows(set_block, b, b.p, cfg, ids.glass, ids.limestone_trim, ids.shutter, ids.door)",
+    "register_wall_windows(set_building_block, b, b.p, cfg, ids.glass, ids.limestone_trim, ids.shutter, ids.door)"
+)
+
 local renderer_chunk, renderer_err = loader(renderer_source, "@gdo_city/renderer.lua")
 assert(renderer_chunk, renderer_err)
 renderer_chunk()
