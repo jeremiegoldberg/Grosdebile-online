@@ -1,95 +1,162 @@
-# GDO Castle Architecture
+# Architecture du Château des Brumes
 
-The replacement castle is built zone by zone. The modular castle is built incrementally. Zones 00, 10, 20, 30, 40, 30, 40 and the gatehouse stair implementation in 70 are in code; all still require in-game validation.
+La carte est générée par zones indépendantes. Le code actuellement intégré au bootstrap construit les zones 00, 10, 20, 30, 40 et la première tranche de la zone 70. Toutes ces zones doivent encore être parcourues et validées en jeu.
 
-## Rules
+## Règles générales
 
-- Every zone has its own file under `zones/`.
-- All coordinates passed to common helpers are absolute world coordinates.
-- A zone owns only its declared bounding box. It must not clear or rewrite another zone.
-- No zone may run a full-castle cleanup.
-- A completed zone stores its own version and any reference elevations in mod storage.
-- Later zones are built only after the previous zone has been checked in-game.
-- Staircases use the single `gdo_castle:refit_stair` node. A stair tread is never accompanied by a decorative full-cube support block.
+- Chaque zone possède son fichier sous `zones/`, sa version stockée et une commande de reconstruction ciblée.
+- Les coordonnées passées aux helpers de `common.lua` sont des coordonnées absolues du monde ; aucun décalage Y implicite n'est appliqué.
+- Une zone ne nettoie que le volume dont elle est propriétaire. Les recouvrements avec une autre zone doivent être volontaires, commentés et reconstruits dans un ordre connu.
+- Le sol du plateau est à `base_y`. Un joueur debout dessus a les pieds autour de `base_y + 1`.
+- La jouabilité passe avant la décoration : portes traversantes, sols continus, hauteurs libres, escaliers praticables et parcours testable dans les deux sens.
+- Un escalier utilise `gdo_castle:refit_stair`. Aucun cube plein ne doit être ajouté sous ou devant une marche pour simuler un escalier.
 
-## Zone sequence
+## Direction architecturale
 
-| ID | Module | Contents | Status |
+La citadelle adopte désormais une inspiration gothique sombre, monumentale et verticale, à partir de [Brukenthal — Team Lyrah](https://www.minecraft-france.fr/map-brukenthal-dark-castle/) et de sa [présentation originale](https://www.planetminecraft.com/project/minecraft-timelapse-project-brukenthal-a-dark-castle/).
+
+À adapter au Château des Brumes, sans reproduire la carte source bloc pour bloc :
+- un grand donjon qui domine nettement les bâtiments voisins ;
+- un profil irrégulier, composé de tours et tourelles de hauteurs différentes ;
+- des toitures en ardoise très pentues, des pignons et des faîtages élancés ;
+- de grands volumes en pierre, des ailes habitées, des galeries et cours intérieures ;
+- des intérieurs riches en colonnes, salles spécialisées et embranchements ;
+- une lumière chaude et ponctuelle, avec des zones d'ombre assumées ;
+- à terme, une approche dans un relief rocheux, un lac, des conifères et un bourg étagé en contrebas.
+
+L'objectif est une forteresse cohérente et explorable, pas une simple façade décorative.
+
+## Découpage des zones
+
+| Zone | Fichier | Responsabilité | État |
 |---|---|---|---|
-| 00 | `00_site.lua` | Natural terrain survey, castle platform, forecourt, level village platform | Implemented; requires in-game validation |
-| 10 | `10_enclosure.lua` | Curtain walls, battlements, wall walks | Implemented; requires in-game validation |
-| 20 | `20_gatehouse.lua` | Twin gate towers, upper guard gallery, portal, portcullis and drawbridge | Updated with wall tie-ins and walk-in tower doors; requires in-game validation |
-| 30 | `30_towers.lua` | Four chamfered corner towers integrated with the curtain walls and wall walks | Implemented; requires in-game validation |
-| 40 | `40_keep.lua` | Central keep with two interior floors, four attached turrets and a steep gabled roof | Implemented; requires in-game validation |
-| 50 | `50_residential.lua` | Great hall and lord's residence | Not started |
-| 60 | `60_courtyard_buildings.lua` | Chapel, workshops, school and service buildings | Not started |
-| 70 | `70_stairs.lua` | Two 2-wide stair flights from the gatehouse ground floor to its +9 first floor; future stair types remain planned | Partially implemented; requires in-game validation |
-| 80 | `80_courtyard.lua` | Paving, wells, gardens and props | Not started |
-| 90 | `90_village.lua` | Village streets, houses, inn, shops and workshops | Not started |
-| 95 | `95_landscape.lua` | Terrain blending, trees, fields, ponds and paths | Not started |
-| 99 | `99_connections.lua` | Doors, bridges and final inter-zone links | Not started |
+| 00 — Site | `00_site.lua` | Relevé du terrain, plateau du château, terrasse du village, altitude de référence | Implémentée ; validation en jeu requise |
+| 10 — Enceinte | `10_enclosure.lua` | Courtines, chemins de ronde et créneaux | Implémentée ; validation en jeu requise |
+| 20 — Châtelet | `20_gatehouse.lua` | Tours de porte, portail, herse, galerie haute et pont-levis | Implémentée ; validation en jeu requise |
+| 30 — Tours d'angle | `30_towers.lua` | Quatre tours chanfreinées, raccords aux courtines | Implémentée ; validation en jeu requise |
+| 40 — Citadelle | `40_keep.lua` | Donjon monumental, huit tours, ailes habitées et cour intérieure | Refaite dans le style Brukenthal ; validation en jeu requise |
+| 50 — Résidence / bourg | `50_residential.lua` | Bâtiments habités et éventuel bourg étagé | Prototype non intégré au bootstrap ; à repositionner |
+| 60 — Bâtiments de cour | `60_courtyard_buildings.lua` | Chapelle, ateliers, école, bâtiments de service | À construire |
+| 70 — Escaliers | `70_stairs.lua` | Escaliers du châtelet puis circulations verticales de la citadelle | Partiellement implémentée |
+| 80 — Cour | `80_courtyard.lua` | Pavage, puits, jardins, mobilier et accessoires | À construire |
+| 90 — Village | `90_village.lua` | Bourg, rues, maisons, auberge, commerces et ateliers | À construire |
+| 95 — Paysage | `95_landscape.lua` | Falaises, affleurements rocheux, lac, conifères et chemins | À construire |
+| 99 — Connexions | `99_connections.lua` | Liaisons finales entre zones, portes et parcours | À construire |
 
-## Zone 00
+Le prototype `50_residential.lua` n'est pas chargé par `architecture/init.lua`. Ne pas l'activer tel quel : ses anciennes coordonnées de maisons se superposent à la citadelle nouvellement élargie. Le repositionner lorsque le plan du bourg étagé sera défini.
 
-- Castle platform: X -43..43, Z -54..75.
-- Village platform: X -43..43, Z 80..128.
-- Each platform gets one independently surveyed elevation.
-- Existing castle-prefixed nodes above the target surface are removed from these footprints.
-- The player is moved to the castle forecourt only after the site build completes.
-- Commands: `/gdo_site` rebuilds zone 00; `/gdo_site_info` reports saved elevations.
+## Zone 00 — Site
 
-## Zone 10
+Emprises actuelles :
+- Plateau du château : X -43 à 43, Z -54 à 75.
+- Terrasse du village : X -43 à 43, Z 80 à 128.
 
-- Bounds: X -39..39, Z -41..39.
-- Four curtain-wall runs form the perimeter; the south wall intentionally has an 11-block gap at X -5..5 for the future gatehouse.
-- Wall body rises 9 blocks above the site surface; the continuous wall walk is at +10, with alternating crenels at +11 and +12.
-- Corner cores are structural only; future towers are separate modules.
-- The zone does not construct stairs, towers, gates, roofs, or courtyard buildings.
-- Commands: `/gdo_zone10` rebuilds only the enceinte; `/gdo_zone10_info` reports its version and elevation.
+Les deux plateaux ont des altitudes naturelles médianes indépendantes, conservées dans le stockage du mod. La zone aplatit ses emprises et pose les sols. Le niveau du château devient le `base_y` commun.
 
-## Zone 20
+Attention : `/gdo_site` reconstruit largement les deux plateaux ; cette commande peut effacer les bâtiments situés dans leur emprise. Ne pas l'utiliser pour corriger une seule construction.
 
-- Bounds: X -18..18, Z 24..61.
-- Passage is 7 blocks wide, from X -3..3, and remains open from the floor through Y +8.
-- Paired stone jambs are at X -5..-4 and X 4..5; portal frames are at Z 33 and Z 40.
-- The raised portcullis is above head height at Z 37; it does not fill the walking passage.
-- The drawbridge is a flat 7-wide timber deck from Z 42..58, exactly level with the castle forecourt and approach path. The two end thresholds are flush deck planks; no raised step crosses the walking lane.
-- Side moat channels are at X -17..-4 and X 4..17, Z 49..55.
-- Includes two integral gate towers (X -17..-7 and 7..17), each with two interior levels, arrow slits, corner quoins and crenellated roof walk. Ground-level 3-wide doorways on the courtyard-facing sides open directly into the lower tower rooms.
-- Short connector piers at X=-18 and X=18 close the one-node gaps between the two gate towers and the south curtain wall; the wall-walk and exterior trim continue across these joints.
-- Includes an upper guard gallery spanning the portal at Y +15..+26, with windows, interior lights and a crenellated roof terrace.
-- The portal has a stepped pointed-arch profile; the ground passage remains 7 blocks wide and 8 blocks high.
-- The portcullis is raised above the walking clearance. The drawbridge and both approaches form one continuous, level walking surface.
-- Staircases are intentionally excluded; floors are reserved for the independent zone 70 staircase module.
-- Commands: `/gdo_zone20` rebuilds only the gatehouse; `/gdo_zone20_info` reports its version and elevation.
+Le point d'apparition actuel est `(0, base_y + 1, 68)`, sur le parvis extérieur, au-delà du pont-levis.
 
-## Zone 30
+## Zone 10 — Enceinte
 
-- Four chamfered towers are centered at (-37,-39), (37,-39), (-37,37) and (37,37).
-- Each tower replaces the old corner core and the intersecting end of its two curtain walls.
-- Courtyard-facing doorways enter the ground-floor chambers.
-- Two upper openings per tower connect the two wall-walks that meet at that corner; the exterior-facing sides remain closed.
-- The wall-walk floor at +10 continues through both connections. Upper lintels are at +15.
-- Commands: `/gdo_zone30` rebuilds the four towers; `/gdo_zone30_info` reports their version and elevation.
+Emprise : X -39 à 39, Z -41 à 39.
 
-## Zone 70 — Gatehouse stair flights
+Courtines actuelles :
+- Nord : autour de Z -40, de X -36 à 36.
+- Ouest : autour de X -38, de Z -38 à 38.
+- Est : autour de X 38, de Z -38 à 38.
+- Sud : autour de Z 38, en deux tronçons X -36 à -6 et X 6 à 36, laissant l'ouverture du châtelet.
 
-- Two stair flights are built inside the gatehouse towers, each two blocks wide.
-- The west tower flight uses X -15..-14; the east tower flight uses X 14..15.
-- Both flights rise toward +Z, from Z 27 to Z 35, and reach the first-floor landing at `base_y + 9`.
-- Only `gdo_castle:refit_stair` nodes are used for the treads; no full-cube blocks are placed underneath them.
-- The stair module owns only its stair columns and the small landing. Rebuilding zone 20 invalidates and regenerates these stairs.
-- Commands: `/gdo_stairs` rebuilds the stair flights; `/gdo_stairs_info` reports their version and elevation.
+Le corps du mur monte à +9 ; le chemin de ronde est à +10 et les créneaux montent jusqu'à +12.
 
-## Zone 40 — Donjon central
+## Zone 20 — Châtelet et pont-levis
 
-- Emprise : X -16..16, Z -37..-5; construction jusqu'à `base_y + 32`.
-- Le corps principal occupe X -12..12, Z -33..-9, avec un hall au rez-de-chaussée et deux planchers supérieurs à +8 et +16.
-- Quatre tourelles octogonales accolées aux angles ont des hauteurs différentes pour éviter une silhouette trop symétrique.
-- La toiture principale est un grand toit à deux pans, fortement incliné, en ardoise sombre ; les tourelles conservent leurs propres petits toits en gradins.
-- L'entrée principale donne sur la cour sud, avec porche encadré et sol sans marche artificielle.
-- Les circulations vers les étages du donjon restent à compléter dans la zone 70 avant de considérer ses niveaux supérieurs comme entièrement jouables.
-- Commandes : `/gdo_zone40` reconstruit le donjon ; `/gdo_zone40_info` affiche son état.
+Emprise : X -18 à 18, Z 24 à 61.
 
-| `/gdo_zone40` | Reconstruit le donjon central |
-| `/gdo_zone40_info` | Affiche l'état de la zone 40 |
+- Passage central de sept blocs de large, X -3 à 3.
+- Tours jumelles : X -17 à -7 et X 7 à 17, Z 25 à 43.
+- Entrées basses de trois blocs de large côté cour.
+- Piliers aux X -18 et 18 raccordant le châtelet aux courtines sud.
+- Portail aux environs de Z 32 et 41 ; herse levée autour de Z 37.
+- Galerie défensive haute aux niveaux +15 à +26.
+- Pont-levis plat, X -3 à 3, Z 42 à 58, au même niveau que le chemin.
+- Fossés latéraux aux X -17 à -4 et 4 à 17, Z 49 à 55.
+
+Le parcours doit rester continu entre cour, passage, tablier et parvis, sans seuil surélevé ni obstacle dans les sept blocs de passage.
+
+## Zone 30 — Tours d'angle
+
+Tours centrées en (-37,-39), (37,-39), (-37,37) et (37,37). Elles remplacent les noyaux d'angle de la zone 10 et absorbent l'extrémité des courtines qui s'y rencontrent.
+
+- Les portes basses donnent sur la cour.
+- Les ouvertures au niveau +10 raccordent les deux chemins de ronde qui arrivent à chaque angle.
+- Les faces extérieures restent fermées.
+- Les tours sont chanfreinées, creuses, éclairées et coiffées de parapets crénelés.
+
+## Zone 40 — Citadelle gothique
+
+Emprise : X -27 à 27, Z -38 à -3 ; les éléments les plus hauts culminent vers `base_y + 47`.
+
+Composition actuelle :
+- Donjon central : X -10 à 10, Z -36 à -19, trois planchers supérieurs à +8, +16 et +24.
+- Toiture principale en ardoise, à deux pans très pentus, avec pignons et faîtage.
+- Deux ailes habitées, ouest et est, de deux niveaux, avec façades hautes en enduit et colombages.
+- Passage d'entrée sud, qui donne sur une cour intérieure ouverte au ciel.
+- Cour intérieure entre le donjon et le bâtiment d'entrée, avec fontaine.
+- Huit tours de hauteurs différentes : quatre tourelles du donjon et quatre tours sur les ailes.
+- Les portes latérales relient le donjon aux ailes ; des passages au sol relient les ailes à la cour.
+
+Les pièces et circulations des étages ne sont pas encore entièrement jouables. Les escaliers internes du donjon et des ailes restent à construire dans la zone 70. Les salles spécialisées (grand hall, appartements, salle des gardes, bibliothèque, chapelle) restent à détailler dans les zones appropriées.
+
+Commande : `/gdo_zone40` reconstruit la citadelle ; `/gdo_zone40_info` en affiche la version et l'état.
+
+## Zone 70 — Escaliers
+
+La première tranche construit deux volées de deux blocs de large dans les tours du châtelet :
+- Tour ouest : X -15 à -14.
+- Tour est : X 14 à 15.
+- Montée vers Z positif, de Z 27 à 35, jusqu'au plancher à +9.
+
+Seul le nœud `gdo_castle:refit_stair` constitue les marches. Aucun bloc plein de soutien n'est posé sous les marches.
+
+Les escaliers du donjon, des ailes, des tours et les accès aux chemins de ronde restent à construire.
+
+## Dépendances et ordre de génération
+
+Ordre actuel :
+1. Zone 00 : terrain et altitude de référence.
+2. Zone 10 : enceinte.
+3. Zone 20 : châtelet et pont-levis.
+4. Zone 30 : tours d'angle.
+5. Zone 40 : citadelle centrale.
+6. Zone 70 : escaliers actuels du châtelet.
+
+Les zones 10 et 20 se recouvrent volontairement au sud. La zone 30 remplace les noyaux d'angle de la zone 10. Après une reconstruction de la zone 10, le bootstrap reconstruit les zones dépendantes dans le bon ordre.
+
+Commandes :
+| Commande | Effet |
+|---|---|
+| `/gdo_site` | Reconstruit le site puis enchaîne les zones dépendantes |
+| `/gdo_site_info` | Affiche les altitudes sauvegardées |
+| `/gdo_zone10` | Reconstruit l'enceinte et les zones dépendantes |
+| `/gdo_zone10_info` | État de la zone 10 |
+| `/gdo_zone20` | Reconstruit le châtelet et les escaliers associés |
+| `/gdo_zone20_info` | État de la zone 20 |
+| `/gdo_zone30` | Reconstruit les quatre tours d'angle |
+| `/gdo_zone30_info` | État de la zone 30 |
+| `/gdo_zone40` | Reconstruit la citadelle centrale |
+| `/gdo_zone40_info` | État de la zone 40 |
+| `/gdo_stairs` | Reconstruit les escaliers du premier étage du châtelet |
+| `/gdo_stairs_info` | État de la tranche actuelle de la zone 70 |
+
+## Contrôle qualité obligatoire
+
+Une zone n'est pas terminée simplement parce que son code s'exécute. Il faut vérifier en jeu :
+- raccord physique avec murs et bâtiments voisins ;
+- accès traversables, sols continus, hauteurs libres et portes réellement ouvertes ;
+- circulation dans les deux sens et accès aux pièces annoncées ;
+- planchers, escaliers, plafonds et collisions ;
+- visibilité extérieure, silhouette, lumière et détails ;
+- reconstruction ciblée sans destruction des autres zones.
+
+Ne jamais annoncer une validation visuelle si Luanti n'a pas été lancé et parcouru.
