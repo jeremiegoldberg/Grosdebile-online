@@ -35,7 +35,6 @@ return function(A)
 
         -- Level landing at the top, continuous with the first-floor surface.
         A.fill(x1,y(Z.rise),36,x2,y(Z.rise),37,M.trim)
-        A.lamp(cx,y(Z.rise+2),37)
     end
 
     function Z.build(base_y)
