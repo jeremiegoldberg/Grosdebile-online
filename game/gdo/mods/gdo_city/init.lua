@@ -63,3 +63,20 @@ renderer_chunk()
 
 _G.__gdo_city_gis_importer = nil
 _G.__gdo_city_embedded_core = nil
+
+-- Enable the native Luanti minimap for the city. The client must support it
+-- and must not have disabled minimap rendering in its own settings.
+local function enable_city_minimap(player)
+    if not player or not player.hud_set_flags then
+        return
+    end
+    player:hud_set_flags({
+        minimap = true,
+        minimap_pos = true,
+    })
+end
+
+minetest.register_on_joinplayer(enable_city_minimap)
+minetest.register_on_respawnplayer(function(player)
+    enable_city_minimap(player)
+end)
