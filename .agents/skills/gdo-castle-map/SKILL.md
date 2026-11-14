@@ -28,6 +28,7 @@ game/gdo/mods/gdo_castle/
         ├── 20_gatehouse.lua
         ├── 30_towers.lua
         ├── 40_keep.lua
+        ├── 50_residential.lua (prototype non chargé)
         └── 70_stairs.lua
 ```
 
@@ -166,8 +167,9 @@ Composition :
 - Cour intérieure ouverte au ciel, entre le donjon et le bâtiment d'entrée, avec fontaine.
 - Huit tours de hauteurs différentes : quatre tourelles autour du donjon et quatre sur les ailes.
 - Des portes latérales relient le donjon aux ailes ; les portes des ailes débouchent sur la cour.
+- Le rez-de-chaussée reçoit déjà un grand hall, une salle de banquet, une bibliothèque/map room, un poste de garde et un éclairage ponctuel.
 
-Ne pas déplacer cette emprise sans vérifier les tours d'angle (zone 30), les ailes et le futur bourg (zone 50). Les intérieurs des niveaux hauts et les escaliers du donjon restent à faire : les planchers supérieurs ne sont pas encore déclarés entièrement accessibles.
+Ne pas déplacer cette emprise sans vérifier les tours d'angle (zone 30), les ailes et le futur bourg (zone 50). Les intérieurs des niveaux hauts, les appartements, la chapelle et les escaliers du donjon restent à faire : les planchers supérieurs ne sont pas encore déclarés entièrement accessibles.
 
 Commande : `/gdo_zone40` reconstruit la citadelle ; `/gdo_zone40_info` affiche son état.
 
