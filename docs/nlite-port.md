@@ -47,6 +47,12 @@ Les fichiers de configuration sont utiles comme inventaire fonctionnel, mais ne 
 
 Les entités et icônes temporaires utilisent des textures simples générées par l'engine. C'est volontaire : les visuels ne sont pas encore au niveau de NLite.
 
+## Nouvelle région ajoutée après le premier portage RPG
+
+La capture portuaire elven.png du diaporama NLite a servi de référence à la **Cité des Canaux**. Cette région est générée à part, au sud du Château des Brumes, et devient le point d'apparition principal. Elle ne remplace aucune autre carte. Le plan et les coordonnées sont documentés dans [docs/world/cite-des-canaux.md](world/cite-des-canaux.md).
+
+La capture d'écran n'est pas copiée comme asset ; les bâtiments, canaux et quais sont reconstruits avec les matériaux natifs du jeu.
+
 ## Ce qui reste à porter
 
 1. Prototyper puis valider un convertisseur des géométries Bedrock/GeckoLib vers glTF/GLB ; reconstruire ou simplifier les squelettes et animations lorsque la conversion directe n'est pas possible.

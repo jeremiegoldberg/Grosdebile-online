@@ -172,6 +172,11 @@ local function find_spawn_position(player)
     local distance = math.random(18, 30)
     local x = math.floor(center.x + math.cos(angle) * distance)
     local z = math.floor(center.z + math.sin(angle) * distance)
+    local city_bounds = gdo_city and gdo_city.bounds
+    if city_bounds and x >= city_bounds.x1 and x <= city_bounds.x2
+        and z >= city_bounds.z1 and z <= city_bounds.z2 then
+        return nil
+    end
     local base_y = math.floor(center.y)
 
     for y = base_y + 7, base_y - 12, -1 do
@@ -217,7 +222,11 @@ minetest.register_globalstep(function(dtime)
 
     for _, player in ipairs(minetest.get_connected_players()) do
         local center = player:get_pos()
-        if math.sqrt(center.x * center.x + center.z * center.z) >= 105
+        local city_bounds = gdo_city and gdo_city.bounds
+        local inside_city = city_bounds
+            and center.x >= city_bounds.x1 and center.x <= city_bounds.x2
+            and center.z >= city_bounds.z1 and center.z <= city_bounds.z2
+        if not inside_city and math.sqrt(center.x * center.x + center.z * center.z) >= 105
             and count_nearby_monsters(center) < spawn_cap then
             for attempt = 1, 8 do
                 local pos = find_spawn_position(player)

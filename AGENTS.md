@@ -17,3 +17,8 @@ Cette skill est la référence du projet pour :
 Utiliser l'architecture modulaire sous `game/gdo/mods/gdo_castle/architecture/` comme source de vérité. Ne pas réactiver les anciens constructeurs monolithiques présents dans `gdo_castle/init.lua` ou `dourdan.lua`, sauf demande explicite.
 
 Toute nouvelle zone doit être intégrée au bootstrap, disposer de sa version de génération, préserver les autres zones et être documentée. Une zone doit être praticable et raccordée avant d'être considérée comme terminée.
+
+
+## Cité des Canaux
+
+La Cité des Canaux est une région indépendante générée par `game/gdo/mods/gdo_city/`. Avant de modifier cette carte, lire `docs/world/cite-des-canaux.md`. Ne pas déplacer ni nettoyer les régions du Château des Brumes ou des villages de guildes pour faire évoluer la cité. La commande `/gdo_city_rebuild` ne doit reconstruire que l'emprise X=-58..58, Z=780..920. Le point d'apparition principal est géré par `gdo_city`; le Château reste accessible via `/gdo_castle`.

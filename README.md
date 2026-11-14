@@ -25,22 +25,29 @@ Voir [docs/nlite-port.md](docs/nlite-port.md) pour l'inventaire de l'archive, la
 
 ## Le monde partagé
 
-GDO repose sur **un seul Royaume du Nawak persistant**, commun à l'ensemble des joueurs du serveur officiel. Le monde s'organise autour de quatre espaces complémentaires :
+GDO repose sur **un seul Royaume du Nawak persistant**, commun à l'ensemble des joueurs du serveur officiel. Les régions sont conservées côte à côte dans le même monde :
 
-1. **Le Château des Brumes** : point d'accueil, lieux de quêtes et espaces scénarisés.
-2. **Les villages de guildes** : places, bâtiments et services développés collectivement.
-3. **Les parcelles personnelles** : chaque joueur dispose d'un terrain et d'une maison de départ qu'il peut faire évoluer.
-4. **Les terres sauvages** : zones d'exploration, de récolte et de construction libre.
+1. **La Cité des Canaux** : nouvelle ville portuaire, canaux, ponts, quais, marché, hôtel de ville et point d'apparition principal.
+2. **Le Château des Brumes** : forteresse-école gothique, lieux de quêtes et espaces scénarisés.
+3. **Les villages de guildes** : quatre villages fondateurs et villages créés par les joueurs.
+4. **Les parcelles personnelles** : une parcelle et une maison de départ par joueur dans son village de guilde.
+5. **Les terres sauvages** : zones d'exploration, de récolte, de combat et de construction libre.
+
+La Cité des Canaux s'inspire de la capture de ville portuaire elfique elven.png présente dans le diaporama du modpack NLite. C'est une reconstruction procédurale originale ; aucun monde Minecraft ni asset tiers n'est copié dans le dépôt.
 
 ![Vue d'ensemble illustrée du Royaume du Nawak](docs/visuals/royaume-du-nawak.svg)
 
 ![Organisation des espaces du monde partagé](docs/visuals/organisation-du-monde.svg)
 
+![Plan de la Cité des Canaux](docs/visuals/cite-des-canaux-plan.svg)
+
 ## État du projet
 
-**Prototype RPG — fondations NLite intégrées.** Le jeu possède une base locale jouable : personnage à créer, dix races, trois classes, progression XP, capacités, sorts, armes, créatures de test, première quête de chasse, monnaie locale et montures. Le château, les quatre maisons, les guildes et la première quête de Gérard restent présents.
+**Prototype RPG — première région urbaine ajoutée.** Le jeu possède une base locale jouable : personnage à créer, dix races, trois classes, progression XP, capacités, sorts, armes, créatures de test, première quête de chasse, monnaie locale et montures.
 
-Les nouvelles entités utilisent encore des formes cubiques et des textures provisoires. Le spawn naturel est limité à cinq créatures autour de chaque zone de joueur et peut être désactivé via `gdo_bestiary_natural_spawn = false`. Le portage des modèles, animations, équipements et assets NLite reste une étape séparée, conditionnée à l'audit des licences et à leur conversion technique.
+La Cité des Canaux est maintenant une région indépendante, générée sur une emprise dédiée au sud du secteur du château. Elle contient un canal principal, un bassin portuaire, un canal secondaire, des ponts, des quais, des maisons à colombages, un marché et un hôtel de ville. Les nouveaux personnages y apparaissent ; le Château des Brumes et les villages de guildes restent présents à leurs emplacements existants.
+
+Les constructions de la cité et du château sont protégées. Le reste du monde demeure libre selon les règles GDO. Les nouvelles entités utilisent encore des formes cubiques et des textures provisoires. Le spawn naturel des créatures est plafonné et exclut les zones urbaines protégées.
 
 ## Démarrage rapide sous Linux
 
@@ -54,9 +61,9 @@ cp -a game/gdo ~/.minetest/games/gdo
 luanti
 ```
 
-Dans Luanti, crée un monde et sélectionne **Gros Débile Online** comme jeu.
+Dans Luanti, crée un monde et sélectionne **Gros Débile Online** comme jeu. Sur un monde existant, la nouvelle cité sera générée dans sa région dédiée ; les anciennes régions ne sont pas reconstruites.
 
-## Commandes RPG
+## Commandes principales
 
 | Commande | Action |
 |---|---|
@@ -64,19 +71,22 @@ Dans Luanti, crée un monde et sélectionne **Gros Débile Online** comme jeu.
 | `/gdo_stats` | Afficher ses statistiques |
 | `/gdo_ability` | Utiliser sa capacité raciale |
 | `/gdo_spells` / `/gdo_spell` | Consulter et lancer les sorts |
-| `/gdo_bestiary` | Afficher le bestiaire de test |
+| `/gdo_bestiary` | Afficher le bestiaire |
 | `/gdo_quests` | Ouvrir le tableau des aventuriers |
 | `/gdo_wallet` / `/gdo_pay` | Consulter ou transférer sa monnaie |
-| `/gdo_mount horse` ou `/gdo_mount dragon` | Faire apparaître une monture (privilège serveur) |
+| `/gdo_city` | Rejoindre la Cité des Canaux |
+| `/gdo_castle` | Rejoindre le Château des Brumes |
+| `/gdo_city_info` | Consulter l'état de génération de la cité |
 
-Les œufs d'apparition des monstres sont disponibles en mode créatif. Le spawn naturel limité reste actif uniquement dans les terres sauvages et peut être désactivé par réglage serveur.
+Les administrateurs disposent aussi de `/gdo_city_rebuild` pour reconstruire uniquement la nouvelle emprise urbaine. Cette commande efface les constructions dans la zone réservée de la cité ; elle ne touche pas au château ni aux villages de guildes.
 
 ## Règles de construction et protection des zones
 
 Le monde suit un modèle volontairement simple :
-- **Zones de scénario en lecture seule** : le Château des Brumes, sa cour, ses quatre pavillons, le jardin des navets et le parcours tutoriel sont protégés.
-- **Monde libre en dehors** : aucun claim et aucune propriété privée des terrains. Chaque joueur peut construire, modifier le paysage, creuser et démolir les constructions des autres.
-- **Pas de protection automatique des bases** : construire quelque part ne confère aucun droit exclusif sur cet endroit.
+- **Zones de scénario en lecture seule** : la Cité des Canaux, le Château des Brumes, ses pavillons et les lieux de tutoriel sont protégés.
+- **Villages de guildes** : les bâtiments communs et parcelles suivent les droits de la guilde.
+- **Monde libre en dehors** : aucun claim général ; les joueurs peuvent construire, modifier le paysage, creuser et démolir les constructions des autres.
+- **Pas de protection automatique des bases sauvages** : construire quelque part ne confère pas de propriété exclusive sur cet endroit.
 
 Les commandes `/gdo_zones`, `/gdo_guild`, `/gdo_plot` et `/gdo_progression` affichent les informations sur le monde et le personnage.
 
@@ -86,6 +96,7 @@ Les commandes `/gdo_zones`, `/gdo_guild`, `/gdo_plot` et `/gdo_progression` affi
 |---|---|
 | Client/serveur Luanti | Monde voxel, rendu, interactions et simulation |
 | Jeu Lua `gdo` | Races, classes, combat, sorts, créatures, PNJ, quêtes, objets et progression |
+| `gdo_city` | Région urbaine indépendante, génération versionnée et point d'apparition |
 | Backend Go | Comptes web, personnages, services de guildes et API |
 | PostgreSQL | Données persistantes métier |
 | Service Fediverse | Identités ActivityPub, abonnements, actualités |

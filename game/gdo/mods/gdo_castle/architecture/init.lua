@@ -8,6 +8,8 @@ A.Gatehouse=dofile(modpath.."/architecture/zones/20_gatehouse.lua")(A)
 A.Towers=dofile(modpath.."/architecture/zones/30_towers.lua")(A)
 A.Stairs=dofile(modpath.."/architecture/zones/70_stairs.lua")(A)
 A.Keep=dofile(modpath.."/architecture/zones/40_keep.lua")(A)
+-- Expose the shared helpers to independent world regions (for example gdo_city).
+gdo_castle_architecture=A
 
 local storage=A.storage
 local SITE_KEY="architecture_site_version"
@@ -147,6 +149,8 @@ local function build_stairs(force)
 end
 
 local function apply_spawn(player)
+    -- New characters start in the additional port city; existing regions remain accessible.
+    if gdo_city and gdo_city.spawn and gdo_city.spawn(player) then return end
     if A.Site.ready then A.Site.spawn(player) end
 end
 

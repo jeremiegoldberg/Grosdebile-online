@@ -23,10 +23,14 @@ Les étapes sont indicatives. Une fonctionnalité n'est considérée comme livr�
 - [ ] Animation de combat et feedback visuel final
 
 ## Phase 2 — Monde du Nawak
-- [ ] Géographie et régions documentées
-- [ ] Biomes, villages et points d'intérêt
-- [ ] Bestiaire élargi, élites, boss et donjons
-- [ ] Construction limitée et protection des zones
+- [x] Nouvelle Cité des Canaux ajoutée sans supprimer le Château des Brumes ni les villages de guildes
+- [x] Génération versionnée de la ville, place, canal, bassin, ponts, quais, maisons et hôtel de ville
+- [x] Apparition principale dans la ville et liaison de retour au château
+- [x] Protection de la ville et exclusion du spawn naturel des monstres
+- [ ] Parcourir et valider en jeu les trajets, ponts, rues, entrées et bâtiments
+- [ ] Intérieurs accessibles, commerces, auberge et PNJ de quartier
+- [ ] Géographie complète et régions documentées
+- [ ] Biomes, villages, bestiaire étendu, élites, boss et donjons
 - [ ] Outils de création et validation des cartes
 
 ## Phase 3 — Services et économie

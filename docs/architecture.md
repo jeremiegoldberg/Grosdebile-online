@@ -27,12 +27,21 @@ Le serveur Luanti héberge le monde et exécute les règles de jeu. Le jeu `gdo`
 | `gdo_economy` | Portefeuille local et transferts |
 | `gdo_society` | Maisons, guildes, villages et parcelles |
 | `gdo_zones` / `gdo_castle` | Protection et génération du Château des Brumes |
+| `gdo_city` | Région indépendante de la Cité des Canaux et point d'apparition |
 
-Les modules RPG sont natifs Lua, sans framework de mobs obligatoire. La caméra troisième personne est l'expérience de référence sur PC/mobile. Une expérience VR immersive est une cible expérimentale qui devra être testée sur un portage Luanti compatible OpenXR.
+Les modules RPG sont natifs Lua, sans framework de mobs obligatoire. Les régions sont générées séparément et disposent de leur propre emprise/version : reconstruire une région ne doit pas réinitialiser les autres. La caméra troisième personne est l'expérience de référence sur PC/mobile. Une expérience VR immersive reste une cible expérimentale qui devra être testée sur un portage Luanti compatible OpenXR.
 
 ### Données et progression
 
 Les valeurs de personnage sont conservées dans les métadonnées Luanti, côté serveur. Les clés de niveau et d'expérience `gdo_level` et `gdo_xp` déjà utilisées par GDO restent la source de vérité pour éviter une migration destructive. Le backend Go pourra ensuite fournir une synchronisation transactionnelle, sans devenir nécessaire pour jouer en local.
+
+### Monde et régions
+
+La Cité des Canaux utilise un module autonome `gdo_city`, qui dépend des matériaux/helpers du château mais possède son propre stockage/version et une emprise dédiée (X -58..58, Z 780..920). Son terrain est échantillonné après l'émergence des chunks, aplani sur une altitude locale, puis reconstruit uniquement dans cette emprise.
+
+Le Château des Brumes continue d'utiliser l'architecture par zones dans `gdo_castle/architecture/`. Les villages de guildes restent gérés par `gdo_society`. Les trois systèmes coexistent dans le même monde ; la nouvelle ville n'écrase ni la forteresse ni les villages de guilde.
+
+Les nouveaux joueurs apparaissent dans la Cité des Canaux. La pierre de passage et les commandes `/gdo_city` et `/gdo_castle` maintiennent une liaison simple entre la ville et le Château des Brumes.
 
 ### Backend Go
 
