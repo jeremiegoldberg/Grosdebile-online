@@ -15,9 +15,8 @@ return function(A)
             local material=(level<=2 or level==height) and M.trim or M.stone
             for dx=-3,3 do
                 for dz=-3,3 do
-                    local edge=math.max(math.abs(dx),math.abs(dz))==3
-                        or (math.abs(dx)==3 and math.abs(dz)==2)
-                        or (math.abs(dx)==2 and math.abs(dz)==3)
+                    local ax,az=math.abs(dx),math.abs(dz)
+                    local edge=(math.max(ax,az)==3) and not (ax==3 and az==3)
                     if edge then A.put(cx+dx,y(level),cz+dz,material) end
                 end
             end
@@ -167,11 +166,13 @@ return function(A)
         -- and stays clear of the four corner towers.
         A.clear(Z.bounds.x1,y(1),Z.bounds.z1,Z.bounds.x2,y(Z.height),Z.bounds.z2)
         build_keep_shell()
+        build_gabled_roof()
+        -- Turrets are placed last so their roofs remain distinct above the
+        -- main gabled roof instead of being overwritten by its roof courses.
         build_turret(-11,-32,23)
         build_turret(11,-32,25)
         build_turret(-11,-10,21)
         build_turret(11,-10,23)
-        build_gabled_roof()
 
         A.fix_light(Z.bounds)
         Z.ready=true
