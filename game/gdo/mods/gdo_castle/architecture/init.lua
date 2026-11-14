@@ -7,6 +7,7 @@ A.Enclosure=dofile(modpath.."/architecture/zones/10_enclosure.lua")(A)
 A.Gatehouse=dofile(modpath.."/architecture/zones/20_gatehouse.lua")(A)
 A.Towers=dofile(modpath.."/architecture/zones/30_towers.lua")(A)
 A.Stairs=dofile(modpath.."/architecture/zones/70_stairs.lua")(A)
+A.Keep=dofile(modpath.."/architecture/zones/40_keep.lua")(A)
 
 local storage=A.storage
 local SITE_KEY="architecture_site_version"
@@ -16,6 +17,7 @@ local ENCLOSURE_KEY="architecture_zone10_version"
 local GATEHOUSE_KEY="architecture_zone20_version"
 local TOWERS_KEY="architecture_zone30_version"
 local STAIRS_KEY="architecture_zone70_stairs_version"
+local KEEP_KEY="architecture_zone40_version"
 local building=false
 local building_enclosure=false
 local building_gatehouse=false
@@ -99,6 +101,29 @@ local function build_towers(force)
     return ok,message
 end
 
+local building_keep=false
+local function build_keep(force)
+    if not A.Site.ready then
+        return false,"La zone 00 doit être construite avant le donjon."
+    end
+    if storage:get_int(TOWERS_KEY)<A.Towers.VERSION then
+        return false,"La zone 30 doit être construite avant le donjon."
+    end
+    if building_keep then
+        return false,"La génération du donjon est déjà en cours."
+    end
+    if not force and storage:get_int(KEEP_KEY)>=A.Keep.VERSION then
+        A.base_y=A.Site.castle_y
+        A.Keep.ready=true
+        return true,"Zone 40 déjà construite."
+    end
+    building_keep=true
+    local ok,message=A.Keep.build(A.Site.castle_y)
+    if ok then storage:set_int(KEEP_KEY,A.Keep.VERSION) end
+    building_keep=false
+    return ok,message
+end
+
 local function build_stairs(force)
     if not A.Site.ready then
         return false,"La zone 00 doit être construite avant les escaliers."
@@ -148,8 +173,13 @@ local function build_site(saved_levels)
                 if not towers_ok then
                     minetest.log("error","[GDO] "..towers_message)
                 else
-                    local stairs_ok,stairs_message=build_stairs(false)
-                    if not stairs_ok then minetest.log("error","[GDO] "..stairs_message) end
+                    local keep_ok,keep_message=build_keep(true)
+                    if not keep_ok then
+                        minetest.log("error","[GDO] "..keep_message)
+                    else
+                        local stairs_ok,stairs_message=build_stairs(false)
+                        if not stairs_ok then minetest.log("error","[GDO] "..stairs_message) end
+                    end
                 end
             end
         end
@@ -184,9 +214,11 @@ minetest.register_chatcommand("gdo_zone10",{
         if not gate_ok then return false,gate_message end
         local towers_ok,towers_message=build_towers(false)
         if not towers_ok then return false,towers_message end
+        local keep_ok,keep_message=build_keep(false)
+        if not keep_ok then return false,keep_message end
         local stairs_ok,stairs_message=build_stairs(false)
         if not stairs_ok then return false,stairs_message end
-        return true,"Zones 10, 20, 30 et 70 reconstruites dans le bon ordre."
+        return true,"Zones 10, 20, 30, 40 et 70 vérifiées dans le bon ordre."
     end,
 })
 
@@ -234,6 +266,23 @@ minetest.register_chatcommand("gdo_zone30_info",{
         return true,string.format("Zone 30: version %d/%d, prêtes=%s, altitude=%d",
             storage:get_int(TOWERS_KEY),A.Towers.VERSION,
             A.Towers.ready and "oui" or "non",storage:get_int(LEVEL_CASTLE_KEY))
+    end,
+})
+
+minetest.register_chatcommand("gdo_zone40",{
+    description="Reconstruit le donjon principal",
+    privs={server=true},
+    func=function()
+        return build_keep(true)
+    end,
+})
+
+minetest.register_chatcommand("gdo_zone40_info",{
+    description="Affiche l'état du donjon principal",
+    func=function()
+        return true,string.format("Zone 40: version %d/%d, prêt=%s, altitude=%d",
+            storage:get_int(KEEP_KEY),A.Keep.VERSION,
+            A.Keep.ready and "oui" or "non",storage:get_int(LEVEL_CASTLE_KEY))
     end,
 })
 
@@ -292,12 +341,17 @@ local function prepare_site()
                 if not towers_ok then
                     minetest.log("error","[GDO] "..towers_message)
                 else
-                    local stairs_ok,stairs_message=build_stairs(false)
-                    if not stairs_ok then minetest.log("error","[GDO] "..stairs_message) end
+                    local keep_ok,keep_message=build_keep(false)
+                    if not keep_ok then
+                        minetest.log("error","[GDO] "..keep_message)
+                    else
+                        local stairs_ok,stairs_message=build_stairs(false)
+                        if not stairs_ok then minetest.log("error","[GDO] "..stairs_message) end
+                    end
                 end
             end
         end
-        minetest.log("action","[GDO] Zones 00 à 30 vérifiées; escaliers du châtelet contrôlés.")
+        minetest.log("action","[GDO] Zones 00 à 40 vérifiées; escaliers du châtelet contrôlés.")
         return
     end
 
