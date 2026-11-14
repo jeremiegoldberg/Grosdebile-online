@@ -1,6 +1,6 @@
 # GDO Castle Architecture
 
-The replacement castle is built zone by zone. The modular castle is built incrementally. Zones 00, 10, 20, 30 and the first gatehouse stair implementation in 70 are in code; all still require in-game validation.
+The replacement castle is built zone by zone. The modular castle is built incrementally. Zones 00, 10, 20, 30, 40, 30, 40 and the gatehouse stair implementation in 70 are in code; all still require in-game validation.
 
 ## Rules
 
@@ -20,7 +20,7 @@ The replacement castle is built zone by zone. The modular castle is built increm
 | 10 | `10_enclosure.lua` | Curtain walls, battlements, wall walks | Implemented; requires in-game validation |
 | 20 | `20_gatehouse.lua` | Twin gate towers, upper guard gallery, portal, portcullis and drawbridge | Updated with wall tie-ins and walk-in tower doors; requires in-game validation |
 | 30 | `30_towers.lua` | Four chamfered corner towers integrated with the curtain walls and wall walks | Implemented; requires in-game validation |
-| 40 | `40_keep.lua` | Keep structure, floors, rooms and roof | Not started |
+| 40 | `40_keep.lua` | Central keep with two interior floors, four attached turrets and a steep gabled roof | Implemented; requires in-game validation |
 | 50 | `50_residential.lua` | Great hall and lord's residence | Not started |
 | 60 | `60_courtyard_buildings.lua` | Chapel, workshops, school and service buildings | Not started |
 | 70 | `70_stairs.lua` | Two 2-wide stair flights from the gatehouse ground floor to its +9 first floor; future stair types remain planned | Partially implemented; requires in-game validation |
@@ -80,3 +80,16 @@ The replacement castle is built zone by zone. The modular castle is built increm
 - Only `gdo_castle:refit_stair` nodes are used for the treads; no full-cube blocks are placed underneath them.
 - The stair module owns only its stair columns and the small landing. Rebuilding zone 20 invalidates and regenerates these stairs.
 - Commands: `/gdo_stairs` rebuilds the stair flights; `/gdo_stairs_info` reports their version and elevation.
+
+## Zone 40 — Donjon central
+
+- Emprise : X -16..16, Z -37..-5; construction jusqu'à `base_y + 32`.
+- Le corps principal occupe X -12..12, Z -33..-9, avec un hall au rez-de-chaussée et deux planchers supérieurs à +8 et +16.
+- Quatre tourelles octogonales accolées aux angles ont des hauteurs différentes pour éviter une silhouette trop symétrique.
+- La toiture principale est un grand toit à deux pans, fortement incliné, en ardoise sombre ; les tourelles conservent leurs propres petits toits en gradins.
+- L'entrée principale donne sur la cour sud, avec porche encadré et sol sans marche artificielle.
+- Les circulations vers les étages du donjon restent à compléter dans la zone 70 avant de considérer ses niveaux supérieurs comme entièrement jouables.
+- Commandes : `/gdo_zone40` reconstruit le donjon ; `/gdo_zone40_info` affiche son état.
+
+| `/gdo_zone40` | Reconstruit le donjon central |
+| `/gdo_zone40_info` | Affiche l'état de la zone 40 |
