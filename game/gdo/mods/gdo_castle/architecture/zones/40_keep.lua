@@ -22,6 +22,11 @@ return function(A)
             end
         end
 
+        -- Floors extend into the turret footprint at each keep level.
+        A.fill(cx-2,y(0),cz-2,cx+2,y(0),cz+2,M.floor)
+        A.fill(cx-2,y(8),cz-2,cx+2,y(8),cz+2,M.floor)
+        A.fill(cx-2,y(16),cz-2,cx+2,y(16),cz+2,M.floor)
+
         -- Corbelled cap and a steep stepped roof, not a flat stone lid.
         A.fill(cx-3,y(height),cz-3,cx+3,y(height),cz+3,M.trim)
         for layer=0,3 do
