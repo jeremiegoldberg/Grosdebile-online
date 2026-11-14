@@ -25,7 +25,10 @@ game/gdo/mods/gdo_castle/
     └── zones/
         ├── 00_site.lua
         ├── 10_enclosure.lua
-        └── 20_gatehouse.lua
+        ├── 20_gatehouse.lua
+        ├── 30_towers.lua
+        ├── 40_keep.lua
+        └── 70_stairs.lua
 ```
 
 - Le point d'entrée actif de l'architecture modulaire est `architecture/init.lua`, appelé depuis `gdo_castle/init.lua`.
