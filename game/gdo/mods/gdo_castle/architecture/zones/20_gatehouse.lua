@@ -3,7 +3,7 @@
 -- No staircases are generated here. Interior levels are reserved for zone 70.
 return function(A)
     local Z={}
-    Z.VERSION=3
+    Z.VERSION=4
     Z.bounds={x1=-18,x2=18,z1=24,z2=61}
     Z.opening={x1=-3,x2=3,z1=33,z2=40}
     Z.drawbridge={x1=-3,x2=3,z1=42,z2=58}
@@ -19,7 +19,7 @@ return function(A)
             Z.bounds.x2,y(Z.height),Z.bounds.z2)
     end
 
-    local function build_gate_tower(cx,inner_side)
+    local function build_gate_tower(cx)
         local x1,x2=cx-5,cx+5
         local z1,z2=25,43
 
@@ -43,9 +43,14 @@ return function(A)
             A.fill(bx1,y(1),bz1,bx2,y(2),bz2,M.gold)
         end
 
-        -- Door from the gate passage into the ground-floor tower room.
-        local door_x=(inner_side=="east") and x2 or x1
-        A.clear(door_x,y(2),34,door_x,y(5),37)
+        -- Wide ground-level entrance facing the inner courtyard (north side).
+        -- The opening starts at the floor level so the player can actually walk in.
+        A.clear(cx-1,y(1),z1,cx+1,y(5),z1)
+        A.fill(cx-1,y(0),z1-1,cx+1,y(0),z1+1,M.trim)
+        -- A clear stone frame marks the entrance without reducing its 3-node width.
+        A.fill(cx-2,y(1),z1,cx-2,y(5),z1,M.trim)
+        A.fill(cx+2,y(1),z1,cx+2,y(5),z1,M.trim)
+        A.fill(cx-2,y(6),z1,cx+2,y(6),z1,M.trim)
 
         -- Narrow arrow slits and glazed watch windows on all four faces.
         for _,z in ipairs({z1,z2}) do
@@ -97,6 +102,18 @@ return function(A)
         A.lamp(cx,y(10),z1+1)
         A.lamp(cx,y(10),z2-1)
         A.put(cx,y(22),z2,M.gold)
+    end
+
+    local function build_wall_tie_ins()
+        -- Zone 10 stops at X=-19 and X=19. These connector piers occupy
+        -- the one-block gap and physically bind the south curtain to each tower.
+        for _,x in ipairs({-18,18}) do
+            A.fill(x,y(1),36,x,y(9),38,M.stone)
+            -- Match the exterior trim and wall-walk elevation of the curtain.
+            A.fill(x,y(1),38,x,y(2),38,M.trim)
+            A.fill(x,y(10),36,x,y(10),38,M.floor)
+            A.fill(x,y(11),38,x,y(12),38,M.trim)
+        end
     end
 
     local function build_portal_arch()
@@ -265,8 +282,9 @@ return function(A)
 
         clear_owned_volume()
         build_passage_floor()
-        build_gate_tower(-12,"east")
-        build_gate_tower(12,"west")
+        build_gate_tower(-12)
+        build_gate_tower(12)
+        build_wall_tie_ins()
         build_portal_arch()
         build_upper_guard_gallery()
         build_portcullis()
