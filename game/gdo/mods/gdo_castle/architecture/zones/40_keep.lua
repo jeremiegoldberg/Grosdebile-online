@@ -6,7 +6,7 @@ return function(A)
     local Z={}
     Z.VERSION=2
     Z.bounds={x1=-27,x2=27,z1=-38,z2=-4}
-    Z.height=43
+    Z.height=48
 
     local M=A.materials
     local function y(offset) return A.base_y+offset end
@@ -47,13 +47,13 @@ return function(A)
 
         -- Door opening connects the turret to its adjoining room or wing.
         if door_side=="east" then
-            A.clear(cx+radius-1,y(1),cz-1,cx+radius-1,y(5),cz+1)
+            A.clear(cx+radius,y(1),cz-1,cx+radius,y(5),cz+1)
         elseif door_side=="west" then
-            A.clear(cx-radius+1,y(1),cz-1,cx-radius+1,y(5),cz+1)
+            A.clear(cx-radius,y(1),cz-1,cx-radius,y(5),cz+1)
         elseif door_side=="north" then
-            A.clear(cx-1,y(1),cz-radius+1,cx+1,y(5),cz-radius+1)
+            A.clear(cx-1,y(1),cz-radius,cx+1,y(5),cz-radius)
         elseif door_side=="south" then
-            A.clear(cx-1,y(1),cz+radius-1,cx+1,y(5),cz+radius-1)
+            A.clear(cx-1,y(1),cz+radius,cx+1,y(5),cz+radius)
         end
 
         -- Slender paired windows on the exposed faces at several levels.
@@ -292,17 +292,8 @@ return function(A)
         A.put(-4,y(1),-15,M.lamp)
         A.put(4,y(1),-15,M.lamp)
 
-        -- Covered gallery links the two wings above the court.
-        A.fill(-12,y(16),-15,12,y(16),-13,M.floor)
-        A.fill(-12,y(17),-15,-12,y(19),-13,M.stone)
-        A.fill(12,y(17),-15,12,y(19),-13,M.stone)
-        A.fill(-12,y(17),-15,12,y(17),-15,M.trim)
-        A.fill(-12,y(17),-13,12,y(17),-13,M.trim)
-        for x=-10,10,4 do
-            A.put(x,y(18),-15,M.glass)
-            A.put(x,y(18),-13,M.glass)
-        end
-        A.lamp(0,y(19),-14)
+        -- The courtyard remains open to the sky; upper circulation is planned
+        -- as interior galleries in the wings and towers, not a roofed bridge.
     end
 
     function Z.build(base_y)
@@ -319,6 +310,12 @@ return function(A)
         build_side_wing("east")
         build_south_range()
         build_inner_court()
+
+        -- One-block covered thresholds connect the main keep and wings.
+        A.fill(-11,y(0),-30,-11,y(0),-14,M.floor)
+        A.fill(11,y(0),-30,11,y(0),-14,M.floor)
+        A.fill(-11,y(0),-18,-11,y(0),-11,M.path)
+        A.fill(11,y(0),-18,11,y(0),-11,M.path)
 
         -- Four unequal spires on the keep and four lower turrets on the wings
         -- create the stepped skyline visible in the Brukenthal reference.
