@@ -57,6 +57,28 @@ _G.__gdo_city_gis_importer = importer_chunk()
 
 local renderer_source = minetest.decompress(read_file("renderer.deflate"), "deflate")
 assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
+-- Keep roofs as a one-node-thick sloped surface. Filling every vertical
+-- column from the eaves to the ridge creates oversized roof masses that
+-- visually spill into narrow streets and courtyards.
+local function replace_once(source, needle, replacement)
+    local first, last = string.find(source, needle, 1, true)
+    assert(first, "[GDO Sommières] Patch renderer introuvable : " .. needle)
+    local second = string.find(source, needle, last + 1, true)
+    assert(not second, "[GDO Sommières] Patch renderer ambigu : " .. needle)
+    return string.sub(source, 1, first - 1) .. replacement .. string.sub(source, last + 1)
+end
+
+renderer_source = replace_once(
+    renderer_source,
+    "local W, D = math.max(0.5, w / 2 + 0.4), math.max(0.5, d / 2 + 0.4)",
+    "local W, D = math.max(0.5, w / 2), math.max(0.5, d / 2)"
+)
+renderer_source = replace_once(
+    renderer_source,
+    "for y = math.max(y_min, top_y + 1), math.min(y_max, roof_y) do set_block(x, y, z, roof_id) end",
+    "set_block(x, roof_y, z, roof_id)"
+)
+
 local renderer_chunk, renderer_err = loader(renderer_source, "@gdo_city/renderer.lua")
 assert(renderer_chunk, renderer_err)
 renderer_chunk()
