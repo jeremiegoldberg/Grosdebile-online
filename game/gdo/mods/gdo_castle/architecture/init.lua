@@ -104,7 +104,9 @@ local function build_site(saved_levels)
         storage:set_int(LEVEL_VILLAGE_KEY,A.Site.village_y)
         storage:set_int(SITE_KEY,A.Site.VERSION)
         for _,player in ipairs(minetest.get_connected_players()) do apply_spawn(player) end
-        local enclosure_ok,enclosure_message=build_enclosure(false)
+        -- Rebuilding the site clears every structure on both platforms.
+        -- Therefore all dependent architectural zones must be regenerated.
+        local enclosure_ok,enclosure_message=build_enclosure(true)
         if not enclosure_ok then
             minetest.log("error","[GDO] "..enclosure_message)
         else
