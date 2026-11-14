@@ -6,6 +6,7 @@ A.Site=dofile(modpath.."/architecture/zones/00_site.lua")(A)
 A.Enclosure=dofile(modpath.."/architecture/zones/10_enclosure.lua")(A)
 A.Gatehouse=dofile(modpath.."/architecture/zones/20_gatehouse.lua")(A)
 A.Towers=dofile(modpath.."/architecture/zones/30_towers.lua")(A)
+A.Stairs=dofile(modpath.."/architecture/zones/70_stairs.lua")(A)
 
 local storage=A.storage
 local SITE_KEY="architecture_site_version"
@@ -14,10 +15,12 @@ local LEVEL_VILLAGE_KEY="architecture_village_level"
 local ENCLOSURE_KEY="architecture_zone10_version"
 local GATEHOUSE_KEY="architecture_zone20_version"
 local TOWERS_KEY="architecture_zone30_version"
+local STAIRS_KEY="architecture_zone70_stairs_version"
 local building=false
 local building_enclosure=false
 local building_gatehouse=false
 local building_towers=false
+local building_stairs=false
 
 local function build_enclosure(force)
     if not A.Site.ready then
@@ -61,7 +64,12 @@ local function build_gatehouse(force)
     end
     building_gatehouse=true
     local ok,message=A.Gatehouse.build(A.Site.castle_y)
-    if ok then storage:set_int(GATEHOUSE_KEY,A.Gatehouse.VERSION) end
+    if ok then
+        storage:set_int(GATEHOUSE_KEY,A.Gatehouse.VERSION)
+        -- Zone 20 owns the tower interiors and upper floors. Its rebuild
+        -- overwrites the stairs placed by zone 70, so invalidate them.
+        storage:set_int(STAIRS_KEY,0)
+    end
     building_gatehouse=false
     return ok,message
 end
@@ -91,6 +99,28 @@ local function build_towers(force)
     return ok,message
 end
 
+local function build_stairs(force)
+    if not A.Site.ready then
+        return false,"La zone 00 doit être construite avant les escaliers."
+    end
+    if storage:get_int(GATEHOUSE_KEY)<A.Gatehouse.VERSION then
+        return false,"La zone 20 doit être construite avant les escaliers du châtelet."
+    end
+    if building_stairs then
+        return false,"La génération des escaliers est déjà en cours."
+    end
+    if not force and storage:get_int(STAIRS_KEY)>=A.Stairs.VERSION then
+        A.base_y=A.Site.castle_y
+        A.Stairs.ready=true
+        return true,"Escaliers du châtelet déjà construits."
+    end
+    building_stairs=true
+    local ok,message=A.Stairs.build(A.Site.castle_y)
+    if ok then storage:set_int(STAIRS_KEY,A.Stairs.VERSION) end
+    building_stairs=false
+    return ok,message
+end
+
 local function apply_spawn(player)
     if A.Site.ready then A.Site.spawn(player) end
 end
@@ -115,7 +145,12 @@ local function build_site(saved_levels)
                 minetest.log("error","[GDO] "..gate_message)
             else
                 local towers_ok,towers_message=build_towers(false)
-                if not towers_ok then minetest.log("error","[GDO] "..towers_message) end
+                if not towers_ok then
+                    minetest.log("error","[GDO] "..towers_message)
+                else
+                    local stairs_ok,stairs_message=build_stairs(false)
+                    if not stairs_ok then minetest.log("error","[GDO] "..stairs_message) end
+                end
             end
         end
     end
@@ -149,7 +184,9 @@ minetest.register_chatcommand("gdo_zone10",{
         if not gate_ok then return false,gate_message end
         local towers_ok,towers_message=build_towers(false)
         if not towers_ok then return false,towers_message end
-        return true,"Zones 10, 20 et 30 reconstruites dans le bon ordre."
+        local stairs_ok,stairs_message=build_stairs(false)
+        if not stairs_ok then return false,stairs_message end
+        return true,"Zones 10, 20, 30 et 70 reconstruites dans le bon ordre."
     end,
 })
 
@@ -163,10 +200,14 @@ minetest.register_chatcommand("gdo_zone10_info",{
 })
 
 minetest.register_chatcommand("gdo_zone20",{
-    description="Reconstruit uniquement la zone 20 : châtelet, herse et pont-levis",
+    description="Reconstruit la zone 20 puis les escaliers qui en dépendent",
     privs={server=true},
     func=function()
-        return build_gatehouse(true)
+        local ok,message=build_gatehouse(true)
+        if not ok then return false,message end
+        local stairs_ok,stairs_message=build_stairs(false)
+        if not stairs_ok then return false,stairs_message end
+        return true,"Châtelet et escaliers du premier étage reconstruits."
     end,
 })
 
@@ -193,6 +234,23 @@ minetest.register_chatcommand("gdo_zone30_info",{
         return true,string.format("Zone 30: version %d/%d, prêtes=%s, altitude=%d",
             storage:get_int(TOWERS_KEY),A.Towers.VERSION,
             A.Towers.ready and "oui" or "non",storage:get_int(LEVEL_CASTLE_KEY))
+    end,
+})
+
+minetest.register_chatcommand("gdo_stairs",{
+    description="Reconstruit les escaliers d'accès au premier étage du châtelet",
+    privs={server=true},
+    func=function()
+        return build_stairs(true)
+    end,
+})
+
+minetest.register_chatcommand("gdo_stairs_info",{
+    description="Affiche l'état des escaliers du châtelet",
+    func=function()
+        return true,string.format("Escaliers zone 70: version %d/%d, prêts=%s, altitude=%d",
+            storage:get_int(STAIRS_KEY),A.Stairs.VERSION,
+            A.Stairs.ready and "oui" or "non",storage:get_int(LEVEL_CASTLE_KEY))
     end,
 })
 
@@ -231,10 +289,15 @@ local function prepare_site()
                 minetest.log("error","[GDO] "..gate_message)
             else
                 local towers_ok,towers_message=build_towers(false)
-                if not towers_ok then minetest.log("error","[GDO] "..towers_message) end
+                if not towers_ok then
+                    minetest.log("error","[GDO] "..towers_message)
+                else
+                    local stairs_ok,stairs_message=build_stairs(false)
+                    if not stairs_ok then minetest.log("error","[GDO] "..stairs_message) end
+                end
             end
         end
-        minetest.log("action","[GDO] Zones 00 à 30 vérifiées; altitude restaurée.")
+        minetest.log("action","[GDO] Zones 00 à 30 vérifiées; escaliers du châtelet contrôlés.")
         return
     end
 
