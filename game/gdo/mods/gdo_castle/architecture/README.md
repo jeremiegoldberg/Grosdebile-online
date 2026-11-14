@@ -105,8 +105,9 @@ Composition actuelle :
 - Cour intérieure entre le donjon et le bâtiment d'entrée, avec fontaine.
 - Huit tours de hauteurs différentes : quatre tourelles du donjon et quatre tours sur les ailes.
 - Les portes latérales relient le donjon aux ailes ; des passages au sol relient les ailes à la cour.
+- Le rez-de-chaussée est meublé avec un grand hall, une salle de banquet, une bibliothèque/map room et un poste de garde, avec éclairage ponctuel.
 
-Les pièces et circulations des étages ne sont pas encore entièrement jouables. Les escaliers internes du donjon et des ailes restent à construire dans la zone 70. Les salles spécialisées (grand hall, appartements, salle des gardes, bibliothèque, chapelle) restent à détailler dans les zones appropriées.
+Les pièces et circulations des étages ne sont pas encore entièrement jouables. Les escaliers internes du donjon et des ailes restent à construire dans la zone 70. Les appartements, la chapelle, les salles spécialisées et le mobilier détaillé restent à développer.
 
 Commande : `/gdo_zone40` reconstruit la citadelle ; `/gdo_zone40_info` en affiche la version et l'état.
 
