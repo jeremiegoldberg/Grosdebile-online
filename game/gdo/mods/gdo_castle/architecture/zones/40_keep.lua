@@ -333,6 +333,55 @@ return function(A)
         -- as interior galleries in the wings and towers, not a roofed bridge.
     end
 
+    local function furnish_citadel()
+        -- Great hall of the keep: paired banquet tables leave a clear central aisle.
+        for _,z in ipairs({-32,-27}) do
+            A.put(-5,y(1),z,M.bench)
+            A.put(-4,y(1),z,M.table)
+            A.put(-3,y(1),z,M.table)
+            A.put(3,y(1),z,M.table)
+            A.put(4,y(1),z,M.table)
+            A.put(5,y(1),z,M.bench)
+        end
+        A.put(0,y(5),-34,M.banner)
+        A.lamp(-7,y(6),-30)
+        A.lamp(7,y(6),-30)
+
+        -- West wing: a long feasting room with timber furniture.
+        for _,z in ipairs({-31,-25}) do
+            A.put(-20,y(1),z,M.table)
+            A.put(-19,y(1),z,M.table)
+            A.put(-18,y(1),z,M.table)
+            A.put(-21,y(1),z,M.bench)
+            A.put(-17,y(1),z,M.bench)
+        end
+        A.put(-24,y(4),-33,M.banner)
+        A.put(-24,y(4),-24,M.banner)
+        A.lamp(-15,y(6),-31)
+        A.lamp(-15,y(6),-22)
+
+        -- East wing: library and map room, with storage against the outer wall.
+        for _,z in ipairs({-32,-29,-26}) do
+            A.put(23,y(1),z,M.crate)
+            A.put(22,y(1),z,M.barrel)
+        end
+        A.put(18,y(1),-29,M.table)
+        A.put(19,y(1),-29,M.table)
+        A.put(20,y(1),-29,M.bench)
+        A.put(17,y(1),-23,M.crate)
+        A.put(23,y(4),-22,M.banner)
+        A.lamp(15,y(6),-30)
+        A.lamp(15,y(6),-20)
+
+        -- The entrance range doubles as a guard room, keeping its middle aisle open.
+        A.put(-8,y(1),-7,M.crate)
+        A.put(8,y(1),-7,M.crate)
+        A.put(-7,y(8),-7,M.banner)
+        A.put(7,y(8),-7,M.banner)
+        A.lamp(-8,y(10),-6)
+        A.lamp(8,y(10),-6)
+    end
+
     function Z.build(base_y)
         if type(base_y)~="number" then
             return false,"Altitude du socle absente : construis d'abord la zone 00."
@@ -348,6 +397,7 @@ return function(A)
         build_side_wing("east")
         build_south_range()
         build_inner_court()
+        furnish_citadel()
 
         -- One-block covered thresholds connect the main keep and wings.
         A.fill(-11,y(0),-30,-11,y(0),-14,M.floor)
@@ -369,7 +419,7 @@ return function(A)
         A.fix_light(Z.bounds)
         Z.ready=true
         minetest.log("action","[GDO][ZONE 40] Citadelle gothique construite : donjon monumental, ailes, huit tours et cour intérieure.")
-        return true,"Citadelle construite : donjon élancé, ailes habitées, huit tours, galerie haute et cour intérieure."
+        return true,"Citadelle construite : donjon élancé, ailes habitées, huit tours, grandes salles et cour intérieure."
     end
 
     return Z
