@@ -27,13 +27,13 @@ Voir [docs/nlite-port.md](docs/nlite-port.md) pour l'inventaire de l'archive, la
 
 GDO repose sur **un seul Royaume du Nawak persistant**, commun à l'ensemble des joueurs du serveur officiel. Les régions sont conservées côte à côte dans le même monde :
 
-1. **Sommières** : centre ancien au bord du Vidourle, pont romain habité de 21 arches, rues médiévales, maisons sur arcades, places de marché, beffroi, quais plantés de platanes et château sur son éperon ; point d'apparition principal.
+1. **Sommières** : centre ancien reconstruit à partir d'un relevé GIS (BD TOPO, voirie, hydrographie, RGE ALTI, arbres et points d'intérêt) ; point d'apparition principal.
 2. **Le Château des Brumes** : forteresse-école gothique, lieux de quêtes et espaces scénarisés.
 3. **Les villages de guildes** : quatre villages fondateurs et villages créés par les joueurs.
 4. **Les parcelles personnelles** : une parcelle et une maison de départ par joueur dans son village de guilde.
 5. **Les terres sauvages** : zones d'exploration, de récolte, de combat et de construction libre.
 
-Sommières est reconstruite à partir de sa trame urbaine réelle : pont romain est-ouest et Vidourle nord-sud, rues du centre ancien, places, arcades, maisons mitoyennes, quais et château. La conception s'appuie sur les rues et façades documentées, les repères Street View disponibles et les vues photographiques/aériennes du centre historique. Les blocs et textures de jeu sont originaux.
+Sommières est reconstruite à partir d'un relevé géographique : 815 empreintes bâties, 226 tronçons routiers, 4 polygones d'eau, 2 lignes hydrographiques, 454 arbres, 164 points d'intérêt et un relief RGE ALTI (grille 28 × 29). Le mod utilise un atlas dédié et un renderer GIS versionné. Les sources du relevé sont IGN BD TOPO / RGE ALTI, OpenStreetMap et une extraction MNS pour les arbres ; les licences de redistribution doivent être confirmées avant diffusion publique.
 
 ![Vue d'ensemble illustrée du Royaume du Nawak](docs/visuals/royaume-du-nawak.svg)
 
@@ -45,7 +45,7 @@ Sommières est reconstruite à partir de sa trame urbaine réelle : pont romain 
 
 **Prototype RPG — première région urbaine ajoutée.** Le jeu possède une base locale jouable : personnage à créer, dix races, trois classes, progression XP, capacités, sorts, armes, créatures de test, première quête de chasse, monnaie locale et montures.
 
-Sommières est générée sur un emplacement continental validé au démarrage. Le Vidourle traverse la carte du nord au sud ; le pont romain la franchit d'est en ouest. Le centre ancien forme un tissu dense autour des rues Marx-Dormoy et Antonin-Paris, des places des Docteurs-Dax, Jean-Jaurès, Saussine et de la République, des quais et du château. Si aucun terrain continental assez plat n'est disponible, les joueurs restent au Château des Brumes. Le château du jeu et les villages de guildes restent à leurs emplacements existants.
+Sommières est générée par le renderer GIS v2 à partir des géométries et attributs du relevé, plutôt que par l'ancien catalogue de maisons posées manuellement. La version 6 reconstruit uniquement l'emprise urbaine de Sommières ; le Château des Brumes, les villages de guildes et les terres sauvages restent à leurs emplacements existants. Faire une sauvegarde du monde avant la première génération GIS.
 
 Les constructions de la cité et du château sont protégées. Le reste du monde demeure libre selon les règles GDO. Les nouvelles entités utilisent encore des formes cubiques et des textures provisoires. Le spawn naturel des créatures est plafonné et exclut les zones urbaines protégées.
 

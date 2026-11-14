@@ -1,73 +1,37 @@
-# Sommières — reconstruction du centre historique
+# Sommières — reconstruction géoréférencée (GIS v2)
 
-## Référence géographique
+## Données intégrées
 
-Sommières est organisée autour du Vidourle. Le fleuve suit un axe nord-sud ; le pont romain le franchit est-ouest. Le pont mesure environ 189 mètres et comporte 21 arches, dont sept sont encore visibles au-dessus du lit du fleuve. Les autres ont été absorbées par le tissu urbain médiéval et servent notamment de caves, ateliers ou locaux au niveau bas. La ville s'est développée au pied du château et jusque dans l'ancien lit du Vidourle. Source : mairie de Sommières, Le Pont Romain.
+La génération manuelle précédente est remplacée par un renderer géographique utilisant les données fournies avec le patch :
 
-La partie basse du centre ancien présente une trame de rues en damier, pensée pour faciliter l'écoulement des crues vers la place du marché. Les maisons s'appuient sur des arcades et des niveaux bas adaptés aux inondations. Les quais Frédéric-Gaussorgues et Cléon-Griolet sont accompagnés d'alignements de platanes. Source : mairie de Sommières, Les rues et les places.
+- 815 empreintes de bâtiments ;
+- 226 géométries / tronçons routiers ;
+- 4 polygones d'eau et 2 lignes hydrographiques ;
+- 454 arbres et 4 zones naturelles ;
+- 164 points d'intérêt ;
+- raster de terrain RGE ALTI interpolé sur une grille de 28 × 29.
 
-Le repérage des voies du centre ancien s'appuie sur l'index Street View de Sommières et les noms de rues documentés : rue Antonin-Paris (ancienne Grand-Rue), rue Marx-Dormoy, place des Docteurs-Dax, quai Frédéric-Gaussorgues, quai Cléon-Griolet, place Jean-Jaurès, place de la République, place Saussine et montée du Château.
+Les sources indiquées dans le relevé sont IGN BD TOPO, RGE ALTI, OpenStreetMap et une extraction du MNS pour les arbres. Les licences applicables à la redistribution de ces données agrégées doivent être confirmées avant toute diffusion publique.
 
-## Orientation dans la carte Luanti
+## Rendu
 
-Le générateur utilise un repère local centré sur le site terrestre choisi :
+Le mod utilise un atlas dédié `textures/sommieres_atlas.png`. Le relevé de base est stocké en fragments Base64 dans `data/`, puis reconstitué et décompressé au chargement. Le renderer et l'importeur sont stockés sous forme de flux DEFLATE dans `renderer.deflate` et `gis_import.deflate`. Ce découpage garde le dépôt lisible et permet de mettre à jour séparément les données et le code.
 
-- X : axe est-ouest ; le pont romain suit cet axe.
-- Z : axe nord-sud ; le Vidourle suit cet axe.
-- Y : altitude ; la chaussée du pont est surélevée par rapport au lit du fleuve.
+Le générateur reconstruit le centre ancien et ses voies à partir des géométries et attributs du relevé, plutôt que d'aligner uniquement des maisons standard dessinées à la main.
 
-Le lit d'eau du Vidourle occupe X=-35..35 (berges et murs jusqu'à environ X=±44) et Z=680..1015 dans le repère local. La chaussée du pont romain s'étend de X=-98 à X=98. Les sept arches centrales restent ouvertes au-dessus de l'eau ; les autres arcs sont intégrés aux bâtiments et niveaux bas du pont habité.
+## Implantation et compatibilité
 
-L'emprise protégée est un carré de 361 × 361 blocs autour du centre validé. Les coordonnées absolues sont enregistrées par le stockage du mod, afin que la ville garde la même position aux redémarrages.
+Le patch remplace la génération manuelle existante de Sommières par la reconstruction GIS v2. Il ne remplace pas les régions du Château des Brumes, les villages de guildes ni les terres sauvages.
 
-## Bâtiments reconstruits individuellement
+**Faire une sauvegarde du monde avant le premier lancement.** La version 6 du générateur reconstruit uniquement l'emprise urbaine de Sommières. Tout bâtiment construit par un joueur dans cette emprise sera supprimé lors de cette reconstruction.
 
-Chaque bâtiment principal possède un constructeur nommé dans le catalogue sommieres.lua. Les maisons utilisent un générateur de volume commun, mais leurs dimensions, hauteurs, matériaux, orientation, ouvertures, balcons et toitures sont définis bâtiment par bâtiment.
+## Commandes
 
-### Pont et faubourg
-
-- 21 arches du pont romain, avec sept arches ouvertes sur le chenal.
-- Maisons et locaux intégrés aux approches du pont.
-- Quatre maisons du faubourg et un atelier du côté rive droite.
-- Maison consulaire de la rue Marx-Dormoy, avec son relief de façade.
-
-### Centre ancien
-
-- Huit maisons individualisées sur la rue Antonin-Paris / Grand-Rue.
-- Arcades de la place des Docteurs-Dax et place du marché.
-- Maisons de la place Jean-Jaurès.
-- Maison à mascaron de la place Saussine.
-- Immeubles de la place de la République.
-- Porte du Bourguet et montée vers le château.
-- Tour de l'Horloge / beffroi-porte.
-- Église Saint-Pons.
-- Château sur son éperon rocheux, avec tour carrée et fragments de remparts.
-
-### Quais et paysage
-
-- Berges maçonnées, escaliers vers l'eau et galets.
-- Quais pavés, platanes, bancs et lanternes.
-- Tuiles canal, façades ocre et rosées, pierre calcaire, volets colorés et ferronnerie.
-
-## Textures
-
-Le mod utilise un atlas original de 16 textures 16×16 : calcaire blond, enduit ocre, pierre de taille, colombage, tuile canal, tuile patinée, maçonnerie, pavage, volets verts et bleu-gris, ferronnerie, porte, claveaux d'arcade, pierre de pont, galets et enduit rose. Ces textures sont propres au projet ; elles ne recopient pas de photographies Street View.
-
-## Implantation et altitude
-
-La recherche de terrain se fait avant toute construction. Le générateur vérifie que l'emprise est sèche et suffisamment plane, puis conserve l'altitude médiane du sol comme niveau de rue. Le lit du Vidourle est creusé sous ce niveau ; les quais, le pont et les maisons sont construits à partir de ce même repère.
-
-Si aucun terrain continental assez grand n'est trouvé, la ville n'est pas générée et les joueurs restent au Château des Brumes. Il vaut mieux reporter la construction que fabriquer une ville flottante ou sous-marine.
-
-## Arrivée et commandes
-
-- Spawn sur la place du marché, à proximité de la place des Docteurs-Dax.
-- /gdo_city : revenir à Sommières.
-- /gdo_castle : rejoindre le Château des Brumes.
-- La pierre de passage de la place du marché permet de rejoindre le château.
-- /gdo_city_info : voir version, statut et coordonnées du site.
-- /gdo_city_rebuild : reconstruire l'emprise enregistrée de Sommières.
+- `/gdo_city` : revenir à Sommières ;
+- `/gdo_castle` : rejoindre le Château des Brumes ;
+- `/gdo_city_info` : afficher l'état et les informations de la cité ;
+- `/gdo_city_rebuild` : reconstruire l'emprise de Sommières (administrateurs).
 
 ## Validation
 
-La génération et le catalogue de bâtiments sont présents dans le dépôt. Il reste à vérifier dans Luanti la circulation sur le pont, le passage sous les arches, les raccords des rues, l'accès au château, l'altitude et les façades en vue de rue. Le rendu final ne doit pas être déclaré validé avant un test en jeu.
+Le code, les fragments de données et l'atlas sont intégrés au dépôt. Le rendu doit encore être contrôlé dans Luanti pour vérifier le placement des bâtiments, les niveaux de terrain, les raccords routiers, les passages et les détails visuels. La validation en jeu n'est pas encore effectuée.
