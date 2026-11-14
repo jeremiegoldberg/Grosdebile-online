@@ -27,7 +27,7 @@ Le serveur Luanti héberge le monde et exécute les règles de jeu. Le jeu `gdo`
 | `gdo_economy` | Portefeuille local et transferts |
 | `gdo_society` | Maisons, guildes, villages et parcelles |
 | `gdo_zones` / `gdo_castle` | Protection et génération du Château des Brumes |
-| `gdo_city` | Région indépendante de la Port elfique et point d'apparition |
+| `gdo_city` | Région indépendante de Sommières : vieux centre, pont romain, rues, places et textures dédiées |
 
 Les modules RPG sont natifs Lua, sans framework de mobs obligatoire. Les régions sont générées séparément et disposent de leur propre emprise/version : reconstruire une région ne doit pas réinitialiser les autres. La caméra troisième personne est l'expérience de référence sur PC/mobile. Une expérience VR immersive reste une cible expérimentale qui devra être testée sur un portage Luanti compatible OpenXR.
 
@@ -37,13 +37,13 @@ Les valeurs de personnage sont conservées dans les métadonnées Luanti, côté
 
 ### Monde et régions
 
-Le module `gdo_city` reconstruit le Port elfique depuis les captures `elven.png` et `praiaelven.png`. Il recherche d'abord un site continental : contrôle des niveaux d'eau, du taux de sol sec et du dénivelé avant toute modification du terrain. Si aucun emplacement valable n'est trouvé, il ne construit rien et conserve le point d'arrivée au château. L'emplacement choisi est conservé en stockage ; la version 2 migre uniquement l'ancienne emprise de la ville.
+Le module gdo_city reconstruit Sommières dans un repère local : Vidourle nord-sud, pont romain est-ouest de 21 arches, rues médiévales en damier, maisons mitoyennes, arcades du marché, beffroi, Porte du Bourguet, église Saint-Pons, quais plantés et château sur son éperon. Il recherche un site continental assez plat et persiste son centre et son altitude. Si aucun site valable n'est trouvé, il ne construit rien et conserve le point d'arrivée au château.
 
 La carte comprend un bassin portuaire, des navires, un canal bordé de maisons mitoyennes, des ponts arqués, une cathédrale, des remparts et une plage en escalier. Les bornes de protection et l'exclusion du bestiaire suivent l'emprise réelle enregistrée.
 
-Le Château des Brumes continue d'utiliser l'architecture par zones dans `gdo_castle/architecture/`. Les villages de guildes restent gérés par `gdo_society`. Les régions coexistent dans le même monde ; le Port elfique ne déplace ni la forteresse ni les villages de guilde.
+Le Château des Brumes continue d'utiliser l'architecture par zones dans `gdo_castle/architecture/`. Les villages de guildes restent gérés par `gdo_society`. Les régions coexistent dans le même monde ; Sommières ne déplace ni la forteresse ni les villages de guilde.
 
-Les nouveaux joueurs apparaissent dans le Port elfique quand son site est prêt. La pierre de passage et les commandes `/gdo_city` et `/gdo_castle` maintiennent la liaison avec le Château des Brumes.
+Les nouveaux joueurs apparaissent à Sommières quand son site est prêt. La pierre de passage et les commandes `/gdo_city` et `/gdo_castle` maintiennent la liaison avec le Château des Brumes.
 
 ### Backend Go
 

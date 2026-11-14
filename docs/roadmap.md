@@ -23,11 +23,11 @@ Les étapes sont indicatives. Une fonctionnalité n'est considérée comme livr�
 - [ ] Animation de combat et feedback visuel final
 
 ## Phase 2 — Monde du Nawak
-- [x] Nouvelle Port elfique ajoutée sans supprimer le Château des Brumes ni les villages de guildes
-- [x] Générateur versionné du Port elfique : bassin, canal, navires, fronts bâtis, ponts, cathédrale, remparts et plage
+- [x] Générateur Sommières indépendant, sans supprimer le Château des Brumes ni les villages de guildes
+- [x] Générateur Sommières : Vidourle, pont romain de 21 arches, rues, maisons mitoyennes, arcades, beffroi, château et textures dédiées
 - [x] Apparition principale dans la ville et liaison de retour au château
 - [x] Protection de la ville et exclusion du spawn naturel des monstres
-- [ ] Vérifier en jeu le choix du site continental et parcourir le port, les ponts, les rues et les bâtiments
+- [ ] Vérifier en jeu l'altitude, les 21 arches, les raccords de rues, les façades et les accès au château
 - [ ] Intérieurs accessibles, commerces, auberge et PNJ de quartier
 - [ ] Géographie complète et régions documentées
 - [ ] Biomes, villages, bestiaire étendu, élites, boss et donjons

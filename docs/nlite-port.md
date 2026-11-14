@@ -49,9 +49,7 @@ Les entités et icônes temporaires utilisent des textures simples générées p
 
 ## Nouvelle région ajoutée après le premier portage RPG
 
-Les vues `elven.png` et `praiaelven.png` du diaporama NLite servent de plans visuels à la reconstruction du **Port elfique** : bassin ouest, navires, canal habité, maisons mitoyennes, ponts arqués, cathédrale, remparts et plage en escalier. La ville est recherchée sur un emplacement continental validé, au lieu d'être construite à des coordonnées arbitraires.
-
-L'archive ne contient ni sauvegarde de monde Minecraft ni structure exportée. Les éléments visibles sont reconstruits en blocs natifs Luanti ; les parties masquées par le cadrage ne peuvent pas être reproduites au bloc près. Voir [la fiche du Port elfique](world/cite-des-canaux.md).
+La région urbaine de départ est une reconstruction de Sommières, et non une cité NLite. Le centre historique est modélisé autour du Vidourle, du pont romain habité, des rues médiévales, des arcades, des quais et du château. Voir la fiche de Sommières dans world/sommieres.md.
 
 ## Ce qui reste à porter
 

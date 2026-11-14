@@ -11,7 +11,7 @@ Ce répertoire documente les régions, cultures, factions et contenus originaux 
 
 ## Régions
 
-- **Port elfique NLite** — reconstruction des vues elven.png et praiaelven.png : bassin, canal, navires, maisons mitoyennes, ponts, cathédrale, remparts et plage en escalier. Emplacement continental recherché au démarrage ; voir [la fiche de région](cite-des-canaux.md).
+- **Sommières** — reconstruction du centre historique autour du Vidourle : pont romain habité, 21 arches, rues en damier, arcades du marché, quais, platanes, maisons mitoyennes et château sur son éperon. Voir la fiche de Sommières dans sommieres.md.
 - **Château des Brumes** — forteresse-école gothique et zone de départ historique.
 - **Villages des quatre guildes fondatrices** — quartiers collectifs et parcelles personnelles.
 - **Terres sauvages** — régions ouvertes pour l'exploration, les ressources et les constructions libres.

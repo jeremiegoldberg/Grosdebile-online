@@ -1,17 +1,17 @@
--- GDO — Port elfique NLite
--- Reconstruction procédurale des vues "elven.png" et "praiaelven.png" de l'archive NLite.
--- Aucun monde Minecraft ni structure exportée n'est disponible ; les volumes visibles sont reconstruits en Lua.
--- La génération est versionnée, indépendante et limitée à son emprise dynamique.
+-- GDO — Sommières, reconstruction procédurale du centre historique.
+-- Références : rues Antonin-Paris/Marx-Dormoy, place des Docteurs-Dax,
+-- place Saussine, place de la République, Vidourle et pont romain habité.
+-- Le plan du jeu est orienté selon la géographie réelle : fleuve N-S, pont E-O.
 
 local A = gdo_castle_architecture
-assert(A and A.materials, "[GDO City] gdo_castle_architecture doit être chargé avant la cité.")
+assert(A and A.materials, "[GDO Sommières] gdo_castle_architecture doit être chargé avant la ville.")
 
 local storage = minetest.get_mod_storage()
-local VERSION = 2
+local VERSION = 3
 local LEGACY_BOUNDS = {x1 = -58, x2 = 58, z1 = 780, z2 = 920}
-local RADIUS = 96
+local RADIUS = 180
 local BOUNDS = LEGACY_BOUNDS
-local SPAWN = {x = 82, z = 868}
+local SPAWN = {x = 76, z = 858}
 local center_x, center_z = 0, 850
 local SITE_Y_MIN, SITE_Y_MAX = -32, 192
 local SITE_CANDIDATES = {
@@ -23,13 +23,54 @@ local SITE_CANDIDATES = {
     {850, 0}, {-850, 0}, {0, -850}, {850, -850}, {-850, -850},
     {0, 2400}, {0, -1800}, {1200, 0}, {-1200, 0},
 }
-local CITY_NAME = "Port elfique"
+local CITY_NAME = "Sommières"
 local base_y = nil
 local ready = false
 local building = false
 local pending_spawns = {}
 local M = A.materials
 local water_node = "gdo_core:eau"
+
+local S = {
+    limestone="gdo_city:limestone", plaster="gdo_city:ochre_plaster", ochre="gdo_city:ochre_plaster",
+    ashlar="gdo_city:rough_ashlar", timber="gdo_city:timber_frame",
+    terracotta="gdo_city:terracotta_roof", roof="gdo_city:weathered_roof",
+    coursed="gdo_city:stone_coursed", paving="gdo_city:paving",
+    shutters_green="gdo_city:shutters_green", shutters_blue="gdo_city:shutters_blue",
+    shutter_green="gdo_city:shutters_green", shutter_blue="gdo_city:shutters_blue",
+    balcony="gdo_city:iron_balcony", door="gdo_city:wooden_door",
+    arcade="gdo_city:arcade_stone", bridge="gdo_city:bridge_stone",
+    pebbles="gdo_city:river_pebbles", rose="gdo_city:rose_plaster",
+}
+local function atlas_tile(col,row)
+    return "sommieres_atlas.png^[sheet:4x4:"..col..","..row
+end
+local texture_nodes = {
+    {"limestone","Calcaire blond de Sommières",0,0},
+    {"ochre_plaster","Enduit ocre patiné",1,0},
+    {"rough_ashlar","Pierre de taille ancienne",2,0},
+    {"timber_frame","Bois de charpente",3,0},
+    {"terracotta_roof","Tuile canal provençale",0,1},
+    {"weathered_roof","Tuile ancienne patinée",1,1},
+    {"stone_coursed","Maçonnerie en pierre",2,1},
+    {"paving","Pavage du centre ancien",3,1},
+    {"shutters_green","Volets verts",0,2},
+    {"shutters_blue","Volets bleu-gris",1,2},
+    {"iron_balcony","Ferronnerie de balcon",2,2},
+    {"wooden_door","Porte en bois",3,2},
+    {"arcade_stone","Claveaux d'arcade",0,3},
+    {"bridge_stone","Pierre du pont romain",1,3},
+    {"river_pebbles","Galets du Vidourle",2,3},
+    {"rose_plaster","Enduit rose ancien",3,3},
+}
+for _, item in ipairs(texture_nodes) do
+    minetest.register_node("gdo_city:"..item[1], {
+        description=item[2], tiles={atlas_tile(item[3],item[4])},
+        paramtype="light", sunlight_propagates=true,
+        groups={cracky=2, oddly_breakable_by_hand=2},
+    })
+end
+
 
 gdo_city = {
     name = CITY_NAME,
@@ -381,38 +422,21 @@ end
 
 
 
+local build_sommieres = dofile(minetest.get_modpath("gdo_city").."/sommieres.lua")({
+    put=put, fill=fill, clear=clear, lamp=lamp,
+    materials=M, sommieres=S, water_node=water_node,
+})
 local function build_city()
     A.flatten_rect(BOUNDS, base_y, 192)
-    A.clear(BOUNDS.x1, base_y + 1, BOUNDS.z1, BOUNDS.x2, 192, BOUNDS.z2)
-
-    -- Bassin ouest relié au canal principal, puis bras vers la plage.
-    build_channel(-96, 827, -62, 862)
-    build_channel(-66, 838, 65, 849)
-    build_channel(58, 845, 72, 912)
-
-    build_roads()
-    build_bridges()
-    build_docks()
-    build_ships()
-    build_houses()
-    build_market()
-    build_city_hall()
-    build_cathedral()
-    build_south_gate()
-    build_greenery()
-    build_lighting()
-
-    -- Plage en escalier sur le coude du canal, comme dans la seconde vue NLite.
-    for step = 0, 5 do
-        fill(84 + step * 2, -step, 888 + step, 96, -step, 894 + step, "gdo_core:sable")
-    end
-
+    -- Bury leftovers from the previous generic city generation before drawing the new streets and river.
+    fill(-100, -8, 750, 100, -1, 950, "gdo_core:terre")
+    build_sommieres()
     A.fix_light(BOUNDS)
     ready = true
     storage:set_int("city_version", VERSION)
     storage:set_int("city_base_y", base_y)
     storage:set_int("city_base_initialized", 1)
-    minetest.log("action", "[GDO][CITY] Port elfique reconstruit sur terrain continental.")
+    minetest.log("action", "[GDO][CITY] Sommières reconstruite : Vidourle, pont romain habité, Grand-Rue, arcades, château et quais.")
 end
 
 local function spawn_position()
@@ -428,11 +452,11 @@ local function finish_pending_spawns()
             if ready then
                 player:set_pos(spawn_position())
                 if player.set_velocity then player:set_velocity({x = 0, y = 0, z = 0}) end
-                minetest.chat_send_player(name, "Bienvenue au Port elfique ! Explore les quais, les navires, le canal et la cathédrale. /gdo_castle permet de rejoindre le Château des Brumes.")
+                minetest.chat_send_player(name, "Bienvenue à Sommières ! Explore le pont romain, les ruelles, les arcades du marché et le château. /gdo_castle permet de rejoindre le Château des Brumes.")
             else
                 local castle_y = gdo_castle_storage:get_int("architecture_castle_level")
                 player:set_pos({x = 0, y = castle_y + 1, z = 68})
-                minetest.chat_send_player(name, "Aucun site terrestre n'est encore validé pour le port elfique. Tu commences au Château des Brumes.")
+                minetest.chat_send_player(name, "Aucun terrain continental n'est encore validé pour Sommières. Tu commences au Château des Brumes.")
             end
         end
         pending_spawns[name] = nil
@@ -455,7 +479,7 @@ local function register_city_zone()
     if gdo_zones and gdo_zones.register_readonly_zone then
         gdo_zones.register_readonly_zone({
             name = CITY_NAME,
-            description = "Port elfique, maisons mitoyennes, bassin, canal, ponts, cathédrale et remparts",
+            description = "Sommières : vieille ville, pont romain habité, rues médiévales, arcades, château et quais du Vidourle",
             min = {x = BOUNDS.x1, y = -32, z = BOUNDS.z1},
             max = {x = BOUNDS.x2, y = 192, z = BOUNDS.z2},
         })
@@ -467,7 +491,7 @@ end
 minetest.register_node("gdo_city:waystone", {
     description = "Pierre de passage — Château des Brumes",
     drawtype = "nodebox",
-    tiles = {"unknown_node.png^[colorize:#d5a52d:220"},
+    tiles = {atlas_tile(2,0)},
     paramtype = "light",
     light_source = 8,
     walkable = false,
@@ -477,18 +501,18 @@ minetest.register_node("gdo_city:waystone", {
         if not clicker or not clicker:is_player() then return end
         local castle_y = gdo_castle_storage and gdo_castle_storage:get_int("architecture_castle_level") or 0
         clicker:set_pos({x = 0, y = castle_y + 1, z = 68})
-        minetest.chat_send_player(clicker:get_player_name(), "Tu retournes au Château des Brumes. /gdo_city permet de revenir dans la cité.")
+        minetest.chat_send_player(clicker:get_player_name(), "Tu retournes au Château des Brumes. /gdo_city permet de revenir à Sommières.")
     end,
 })
 
 minetest.register_chatcommand("gdo_city", {
-    description = "Rejoindre le Port elfique",
+    description = "Rejoindre Sommières",
     func = function(name)
         local player = minetest.get_player_by_name(name)
         if not player then return false, "Joueur introuvable." end
         gdo_city.spawn(player)
-        if not ready then return true, "La cité termine sa préparation ; tu y seras envoyé dès qu'elle sera prête." end
-        return true, "Bienvenue au Port elfique."
+        if not ready then return true, "Sommières termine sa préparation ; tu y seras envoyé dès que la ville sera prête." end
+        return true, "Bienvenue à Sommières."
     end,
 })
 
@@ -758,7 +782,7 @@ minetest.register_chatcommand("gdo_city_info", {
 })
 
 minetest.register_chatcommand("gdo_city_rebuild", {
-    description = "Reconstruit le Port elfique (zone réservée)",
+    description = "Reconstruit Sommières (zone réservée)",
     privs = {server = true},
     func = function()
         if building then return false, "La génération de la cité est déjà en cours." end
@@ -766,8 +790,8 @@ minetest.register_chatcommand("gdo_city_rebuild", {
         ready = false
         pending_spawns = {}
         start_city()
-        return true, "Reconstruction du Port elfique demandée. Seule son emprise sera remplacée."
+        return true, "Reconstruction de Sommières demandée. Seule son emprise sera remplacée."
     end,
 })
 
-minetest.log("action", "[GDO City] Le Port elfique est enregistré ; elle sera générée après le site du château.")
+minetest.log("action", "[GDO City] Sommières est enregistrée ; le site sera validé avant sa reconstruction.")
