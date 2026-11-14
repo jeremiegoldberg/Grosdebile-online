@@ -16,7 +16,7 @@ Le générateur utilise un repère local centré sur le site terrestre choisi :
 - Z : axe nord-sud ; le Vidourle suit cet axe.
 - Y : altitude ; la chaussée du pont est surélevée par rapport au lit du fleuve.
 
-Le Vidourle occupe approximativement X=-40..40 et Z=680..1015 dans le repère local. La chaussée du pont romain s'étend de X=-98 à X=98. Les sept arches centrales restent ouvertes au-dessus de l'eau ; les autres arcs sont intégrés aux bâtiments et niveaux bas du pont habité.
+Le lit d'eau du Vidourle occupe X=-35..35 (berges et murs jusqu'à environ X=±44) et Z=680..1015 dans le repère local. La chaussée du pont romain s'étend de X=-98 à X=98. Les sept arches centrales restent ouvertes au-dessus de l'eau ; les autres arcs sont intégrés aux bâtiments et niveaux bas du pont habité.
 
 L'emprise protégée est un carré de 361 × 361 blocs autour du centre validé. Les coordonnées absolues sont enregistrées par le stockage du mod, afin que la ville garde la même position aux redémarrages.
 

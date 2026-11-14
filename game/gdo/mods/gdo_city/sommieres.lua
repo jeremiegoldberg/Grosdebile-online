@@ -157,13 +157,13 @@ return function(C)
     -- Éléments du Vidourle et des quais.
     local function build_vidourle()
         -- Lit minéral, eau au niveau bas et berges en pente douce.
-        fill(-40,-8,680,40,-5,1015,S.bridge)
-        fill(-39,-4,680,39,-1,1015,C.water_node)
+        fill(-36,-8,680,36,-5,1015,S.bridge)
+        fill(-35,-4,680,35,-1,1015,C.water_node)
         for z=680,1015 do
-            fill(-44,-2,z,-41,1,z,S.ashlar)
-            fill(41,-2,z,44,1,z,S.ashlar)
-            fill(-48,-3,z,-45,-1,z,"gdo_core:sable")
-            fill(45,-3,z,48,-1,z,"gdo_core:sable")
+            fill(-40,-2,z,-37,1,z,S.ashlar)
+            fill(37,-2,z,40,1,z,S.ashlar)
+            fill(-44,-3,z,-41,-1,z,S.pebbles)
+            fill(41,-3,z,44,-1,z,S.pebbles)
         end
         -- Escaliers de descente au fleuve au nord et au sud du vieux centre.
         for step=0,5 do
