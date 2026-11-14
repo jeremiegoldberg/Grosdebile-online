@@ -19,7 +19,7 @@ return function(A)
             and math.abs(dx)+math.abs(dz)<=7
     end
 
-    local function build_tower(cx,cz,courtyard_side)
+    local function build_tower(cx,cz,courtyard_side,wall_x_side)
         -- Clear only this tower's 13x13 footprint. The overlap with zone 10
         -- is deliberate: the tower replaces the old corner core and absorbs
         -- the ends of both adjoining curtain walls.
@@ -76,18 +76,27 @@ return function(A)
         end
         A.fill(cx-2,y(6),front_z1,cx+2,y(6),front_z2,M.trim)
 
-        -- Four open galleries at parapet height connect both perpendicular
-        -- curtain walks through the tower. Each opening is 3 wide x 4 high.
-        A.clear(cx-6,y(11),cz-1,cx-5,y(14),cz+1)
-        A.clear(cx+5,y(11),cz-1,cx+6,y(14),cz+1)
-        A.clear(cx-1,y(11),cz-6,cx+1,y(14),cz-5)
-        A.clear(cx-1,y(11),cz+5,cx+1,y(14),cz+6)
+        -- Two upper-level connections align with the two curtain walks that
+        -- actually reach this corner. The exterior-facing sides remain closed.
+        local x1,x2
+        if wall_x_side=="east" then
+            x1,x2=cx+5,cx+6
+        else
+            x1,x2=cx-6,cx-5
+        end
+        A.clear(x1,y(11),cz-1,x2,y(14),cz+1)
 
-        -- Stone lintels above the four parapet connections.
-        A.fill(cx-2,y(15),cz-6,cx+2,y(15),cz-5,M.trim)
-        A.fill(cx-2,y(15),cz+5,cx+2,y(15),cz+6,M.trim)
-        A.fill(cx-6,y(15),cz-2,cx-5,y(15),cz+2,M.trim)
-        A.fill(cx+5,y(15),cz-2,cx+6,y(15),cz+2,M.trim)
+        local z1,z2
+        if courtyard_side=="south" then
+            z1,z2=cz+5,cz+6
+        else
+            z1,z2=cz-6,cz-5
+        end
+        A.clear(cx-1,y(11),z1,cx+1,y(14),z2)
+
+        -- Stone lintels above the two wall-walk connections.
+        A.fill(x1,y(15),cz-2,x2,y(15),cz+2,M.trim)
+        A.fill(cx-2,y(15),z1,cx+2,y(15),z2,M.trim)
 
         -- Arrow slits on the lower storey and glazed watch windows above.
         for _,offset in ipairs({-3,3}) do
@@ -129,10 +138,10 @@ return function(A)
         end
         A.base_y=base_y
 
-        build_tower(-37,-39,"south") -- north-west corner
-        build_tower(37,-39,"south")  -- north-east corner
-        build_tower(-37,37,"north")  -- south-west corner
-        build_tower(37,37,"north")   -- south-east corner
+        build_tower(-37,-39,"south","east") -- north-west corner
+        build_tower(37,-39,"south","west")  -- north-east corner
+        build_tower(-37,37,"north","east")  -- south-west corner
+        build_tower(37,37,"north","west")   -- south-east corner
 
         A.fix_light(Z.bounds)
         Z.ready=true
