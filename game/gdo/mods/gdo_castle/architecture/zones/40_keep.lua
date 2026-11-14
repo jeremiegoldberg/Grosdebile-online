@@ -5,7 +5,7 @@
 return function(A)
     local Z={}
     Z.VERSION=2
-    Z.bounds={x1=-27,x2=27,z1=-38,z2=-4}
+    Z.bounds={x1=-27,x2=27,z1=-38,z2=-3}
     Z.height=48
 
     local M=A.materials
@@ -162,6 +162,38 @@ return function(A)
         A.fill(-4,y(2),-29,4,y(2),-29,M.gold)
     end
 
+    local function build_main_keep_roof()
+        -- A very steep central gable rises above the upper keep floor.
+        -- The roof ridge runs north-south, with two large dark slate pitches.
+        for layer=0,10 do
+            local left=-10+layer
+            local right=10-layer
+            local level=26+layer
+            A.fill(left,y(level),-37,left+1,y(level),-18,M.roof)
+            A.fill(right-1,y(level),-37,right,y(level),-18,M.roof)
+        end
+        A.fill(-1,y(36),-37,1,y(36),-18,M.trim)
+        A.fill(-1,y(37),-37,1,y(37),-18,M.roof)
+
+        -- Tall gable ends show the profile from both the inner court and the north.
+        for _,z in ipairs({-37,-18}) do
+            for level=0,9 do
+                local half=10-level
+                A.fill(-half,y(26+level),z,half,y(26+level),z,
+                    (level%2==0) and M.trim or M.stone)
+            end
+            A.fill(-2,y(36),z,2,y(36),z,M.wood)
+            A.put(0,y(37),z,M.gold)
+        end
+
+        -- Stone corner buttresses run up to the eaves.
+        for _,x in ipairs({-11,11}) do
+            for _,z in ipairs({-34,-21}) do
+                A.fill(x,y(1),z,x,y(25),z,M.trim)
+            end
+        end
+    end
+
     local function build_side_wing(side)
         local x1,x2
         if side=="west" then x1,x2=-25,-12 else x1,x2=12,25 end
@@ -174,19 +206,24 @@ return function(A)
         A.clear(x1+1,y(2),z1+1,x2-1,y(13),z2-1)
         A.fill(x1+1,y(7),z1+1,x2-1,y(7),z2-1,M.floor)
 
-        -- Outer walls are lighter on the upper storey, with timber framing.
-        A.fill(x1+1,y(8),z1+1,x2-1,y(12),z1+1,M.plaster)
-        A.fill(x1+1,y(8),z2-1,x2-1,y(12),z2-1,M.plaster)
-        A.fill(x1+1,y(8),z1+1,x1+1,y(12),z2-1,M.plaster)
-        A.fill(x2-1,y(8),z1+1,x2-1,y(12),z2-1,M.plaster)
-        for _,x in ipairs({x1+1,x1+4,x2-4,x2-1}) do
-            A.fill(x,y(8),z1+1,x,y(12),z1+1,M.wood)
-            A.fill(x,y(8),z2-1,x,y(12),z2-1,M.wood)
+        -- The upper storey is lime-plastered on the visible outside faces.
+        A.fill(x1,y(8),z1,x2,y(12),z1,M.plaster)
+        A.fill(x1,y(8),z2,x2,y(12),z2,M.plaster)
+        A.fill(x1,y(8),z1,x1,y(12),z2,M.plaster)
+        A.fill(x2,y(8),z1,x2,y(12),z2,M.plaster)
+        -- Dark timber posts and rails make the facades visibly half-timbered.
+        for _,x in ipairs({x1,x1+4,x2-4,x2}) do
+            A.fill(x,y(8),z1,x,y(12),z1,M.wood)
+            A.fill(x,y(8),z2,x,y(12),z2,M.wood)
         end
-        A.fill(x1+1,y(8),z1+1,x2-1,y(8),z1+1,M.wood)
-        A.fill(x1+1,y(12),z1+1,x2-1,y(12),z1+1,M.wood)
-        A.fill(x1+1,y(8),z2-1,x2-1,y(8),z2-1,M.wood)
-        A.fill(x1+1,y(12),z2-1,x2-1,y(12),z2-1,M.wood)
+        for _,z in ipairs({z1,z2}) do
+            A.fill(x1,y(8),z,x2,y(8),z,M.wood)
+            A.fill(x1,y(12),z,x2,y(12),z,M.wood)
+        end
+        for _,z in ipairs({z1+5,z2-5}) do
+            A.fill(x1,y(8),z,x1,y(12),z,M.wood)
+            A.fill(x2,y(8),z,x2,y(12),z,M.wood)
+        end
 
         -- Real doorways from each wing into the inner court.
         if side=="west" then
@@ -306,6 +343,7 @@ return function(A)
         A.clear(Z.bounds.x1,y(1),Z.bounds.z1,Z.bounds.x2,y(Z.height),Z.bounds.z2)
 
         build_main_keep()
+        build_main_keep_roof()
         build_side_wing("west")
         build_side_wing("east")
         build_south_range()
