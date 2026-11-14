@@ -49,66 +49,63 @@ assert(_G.__gdo_city_embedded_core and _G.__gdo_city_embedded_core.buildings,
     "[GDO Sommières] Relevé géographique invalide.")
 
 local loader = loadstring or load
+local function replace_once(source, needle, replacement)
+    local first, last = string.find(source, needle, 1, true)
+    assert(first, "[GDO Sommières] Patch SIG introuvable : " .. needle)
+    local second = string.find(source, needle, last + 1, true)
+    assert(not second, "[GDO Sommières] Patch SIG ambigu : " .. needle)
+    return string.sub(source, 1, first - 1) .. replacement .. string.sub(source, last + 1)
+end
+
 local importer_source = minetest.decompress(read_file("gis_import.deflate"), "deflate")
 assert(importer_source, "[GDO Sommières] Importeur GIS compressé invalide.")
+
+-- Roofs must be a one-node-thick sloped surface, not a solid mass between
+-- the eaves and ridge. Keep the roof within the surveyed building footprint.
+importer_source = replace_once(
+    importer_source,
+    "local W, D = math.max(0.5, w / 2 + 0.4), math.max(0.5, d / 2 + 0.4)",
+    "local W, D = math.max(0.5, w / 2), math.max(0.5, d / 2)"
+)
+importer_source = replace_once(
+    importer_source,
+    "for y = math.max(y_min, top_y + 1), math.min(y_max, roof_y) do set_block(x, y, z, roof_id) end",
+    "set_block(x, roof_y, z, roof_id)"
+)
+
+-- Keep road cells walkable when a surveyed building footprint overlaps them.
+importer_source = replace_once(
+    importer_source,
+    "local tile_cache = {}",
+    "local tile_cache = {}\n        local road_mask = {}"
+)
+importer_source = replace_once(
+    importer_source,
+    "set_block(x, road_y, z, surface_id)",
+    "set_block(x, road_y, z, surface_id)\n                            road_mask[(z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1] = true"
+)
+importer_source = replace_once(
+    importer_source,
+    "-- 4) Individual building footprints, measured heights and oriented roof planes.",
+    "local function set_building_block(x, y, z, id)\n            if x < lx1 or x > lx2 or z < lz1 or z > lz2 then return end\n            local key = (z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1\n            if road_mask[key] then return end\n            set_block(x, y, z, id)\n        end\n\n        -- 4) Individual building footprints, measured heights and oriented roof planes."
+)
+importer_source = replace_once(importer_source, "set_block(x, floor_y, z, ids.floor)", "set_building_block(x, floor_y, z, ids.floor)")
+importer_source = replace_once(importer_source, "set_block(x, roof_y, z, roof_id)", "set_building_block(x, roof_y, z, roof_id)")
+importer_source = replace_once(importer_source, "set_block(x, y, z, wall_id)", "set_building_block(x, y, z, wall_id)")
+importer_source = replace_once(importer_source, "set_block(x, top_y, z, ids.limestone_trim)", "set_building_block(x, top_y, z, ids.limestone_trim)")
+importer_source = replace_once(importer_source, "set_block(x, floor_y + 2, z, ids.limestone_trim)", "set_building_block(x, floor_y + 2, z, ids.limestone_trim)")
+importer_source = replace_once(
+    importer_source,
+    "register_wall_windows(set_block, b, b.p, cfg, ids.glass, ids.limestone_trim, ids.shutter, ids.door)",
+    "register_wall_windows(set_building_block, b, b.p, cfg, ids.glass, ids.limestone_trim, ids.shutter, ids.door)"
+)
 local importer_chunk, importer_err = loader(importer_source, "@gdo_city/gis_import.lua")
 assert(importer_chunk, importer_err)
 _G.__gdo_city_gis_importer = importer_chunk()
 
 local renderer_source = minetest.decompress(read_file("renderer.deflate"), "deflate")
 assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
--- Keep roofs as a one-node-thick sloped surface. Filling every vertical
--- column from the eaves to the ridge creates oversized roof masses that
--- visually spill into narrow streets and courtyards.
-local function replace_once(source, needle, replacement)
-    local first, last = string.find(source, needle, 1, true)
-    assert(first, "[GDO Sommières] Patch renderer introuvable : " .. needle)
-    local second = string.find(source, needle, last + 1, true)
-    assert(not second, "[GDO Sommières] Patch renderer ambigu : " .. needle)
-    return string.sub(source, 1, first - 1) .. replacement .. string.sub(source, last + 1)
-end
-
-renderer_source = replace_once(
-    renderer_source,
-    "local W, D = math.max(0.5, w / 2 + 0.4), math.max(0.5, d / 2 + 0.4)",
-    "local W, D = math.max(0.5, w / 2), math.max(0.5, d / 2)"
-)
 renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 7")
-renderer_source = replace_once(
-    renderer_source,
-    "for y = math.max(y_min, top_y + 1), math.min(y_max, roof_y) do set_block(x, y, z, roof_id) end",
-    "set_block(x, roof_y, z, roof_id)"
-)
-
--- Preserve surveyed road corridors when a GIS building polygon touches or
--- overlaps a road raster cell. The road layer is authoritative for walkable
--- streets; building floors, walls, windows and roofs must not overwrite it.
-renderer_source = replace_once(
-    renderer_source,
-    "local tile_cache = {}",
-    "local tile_cache = {}\n        local road_mask = {}"
-)
-renderer_source = replace_once(
-    renderer_source,
-    "set_block(x, road_y, z, surface_id)",
-    "set_block(x, road_y, z, surface_id)\n                            road_mask[(z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1] = true"
-)
-renderer_source = replace_once(
-    renderer_source,
-    "-- 4) Individual building footprints, measured heights and oriented roof planes.",
-    "local function set_building_block(x, y, z, id)\n            if x < lx1 or x > lx2 or z < lz1 or z > lz2 then return end\n            local key = (z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1\n            if road_mask[key] then return end\n            set_block(x, y, z, id)\n        end\n\n        -- 4) Individual building footprints, measured heights and oriented roof planes."
-)
-renderer_source = replace_once(renderer_source, "set_block(x, floor_y, z, ids.floor)", "set_building_block(x, floor_y, z, ids.floor)")
-renderer_source = replace_once(renderer_source, "set_block(x, roof_y, z, roof_id)", "set_building_block(x, roof_y, z, roof_id)")
-renderer_source = replace_once(renderer_source, "set_block(x, y, z, wall_id)", "set_building_block(x, y, z, wall_id)")
-renderer_source = replace_once(renderer_source, "set_block(x, top_y, z, ids.limestone_trim)", "set_building_block(x, top_y, z, ids.limestone_trim)")
-renderer_source = replace_once(renderer_source, "set_block(x, floor_y + 2, z, ids.limestone_trim)", "set_building_block(x, floor_y + 2, z, ids.limestone_trim)")
-renderer_source = replace_once(
-    renderer_source,
-    "register_wall_windows(set_block, b, b.p, cfg, ids.glass, ids.limestone_trim, ids.shutter, ids.door)",
-    "register_wall_windows(set_building_block, b, b.p, cfg, ids.glass, ids.limestone_trim, ids.shutter, ids.door)"
-)
-
 local renderer_chunk, renderer_err = loader(renderer_source, "@gdo_city/renderer.lua")
 assert(renderer_chunk, renderer_err)
 renderer_chunk()
