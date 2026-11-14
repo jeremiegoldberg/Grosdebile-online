@@ -18,7 +18,7 @@ The replacement castle is built zone by zone. The replacement castle is active o
 |---|---|---|---|
 | 00 | `00_site.lua` | Natural terrain survey, castle platform, forecourt, level village platform | Implemented; requires in-game validation |
 | 10 | `10_enclosure.lua` | Curtain walls, battlements, wall walks | Implemented; requires in-game validation |
-| 20 | `20_gatehouse.lua` | Gate passage, drawbridge, portcullis, moat | Implemented; requires in-game validation |
+| 20 | `20_gatehouse.lua` | Twin gate towers, upper guard gallery, portal, portcullis and drawbridge | Redesigned; requires in-game validation |
 | 30 | `30_towers.lua` | Independent corner and gate towers | Not started |
 | 40 | `40_keep.lua` | Keep structure, floors, rooms and roof | Not started |
 | 50 | `50_residential.lua` | Great hall and lord's residence | Not started |
@@ -55,5 +55,9 @@ The replacement castle is built zone by zone. The replacement castle is active o
 - The raised portcullis is above head height at Z 37; it does not fill the walking passage.
 - The drawbridge is a flat 7-wide timber deck from Z 42..58, on the same level as the site platform.
 - Side moat channels are at X -17..-4 and X 4..17, Z 49..55.
-- Gate towers, stairs, and upper gatehouse rooms are intentionally excluded.
+- Includes two integral gate towers (X -17..-7 and 7..17), each with two interior levels, arrow slits, corner quoins and crenellated roof walk.
+- Includes an upper guard gallery spanning the portal at Y +15..+26, with windows, interior lights and a crenellated roof terrace.
+- The portal has a stepped pointed-arch profile; the ground passage remains 7 blocks wide and 8 blocks high.
+- The portcullis is raised above the walking clearance. The drawbridge remains a level 7-wide timber deck.
+- Staircases are intentionally excluded; floors are reserved for the independent zone 70 staircase module.
 - Commands: `/gdo_zone20` rebuilds only the gatehouse; `/gdo_zone20_info` reports its version and elevation.
