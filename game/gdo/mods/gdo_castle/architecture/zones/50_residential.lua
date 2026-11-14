@@ -53,9 +53,9 @@ return function(A)
         -- Open doorway on the facade that faces the nearest inner street.
         local door_x1,door_x2,door_z1,door_z2
         if def.front=="east" then
-            door_x1,door_x2,door_z1,door_z2=x2,x2,c z-1,c z+1
+            door_x1,door_x2,door_z1,door_z2=x2,x2,cz-1,cz+1
         elseif def.front=="west" then
-            door_x1,door_x2,door_z1,door_z2=x1,x1,c z-1,c z+1
+            door_x1,door_x2,door_z1,door_z2=x1,x1,cz-1,cz+1
         elseif def.front=="north" then
             door_x1,door_x2,door_z1,door_z2=cx-1,cx+1,z1,z1
         else
