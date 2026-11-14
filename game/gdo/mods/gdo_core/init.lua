@@ -376,7 +376,7 @@ minetest.register_on_joinplayer(function(player)
         meta:set_int("gdo_spawned", 1)
         if first_spawn then
             minetest.chat_send_player(player:get_player_name(),
-                "Bienvenue dans le Royaume du Nawak ! Tu commences dans la Cité des Canaux. Le Château des Brumes reste accessible par la pierre de passage ou /gdo_castle.")
+                "Bienvenue dans le Royaume du Nawak ! Tu commences au Port elfique. Le Château des Brumes reste accessible par la pierre de passage ou /gdo_castle.")
         end
     end)
 end)

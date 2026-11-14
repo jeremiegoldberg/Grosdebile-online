@@ -1,75 +1,101 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="860" viewBox="0 0 1200 860" role="img" aria-labelledby="title desc">
-<title id="title">Plan de la Cité des Canaux</title>
-<desc id="desc">Plan top-down schématique de la nouvelle ville portuaire : quartiers nord et sud, canal principal, bassin, canal secondaire, ponts, place centrale et hôtel de ville.</desc>
-<rect width="1200" height="860" fill="#f3eee3"/>
-<rect x="35" y="28" width="1130" height="100" rx="22" fill="#233d46"/>
-<text x="75" y="76" font-family="sans-serif" font-size="34" font-weight="800" fill="#fff">CITÉ DES CANAUX</text>
-<text x="77" y="108" font-family="sans-serif" font-size="18" fill="#d5e2dd">Nouvelle région de départ — ajoutée en plus des cartes existantes</text>
-<g transform="translate(74 158)">
-  <rect x="0" y="0" width="1052" height="620" rx="18" fill="#d8d0bd" stroke="#776e5b" stroke-width="5"/>
-  <g fill="#b6a995" opacity=".7">
-    <rect x="22" y="20" width="1008" height="125" rx="8"/>
-    <rect x="22" y="472" width="1008" height="126" rx="8"/>
+<title id="title">Plan du port elfique NLite</title>
+<desc id="desc">Plan top-down du port : bassin à l'ouest avec trois navires, canal transversal bordé de maisons mitoyennes, ponts arqués, cathédrale et remparts en fond, plage en escalier et place de débarquement à l'est.</desc>
+<defs>
+  <pattern id="water" width="26" height="18" patternUnits="userSpaceOnUse"><rect width="26" height="18" fill="#3e91b0"/><path d="M0 7 Q6 2 13 7 T26 7" fill="none" stroke="#9bd3df" stroke-width="2" opacity=".7"/></pattern>
+  <pattern id="stone" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#b9b5aa"/><path d="M0 8H16M8 0V8M3 8V16" stroke="#89877f" stroke-width="1"/></pattern>
+  <pattern id="roof" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#344a63"/><path d="M0 0L16 16M-8 8L8 24M8 -8L24 8" stroke="#62758b" stroke-width="2"/></pattern>
+</defs>
+<rect width="1200" height="860" fill="#e6e0d2"/>
+<rect x="34" y="26" width="1132" height="94" rx="18" fill="#243846"/>
+<text x="68" y="68" font-family="sans-serif" font-size="32" font-weight="800" fill="#fff">PORT ELFIQUE — PLAN DE RECONSTRUCTION</text>
+<text x="70" y="99" font-family="sans-serif" font-size="17" fill="#d8e5e5">Lecture du plan local · bassin ouest · canal habité · cathédrale et remparts en fond</text>
+<g transform="translate(80 150)">
+  <rect width="1040" height="650" rx="18" fill="#d3cbb9" stroke="#857d6c" stroke-width="5"/>
+  <!-- arrière rempart -->
+  <rect x="54" y="52" width="930" height="22" fill="url(#stone)" stroke="#655f55" stroke-width="3"/>
+  <g fill="#777c82" stroke="#4f5961" stroke-width="3">
+    <rect x="92" y="25" width="34" height="62"/><rect x="246" y="25" width="34" height="62"/>
+    <rect x="416" y="25" width="34" height="62"/><rect x="586" y="25" width="34" height="62"/>
+    <rect x="756" y="25" width="34" height="62"/><rect x="916" y="25" width="34" height="62"/>
   </g>
-  <g stroke="#665447" stroke-width="3">
-    <g fill="#dbc39b">
-      <rect x="48" y="38" width="98" height="82" rx="5"/><rect x="172" y="38" width="98" height="82" rx="5"/>
-      <rect x="296" y="38" width="98" height="82" rx="5"/><rect x="420" y="38" width="98" height="82" rx="5"/>
-      <rect x="688" y="38" width="98" height="82" rx="5"/><rect x="812" y="38" width="98" height="82" rx="5"/>
-      <rect x="936" y="38" width="70" height="82" rx="5"/>
+  <!-- cathédrale en arrière-est -->
+  <rect x="610" y="105" width="250" height="165" fill="#b9b3a8" stroke="#6a6258" stroke-width="5"/>
+  <path d="M600 112L735 34L870 112Z" fill="url(#roof)" stroke="#34465a" stroke-width="5"/>
+  <path d="M690 102L735 8L780 102Z" fill="#596c84" stroke="#35475a" stroke-width="4"/>
+  <g fill="#526b82" stroke="#e0d8ca" stroke-width="4">
+    <rect x="625" y="75" width="31" height="120"/><rect x="814" y="75" width="31" height="120"/>
+  </g>
+  <g fill="#9dc5cb" stroke="#6c8990" stroke-width="2">
+    <rect x="644" y="145" width="13" height="38"/><rect x="710" y="145" width="13" height="38"/>
+    <rect x="762" y="145" width="13" height="38"/><rect x="828" y="145" width="13" height="38"/>
+  </g>
+  <!-- port basin -->
+  <rect x="40" y="225" width="255" height="270" rx="18" fill="url(#water)" stroke="#315f74" stroke-width="9"/>
+  <path d="M45 250H292M45 470H292" stroke="#b1d6d2" stroke-width="5" opacity=".65"/>
+  <!-- ships -->
+  <g stroke="#503e2e" stroke-width="5" fill="#805632">
+    <path d="M80 310Q125 352 170 310L158 372H93Z"/><path d="M128 309V250" stroke="#60452d" stroke-width="7"/>
+    <path d="M128 255L95 297H128Z" fill="#d9d4bf"/><path d="M132 257L161 294H132Z" fill="#b9c3c3"/>
+    <path d="M180 408Q218 448 255 408L245 462H190Z"/><path d="M218 407V360" stroke="#60452d" stroke-width="7"/>
+    <path d="M218 362L194 398H218Z" fill="#bfaca0"/>
+  </g>
+  <!-- docks and cranes -->
+  <g stroke="#66452e" stroke-width="8" fill="none">
+    <path d="M62 250V210H112M62 210L91 234M255 456V510H286"/>
+  </g>
+  <g fill="#a57c50" stroke="#684a30" stroke-width="3">
+    <rect x="55" y="475" width="28" height="25"/><rect x="93" y="470" width="28" height="30"/>
+    <rect x="258" y="230" width="26" height="24"/>
+  </g>
+  <!-- main canal -->
+  <rect x="282" y="348" width="700" height="112" fill="url(#water)" stroke="#315f74" stroke-width="8"/>
+  <path d="M298 375H966M298 432H966" stroke="#a5d9dd" stroke-width="4" opacity=".7"/>
+  <!-- connecting harbour throat -->
+  <rect x="255" y="349" width="60" height="110" fill="url(#water)" stroke="#315f74" stroke-width="4"/>
+  <!-- wharves -->
+  <rect x="300" y="314" width="666" height="31" fill="url(#stone)" stroke="#777167" stroke-width="3"/>
+  <rect x="300" y="463" width="666" height="31" fill="url(#stone)" stroke="#777167" stroke-width="3"/>
+  <!-- houses both banks -->
+  <g stroke="#665244" stroke-width="3">
+    <g fill="#d9c7aa">
+      <rect x="316" y="176" width="76" height="132"/><rect x="402" y="176" width="76" height="132"/>
+      <rect x="488" y="176" width="76" height="132"/><rect x="574" y="176" width="76" height="132"/>
+      <rect x="660" y="176" width="76" height="132"/><rect x="746" y="176" width="76" height="132"/>
+      <rect x="832" y="176" width="76" height="132"/>
+      <rect x="316" y="500" width="76" height="132"/><rect x="402" y="500" width="76" height="132"/>
+      <rect x="488" y="500" width="76" height="132"/><rect x="574" y="500" width="76" height="132"/>
+      <rect x="660" y="500" width="76" height="132"/><rect x="746" y="500" width="76" height="132"/>
+      <rect x="832" y="500" width="76" height="132"/>
     </g>
-    <g fill="#a95742">
-      <path d="M42 42l55-24 55 24z M166 42l55-24 55 24z M290 42l55-24 55 24z M414 42l55-24 55 24z M682 42l55-24 55 24z M806 42l55-24 55 24z M930 42l41-24 41 24z"/>
+    <g fill="#7f4c43" stroke="#4f3834" stroke-width="3">
+      <path d="M309 180L354 145L399 180Z M395 180L440 145L485 180Z M481 180L526 145L571 180Z M567 180L612 145L657 180Z M653 180L698 145L743 180Z M739 180L784 145L829 180Z M825 180L870 145L915 180Z"/>
+      <path d="M309 505L354 470L399 505Z M395 505L440 470L485 505Z M481 505L526 470L571 505Z M567 505L612 470L657 505Z M653 505L698 470L743 505Z M739 505L784 470L829 505Z M825 505L870 470L915 505Z"/>
     </g>
   </g>
-  <rect x="20" y="270" width="1012" height="102" fill="#4b9db4" stroke="#376f86" stroke-width="8"/>
-  <path d="M26 292H1024 M26 348H1024" stroke="#a8e0df" stroke-width="4" opacity=".8"/>
-  <rect x="20" y="215" width="162" height="210" rx="22" fill="#4b9db4" stroke="#376f86" stroke-width="8"/>
-  <g stroke="#6a4d35" stroke-width="8">
-    <path d="M52 226v-45 M100 226v-62 M148 226v-42 M52 414v43 M100 414v58 M148 414v44"/>
+  <!-- bridges with rounded arcs -->
+  <g stroke="#777267" stroke-width="12" fill="none">
+    <path d="M440 348V336Q466 298 492 336V348"/>
+    <path d="M650 348V336Q676 298 702 336V348"/>
+    <path d="M850 348V336Q876 298 902 336V348"/>
   </g>
-  <g fill="#b8b3a7" stroke="#766f65" stroke-width="5">
-    <rect x="274" y="252" width="48" height="138" rx="8"/>
-    <rect x="570" y="252" width="48" height="138" rx="8"/>
-    <rect x="855" y="252" width="48" height="138" rx="8"/>
+  <g stroke="#777267" stroke-width="12" fill="none">
+    <path d="M440 460V472Q466 510 492 472V460"/>
+    <path d="M650 460V472Q676 510 702 472V460"/>
+    <path d="M850 460V472Q876 510 902 472V460"/>
   </g>
-  <g stroke="#9b927f" stroke-width="4">
-    <path d="M282 262v118 M314 262v118 M578 262v118 M610 262v118 M863 262v118 M895 262v118"/>
+  <!-- east landing and stepped beach -->
+  <rect x="916" y="270" width="86" height="360" fill="#d9c69e" stroke="#9c8964" stroke-width="4"/>
+  <g fill="#c5b18c" stroke="#9b8968" stroke-width="2">
+    <rect x="926" y="290" width="76" height="30"/><rect x="926" y="326" width="76" height="30"/>
+    <rect x="926" y="362" width="76" height="30"/><rect x="926" y="398" width="76" height="30"/>
+    <rect x="926" y="434" width="76" height="30"/><rect x="926" y="470" width="76" height="30"/>
   </g>
-  <rect x="742" y="365" width="98" height="225" fill="#4b9db4" stroke="#376f86" stroke-width="8"/>
-  <g stroke="#665447" stroke-width="3" fill="#d8be91">
-    <rect x="44" y="490" width="102" height="82"/><rect x="173" y="490" width="102" height="82"/>
-    <rect x="44" y="590" width="102" height="72"/><rect x="173" y="590" width="102" height="72"/>
-    <rect x="868" y="490" width="102" height="82"/><rect x="868" y="590" width="102" height="72"/>
-    <rect x="980" y="490" width="48" height="82"/>
-  </g>
-  <g fill="#a95742" stroke="#704434" stroke-width="3">
-    <path d="M40 494l55-30 55 30z M169 494l55-30 55 30z M40 594l55-26 55 26z M169 594l55-26 55 26z M864 494l55-30 55 30z M864 594l55-26 55 26z"/>
-  </g>
-  <rect x="350" y="420" width="310" height="188" rx="18" fill="#e8d8b2" stroke="#9b835d" stroke-width="5"/>
-  <text x="505" y="447" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="700" fill="#594b37">PLACE DU MARCHÉ</text>
-  <circle cx="505" cy="520" r="42" fill="#c9b997" stroke="#77674d" stroke-width="5"/>
-  <circle cx="505" cy="520" r="25" fill="#4b9db4" stroke="#376f86" stroke-width="4"/>
-  <g fill="#b76d42" stroke="#79503b" stroke-width="3">
-    <rect x="382" y="470" width="55" height="48"/><rect x="573" y="470" width="55" height="48"/>
-  </g>
-  <g fill="#8a4f43">
-    <path d="M378 472l31-24 31 24z M569 472l31-24 31 24z"/>
-  </g>
-  <rect x="390" y="626" width="230" height="118" rx="10" fill="#b8b9b2" stroke="#5d686a" stroke-width="6"/>
-  <path d="M380 635l125-55 125 55z" fill="#48596a" stroke="#35434e" stroke-width="5"/>
-  <rect x="474" y="656" width="62" height="88" fill="#70523b"/>
-  <rect x="487" y="640" width="36" height="20" fill="#6c9ead"/>
-  <path d="M488 581l17-45 17 45z" fill="#48596a" stroke="#35434e" stroke-width="4"/>
-  <text x="505" y="770" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="700" fill="#31454b">HÔTEL DE VILLE</text>
-  <circle cx="505" cy="605" r="13" fill="#e6ae38" stroke="#fff" stroke-width="4"/>
-  <path d="M505 590v-18" stroke="#6d542a" stroke-width="4"/>
-  <text x="525" y="611" font-family="sans-serif" font-size="16" font-weight="700" fill="#4d463b">APPARITION</text>
-  <text x="520" y="246" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="700" fill="#eaf5f2">CANAL PRINCIPAL</text>
-  <text x="95" y="330" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#eaf5f2" transform="rotate(-90 95 330)">BASSIN DU PORT</text>
-  <text x="791" y="475" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#eaf5f2" transform="rotate(90 791 475)">CANAL SECONDAIRE</text>
-  <text x="520" y="166" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#4f574f">QUARTIERS NORD — MAISONS À COLOMBAGES</text>
-  <text x="508" y="690" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#4f574f">PLACE CENTRALE ET HÔTEL DE VILLE</text>
+  <text x="165" y="527" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="700" fill="#e8f4f4">BASSIN DU PORT · 3 NAVIRES</text>
+  <text x="635" y="406" text-anchor="middle" font-family="sans-serif" font-size="19" font-weight="700" fill="#edf8f8">CANAL PRINCIPAL</text>
+  <text x="625" y="160" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="700" fill="#4c4035">CATHÉDRALE / SILHOUETTE ARRIÈRE</text>
+  <text x="958" y="654" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#5d513d">PLAGE EN ESCALIER</text>
+  <text x="630" y="690" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#4d514f">MAISONS MITOYENNES · DEUX RIVES · QUAI CONTINU</text>
+  <text x="520" y="830" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#4e5c5a">Plan schématique de la reconstruction visible ; zones masquées non déductibles des captures d'écran.</text>
 </g>
-<text x="600" y="825" text-anchor="middle" font-family="sans-serif" font-size="17" fill="#4e5c5a">Schéma top-down indicatif — les bâtiments sont générés en blocs dans Luanti.</text>
 </svg>

@@ -23,11 +23,11 @@ Les étapes sont indicatives. Une fonctionnalité n'est considérée comme livr�
 - [ ] Animation de combat et feedback visuel final
 
 ## Phase 2 — Monde du Nawak
-- [x] Nouvelle Cité des Canaux ajoutée sans supprimer le Château des Brumes ni les villages de guildes
-- [x] Génération versionnée de la ville, place, canal, bassin, ponts, quais, maisons et hôtel de ville
+- [x] Nouvelle Port elfique ajoutée sans supprimer le Château des Brumes ni les villages de guildes
+- [x] Générateur versionné du Port elfique : bassin, canal, navires, fronts bâtis, ponts, cathédrale, remparts et plage
 - [x] Apparition principale dans la ville et liaison de retour au château
 - [x] Protection de la ville et exclusion du spawn naturel des monstres
-- [ ] Parcourir et valider en jeu les trajets, ponts, rues, entrées et bâtiments
+- [ ] Vérifier en jeu le choix du site continental et parcourir le port, les ponts, les rues et les bâtiments
 - [ ] Intérieurs accessibles, commerces, auberge et PNJ de quartier
 - [ ] Géographie complète et régions documentées
 - [ ] Biomes, villages, bestiaire étendu, élites, boss et donjons

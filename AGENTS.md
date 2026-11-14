@@ -19,6 +19,6 @@ Utiliser l'architecture modulaire sous `game/gdo/mods/gdo_castle/architecture/` 
 Toute nouvelle zone doit être intégrée au bootstrap, disposer de sa version de génération, préserver les autres zones et être documentée. Une zone doit être praticable et raccordée avant d'être considérée comme terminée.
 
 
-## Cité des Canaux
+## Port elfique NLite
 
-La Cité des Canaux est une région indépendante générée par `game/gdo/mods/gdo_city/`. Avant de modifier cette carte, lire `docs/world/cite-des-canaux.md`. Ne pas déplacer ni nettoyer les régions du Château des Brumes ou des villages de guildes pour faire évoluer la cité. La commande `/gdo_city_rebuild` ne doit reconstruire que l'emprise X=-58..58, Z=780..920. Le point d'apparition principal est géré par `gdo_city`; le Château reste accessible via `/gdo_castle`.
+Le Port elfique est généré par `game/gdo/mods/gdo_city/`. Avant toute modification, lire `docs/world/cite-des-canaux.md` et conserver comme références les vues `elven.png` et `praiaelven.png` de l'archive NLite. Reproduire leur composition visible : bassin ouest et navires, canal entre des fronts bâtis continus, ponts, cathédrale, remparts et plage en escalier. Ne pas remplacer cette géométrie par une place gazonnée et des maisons isolées. Le site doit être validé comme continental avant toute terraformation. Si aucun site n'est valide, aucune ville ne doit être construite dans l'eau. Ne jamais modifier le Château des Brumes ou les villages de guildes ; la zone et le spawn sont dynamiques et stockés. `/gdo_city_rebuild` ne reconstruit que l'emprise enregistrée.

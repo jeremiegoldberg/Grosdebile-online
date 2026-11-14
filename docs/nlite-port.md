@@ -49,9 +49,9 @@ Les entités et icônes temporaires utilisent des textures simples générées p
 
 ## Nouvelle région ajoutée après le premier portage RPG
 
-La capture portuaire elven.png du diaporama NLite a servi de référence à la **Cité des Canaux**. Cette région est générée à part, au sud du Château des Brumes, et devient le point d'apparition principal. Elle ne remplace aucune autre carte. Le plan et les coordonnées sont documentés dans [docs/world/cite-des-canaux.md](world/cite-des-canaux.md).
+Les vues `elven.png` et `praiaelven.png` du diaporama NLite servent de plans visuels à la reconstruction du **Port elfique** : bassin ouest, navires, canal habité, maisons mitoyennes, ponts arqués, cathédrale, remparts et plage en escalier. La ville est recherchée sur un emplacement continental validé, au lieu d'être construite à des coordonnées arbitraires.
 
-La capture d'écran n'est pas copiée comme asset ; les bâtiments, canaux et quais sont reconstruits avec les matériaux natifs du jeu.
+L'archive ne contient ni sauvegarde de monde Minecraft ni structure exportée. Les éléments visibles sont reconstruits en blocs natifs Luanti ; les parties masquées par le cadrage ne peuvent pas être reproduites au bloc près. Voir [la fiche du Port elfique](world/cite-des-canaux.md).
 
 ## Ce qui reste à porter
 

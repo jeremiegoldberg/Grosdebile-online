@@ -22,19 +22,19 @@ luanti
 
 Dans le menu, crée un monde et sélectionne **Gros Débile Online** comme jeu. Si la commande `luanti` n'existe pas, essaie `minetest` selon le nom du paquet installé.
 
-Sur un monde déjà existant, fais une sauvegarde avant la mise à jour. La Cité des Canaux sera ajoutée dans sa propre région ; le Château des Brumes et les villages de guildes ne seront pas reconstruits.
+Sur un monde déjà existant, fais une sauvegarde avant la mise à jour. Le Port elfique sera généré sur un site continental séparé ; le Château des Brumes et les villages de guildes ne seront pas reconstruits.
 
-## 3. Première connexion : la Cité des Canaux
+## 3. Première connexion : le Port elfique
 
-Les nouveaux personnages apparaissent dans la **Cité des Canaux**, une ville portuaire inspirée de la capture elfique du pack NLite. La carte comprend un canal principal, un bassin portuaire, des quais, trois ponts, des maisons à colombages, une place de marché et un hôtel de ville.
+Le jeu recherche d'abord un terrain continental assez plat, puis y construit le **Port elfique** à partir des vues `elven.png` et `praiaelven.png` de NLite : bassin avec navires, canal entre des maisons mitoyennes, ponts, cathédrale, remparts et plage en escalier.
 
-- Le point d'apparition est sur la place centrale, devant l'hôtel de ville.
-- La pierre de passage de la place permet de rejoindre le Château des Brumes.
-- Utilise `/gdo_city` pour revenir à la cité depuis n'importe quelle région.
-- Utilise `/gdo_castle` pour rejoindre directement le Château des Brumes.
-- La cité est une zone scénarisée protégée : les joueurs ne peuvent pas y poser ni retirer de blocs.
+- Les nouveaux joueurs arrivent sur la petite place à l'est du canal.
+- La pierre de passage permet de rejoindre le Château des Brumes.
+- Utilise `/gdo_city` pour revenir au port depuis n'importe quelle région.
+- Utilise `/gdo_castle` pour rejoindre directement le château.
+- Le port est une zone scénarisée protégée.
 
-La génération est lancée automatiquement après l'initialisation du site du château. Sur un premier démarrage, attends que les chunks de la ville soient apparus si tu arrives avant la fin de la génération.
+Le terrain n'est modifié qu'après validation du sol sec. Si aucun site continental n'est trouvé, le joueur reste au château et le serveur réessaie plus tard ; il ne doit jamais apparaître au fond d'un lac.
 
 ## 4. Créer son personnage
 
@@ -56,7 +56,7 @@ Les quatre sorts disponibles sont `firebolt`, `heal`, `frostnova` et `arcane_bur
 
 ## 6. Monstres, quêtes et montures
 
-Le bestiaire contient trois créatures : gelée des marais, gobelin pillard et loup des brumes. Un spawn naturel limité est activé dans les terres sauvages, loin du Château des Brumes et de la Cité des Canaux. Il peut être désactivé dans `minetest.conf` avec `gdo_bestiary_natural_spawn = false`. Les œufs d'apparition sont aussi disponibles en mode créatif.
+Le bestiaire contient trois créatures : gelée des marais, gobelin pillard et loup des brumes. Un spawn naturel limité est activé dans les terres sauvages, loin du Château des Brumes et de le Port elfique. Il peut être désactivé dans `minetest.conf` avec `gdo_bestiary_natural_spawn = false`. Les œufs d'apparition sont aussi disponibles en mode créatif.
 
 La commande `/gdo_quests` ouvre le tableau des aventuriers : accepte la prime aux gobelins, élimine trois gobelins et réclame ton XP et tes pièces. `/gdo_wallet` affiche ton solde et `/gdo_pay <joueur> <montant>` transfère des pièces à un joueur connecté.
 
@@ -65,7 +65,7 @@ Les administrateurs peuvent faire apparaître un cheval ou un drake volant avec 
 ## 7. Le Château des Brumes et les villages de guildes
 
 Le Château des Brumes est conservé à son emplacement historique :
-- Depuis la Cité des Canaux, utilise la pierre de passage sur la place ou la commande `/gdo_castle`.
+- Depuis le Port elfique, utilise la pierre de passage sur la place ou la commande `/gdo_castle`.
 - Traverse le pont et la grande porte.
 - Dans la cour, cherche le **Bureau des Quêtes**.
 - Visite la grande salle de banquet, la bibliothèque, la salle de cours et la galerie des trophées.
@@ -78,7 +78,7 @@ Les quatre villages fondateurs restent présents autour de leurs coordonnées hi
 
 | Commande | Action |
 |---|---|
-| `/gdo_city` | Téléportation vers la Cité des Canaux |
+| `/gdo_city` | Téléportation vers le Port elfique |
 | `/gdo_castle` | Téléportation vers le Château des Brumes |
 | `/gdo_city_info` | État/version et coordonnées de la cité |
 | `/gdo_city_rebuild` | Reconstruction de la seule emprise urbaine (admin) |
@@ -86,11 +86,11 @@ Les quatre villages fondateurs restent présents autour de leurs coordonnées hi
 | `/gdo_zone40_info` | État de la citadelle gothique |
 | `/gdo_zones` | Liste des zones protégées et règles de construction |
 
-**Attention :** `/gdo_city_rebuild` efface et reconstruit toute l'emprise de la Cité des Canaux (X -58..58, Z 780..920). Il ne touche pas aux autres cartes.
+**Attention :** `/gdo_city_rebuild` reconstruit l'emprise du Port elfique au site déjà enregistré. Il ne déplace pas la ville et ne touche pas au château ni aux villages.
 
 ## 9. Limites connues
 
-- La Cité des Canaux est une reconstruction procédurale originale à partir d'une capture de référence, pas une importation d'un monde Minecraft ou d'un fichier de structure NLite.
+- Le Port elfique est une reconstruction procédurale à partir de deux captures de référence, pas une importation d'un monde Minecraft ou d'un fichier de structure NLite. Les parties masquées sur les images ne peuvent pas être reproduites au bloc près.
 - Les rues, maisons et bâtiments sont construits en blocs Luanti ; l'architecture et les textures restent provisoires.
 - Les créatures utilisent des formes cubiques et des textures temporaires ; les modèles et animations NLite ne sont pas encore importés.
 - Le jeu est un prototype : les boss, donjons complets, marchands, équipement avancé, animations dédiées et économie centralisée restent à développer.

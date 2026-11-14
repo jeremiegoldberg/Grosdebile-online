@@ -11,7 +11,7 @@ Ce répertoire documente les régions, cultures, factions et contenus originaux 
 
 ## Régions
 
-- **Cité des Canaux** — ville portuaire ajoutée à l'emprise X -58..58, Z 780..920 ; point d'apparition principal. Voir [la fiche de région](cite-des-canaux.md).
+- **Port elfique NLite** — reconstruction des vues elven.png et praiaelven.png : bassin, canal, navires, maisons mitoyennes, ponts, cathédrale, remparts et plage en escalier. Emplacement continental recherché au démarrage ; voir [la fiche de région](cite-des-canaux.md).
 - **Château des Brumes** — forteresse-école gothique et zone de départ historique.
 - **Villages des quatre guildes fondatrices** — quartiers collectifs et parcelles personnelles.
 - **Terres sauvages** — régions ouvertes pour l'exploration, les ressources et les constructions libres.

@@ -27,7 +27,7 @@ Le serveur Luanti héberge le monde et exécute les règles de jeu. Le jeu `gdo`
 | `gdo_economy` | Portefeuille local et transferts |
 | `gdo_society` | Maisons, guildes, villages et parcelles |
 | `gdo_zones` / `gdo_castle` | Protection et génération du Château des Brumes |
-| `gdo_city` | Région indépendante de la Cité des Canaux et point d'apparition |
+| `gdo_city` | Région indépendante de la Port elfique et point d'apparition |
 
 Les modules RPG sont natifs Lua, sans framework de mobs obligatoire. Les régions sont générées séparément et disposent de leur propre emprise/version : reconstruire une région ne doit pas réinitialiser les autres. La caméra troisième personne est l'expérience de référence sur PC/mobile. Une expérience VR immersive reste une cible expérimentale qui devra être testée sur un portage Luanti compatible OpenXR.
 
@@ -37,11 +37,13 @@ Les valeurs de personnage sont conservées dans les métadonnées Luanti, côté
 
 ### Monde et régions
 
-La Cité des Canaux utilise un module autonome `gdo_city`, qui dépend des matériaux/helpers du château mais possède son propre stockage/version et une emprise dédiée (X -58..58, Z 780..920). Son terrain est échantillonné après l'émergence des chunks, aplani sur une altitude locale, puis reconstruit uniquement dans cette emprise.
+Le module `gdo_city` reconstruit le Port elfique depuis les captures `elven.png` et `praiaelven.png`. Il recherche d'abord un site continental : contrôle des niveaux d'eau, du taux de sol sec et du dénivelé avant toute modification du terrain. Si aucun emplacement valable n'est trouvé, il ne construit rien et conserve le point d'arrivée au château. L'emplacement choisi est conservé en stockage ; la version 2 migre uniquement l'ancienne emprise de la ville.
 
-Le Château des Brumes continue d'utiliser l'architecture par zones dans `gdo_castle/architecture/`. Les villages de guildes restent gérés par `gdo_society`. Les trois systèmes coexistent dans le même monde ; la nouvelle ville n'écrase ni la forteresse ni les villages de guilde.
+La carte comprend un bassin portuaire, des navires, un canal bordé de maisons mitoyennes, des ponts arqués, une cathédrale, des remparts et une plage en escalier. Les bornes de protection et l'exclusion du bestiaire suivent l'emprise réelle enregistrée.
 
-Les nouveaux joueurs apparaissent dans la Cité des Canaux. La pierre de passage et les commandes `/gdo_city` et `/gdo_castle` maintiennent une liaison simple entre la ville et le Château des Brumes.
+Le Château des Brumes continue d'utiliser l'architecture par zones dans `gdo_castle/architecture/`. Les villages de guildes restent gérés par `gdo_society`. Les régions coexistent dans le même monde ; le Port elfique ne déplace ni la forteresse ni les villages de guilde.
+
+Les nouveaux joueurs apparaissent dans le Port elfique quand son site est prêt. La pierre de passage et les commandes `/gdo_city` et `/gdo_castle` maintiennent la liaison avec le Château des Brumes.
 
 ### Backend Go
 

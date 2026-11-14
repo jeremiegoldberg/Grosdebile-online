@@ -1,16 +1,29 @@
--- GDO — Cité des Canaux
--- Nouvelle région indépendante, inspirée de la capture "elven.png" du diaporama NLite.
--- La capture sert de référence visuelle : aucun monde, schéma ou asset tiers n'est importé.
--- La génération est déterministe, limitée à sa propre emprise et versionnée séparément.
+-- GDO — Port elfique NLite
+-- Reconstruction procédurale des vues "elven.png" et "praiaelven.png" de l'archive NLite.
+-- Aucun monde Minecraft ni structure exportée n'est disponible ; les volumes visibles sont reconstruits en Lua.
+-- La génération est versionnée, indépendante et limitée à son emprise dynamique.
 
 local A = gdo_castle_architecture
 assert(A and A.materials, "[GDO City] gdo_castle_architecture doit être chargé avant la cité.")
 
 local storage = minetest.get_mod_storage()
-local VERSION = 1
-local BOUNDS = {x1 = -58, x2 = 58, z1 = 780, z2 = 920}
-local SPAWN = {x = 0, z = 861}
-local CITY_NAME = "Cité des Canaux"
+local VERSION = 2
+local LEGACY_BOUNDS = {x1 = -58, x2 = 58, z1 = 780, z2 = 920}
+local RADIUS = 96
+local BOUNDS = LEGACY_BOUNDS
+local SPAWN = {x = 82, z = 868}
+local center_x, center_z = 0, 850
+local SITE_Y_MIN, SITE_Y_MAX = -32, 192
+local SITE_CANDIDATES = {
+    {270, 860}, {-270, 860}, {270, 1180}, {-270, 1180},
+    {0, 1180}, {0, 560}, {270, 560}, {-270, 560},
+    {270, 1500}, {-270, 1500}, {0, 1500},
+    {270, 2000}, {-270, 2000}, {0, 2000},
+    {270, -560}, {-270, -560}, {0, -560},
+    {850, 0}, {-850, 0}, {0, -850}, {850, -850}, {-850, -850},
+    {0, 2400}, {0, -1800}, {1200, 0}, {-1200, 0},
+}
+local CITY_NAME = "Port elfique"
 local base_y = nil
 local ready = false
 local building = false
@@ -29,25 +42,28 @@ local function y(offset)
     return (base_y or 0) + offset
 end
 
+-- Coordonnées locales : le centre absolu n'est choisi qu'après validation du terrain.
+local function wx(x) return center_x + x end
+local function wz(z) return center_z + z - 850 end
 local function put(x, level, z, node, param2)
-    A.put(x, y(level), z, node, param2)
+    A.put(wx(x), y(level), wz(z), node, param2)
 end
-
 local function fill(x1, level1, z1, x2, level2, z2, node)
-    A.fill(x1, y(level1), z1, x2, y(level2), z2, node)
+    A.fill(wx(x1), y(level1), wz(z1), wx(x2), y(level2), wz(z2), node)
 end
-
 local function clear(x1, level1, z1, x2, level2, z2)
-    A.clear(x1, y(level1), z1, x2, y(level2), z2)
+    A.clear(wx(x1), y(level1), wz(z1), wx(x2), y(level2), wz(z2))
 end
-
+local function lamp(x, level, z)
+    A.lamp(wx(x), y(level), wz(z))
+end
 local function build_channel(x1, z1, x2, z2)
-    -- Lit de pierre et eau en source : le canal reste stable, sans calcul de courant.
-    fill(x1, -4, z1, x2, -2, z2, M.stone)
-    fill(x1, -1, z1, x2, -1, z2, water_node)
+    fill(x1, -5, z1, x2, -3, z2, M.stone)
+    fill(x1, -2, z1, x2, -1, z2, water_node)
 end
 
-local function build_house(cx, cz, width, depth, variant)
+
+local function build_house(cx, cz, width, depth, variant, front)
     local x1, x2 = cx, cx + width - 1
     local z1, z2 = cz, cz + depth - 1
     local mid = math.floor((x1 + x2) / 2)
@@ -58,16 +74,17 @@ local function build_house(cx, cz, width, depth, variant)
     fill(x1, 1, z1, x2, 5, z2, wall)
     clear(x1 + 1, 1, z1 + 1, x2 - 1, 4, z2 - 1)
 
-    -- Portes orientées vers le canal ou la rue principale (façade sud).
-    clear(mid - 1, 1, z2, mid + 1, 4, z2)
-    fill(mid - 2, 1, z2, mid - 2, 4, z2, M.trim)
-    fill(mid + 2, 1, z2, mid + 2, 4, z2, M.trim)
-    fill(mid - 2, 5, z2, mid + 2, 5, z2, M.trim)
+    -- Entrée tournée vers le canal selon la rive.
+    local front_z = (front == "north") and z1 or z2
+    clear(mid - 1, 1, front_z, mid + 1, 4, front_z)
+    fill(mid - 2, 1, front_z, mid - 2, 4, front_z, M.trim)
+    fill(mid + 2, 1, front_z, mid + 2, 4, front_z, M.trim)
+    fill(mid - 2, 5, front_z, mid + 2, 5, front_z, M.trim)
 
     -- Fenêtres à meneaux sur les façades visibles.
     for _, z in ipairs({z1, z2}) do
         for _, x in ipairs({x1 + 2, x2 - 2}) do
-            if not (z == z2 and math.abs(x - mid) <= 2) then
+            if not (z == front_z and math.abs(x - mid) <= 2) then
                 put(x, 3, z, M.trim)
                 put(x, 4, z, M.glass)
                 put(x, 5, z, M.trim)
@@ -105,7 +122,7 @@ local function build_house(cx, cz, width, depth, variant)
     fill(x1 + 1, 6, z1 + 1, x1 + 2, 8, z1 + 2, M.stone)
     put(x1 + 4, 1, z1 + 4, M.table)
     put(x1 + 3, 1, z1 + 4, M.bench)
-    A.lamp(x2 - 2, y(4), z1 + 2)
+    lamp(x2 - 2, 4, z1 + 2)
 end
 
 local function build_spire(cx, cz, radius, wall_height)
@@ -128,7 +145,7 @@ local function build_spire(cx, cz, radius, wall_height)
             cx + inset, wall_height + 1 + layer, cz + inset, M.roof)
     end
     put(cx, wall_height + radius + 4, cz, M.gold)
-    A.lamp(cx, y(4), cz)
+    lamp(cx, 4, cz)
 end
 
 local function build_city_hall()
@@ -168,204 +185,255 @@ local function build_city_hall()
 
     -- Tour d'horloge sur le faîtage, visible depuis les canaux.
     build_spire(0, 897, 3, 15)
-    A.lamp(-9, y(7), 891)
-    A.lamp(9, y(7), 891)
+    lamp(-9, 7, 891)
+    lamp(9, 7, 891)
     put(0, 1, 900, M.banner)
     put(-8, 1, 900, M.table)
     put(8, 1, 900, M.table)
 end
 
 local function build_bridges()
-    -- Trois ponts de pierre au niveau des quais : pas de marches ni de seuil haut.
+    -- Trois traversées du canal principal, avec une arche basse sous la chaussée.
     for _, cx in ipairs({-27, 5, 44}) do
-        fill(cx - 2, 0, 834, cx + 2, 0, 853, M.floor)
-        fill(cx - 2, 1, 834, cx - 2, 2, 853, M.trim)
-        fill(cx + 2, 1, 834, cx + 2, 2, 853, M.trim)
-        for _, z in ipairs({835, 852}) do
-            fill(cx - 2, 1, z, cx + 2, 1, z, M.gold)
+        fill(cx - 3, 0, 834, cx + 3, 0, 853, M.floor)
+        fill(cx - 3, 1, 834, cx - 3, 2, 853, M.trim)
+        fill(cx + 3, 1, 834, cx + 3, 2, 853, M.trim)
+        for _, x in ipairs({cx - 2, cx + 2}) do
+            for z = 837, 850 do
+                local arch = math.floor(math.sqrt(math.max(0, 49 - (z - 843.5) * (z - 843.5))) / 3)
+                put(x, -2 + arch, z, M.stone)
+            end
         end
     end
-
-    -- Passage transversal sur le canal secondaire.
-    fill(17, 0, 878, 38, 0, 882, M.floor)
-    fill(17, 1, 878, 17, 2, 882, M.trim)
-    fill(38, 1, 878, 38, 2, 882, M.trim)
+    -- Pont transversal sur le bras qui rejoint la plage.
+    fill(52, 0, 878, 78, 0, 882, M.floor)
+    fill(52, 1, 878, 52, 2, 882, M.trim)
+    fill(78, 1, 878, 78, 2, 882, M.trim)
 end
+
+
 
 local function build_docks()
-    -- Deux pontons de marchandises, barils et lanternes.
-    fill(-56, 0, 829, -39, 0, 832, M.wood)
-    fill(-54, 0, 855, -40, 0, 858, M.wood)
-    for _, x in ipairs({-54, -48, -42}) do
-        fill(x, 1, 829, x, 3, 829, M.wood)
-        fill(x, 1, 855, x, 3, 855, M.wood)
+    -- Quais de pierre et pontons en bois dans le bassin ouest.
+    fill(-94, 0, 827, -66, 0, 830, M.wood)
+    fill(-92, 0, 855, -66, 0, 858, M.wood)
+    for _, x in ipairs({-91, -82, -73}) do
+        fill(x, 1, 827, x, 4, 827, M.wood)
+        fill(x, 1, 855, x, 4, 855, M.wood)
+        put(x, 1, 828, M.barrel)
+        put(x + 2, 1, 828, M.crate)
     end
-    for _, pos in ipairs({
-        {x = -52, z = 830}, {x = -45, z = 831},
-        {x = -51, z = 856}, {x = -43, z = 856},
-    }) do
-        put(pos.x, 1, pos.z, M.barrel)
-        put(pos.x + 1, 1, pos.z, M.crate)
-    end
-    A.lamp(-40, y(4), 830)
-    A.lamp(-40, y(4), 857)
+    lamp(-66, 4, 829)
+    lamp(-66, 4, 856)
 end
+
+
 
 local function build_market()
-    -- Place centrale pavée, bordure de pierre et fontaine.
-    fill(-17, 0, 858, 17, 0, 882, M.floor)
-    fill(-17, 0, 858, 17, 0, 859, M.trim)
-    fill(-17, 0, 881, 17, 0, 882, M.trim)
-    fill(-17, 0, 858, -16, 0, 882, M.trim)
-    fill(16, 0, 858, 17, 0, 882, M.trim)
-
-    -- Fontaine circulaire, au ras de la place.
-    fill(-4, 0, 866, 4, 0, 874, M.stone)
-    fill(-3, 1, 867, 3, 1, 873, water_node)
-    fill(-4, 1, 866, 4, 1, 866, M.trim)
-    fill(-4, 1, 874, 4, 1, 874, M.trim)
-    fill(-4, 1, 866, -4, 1, 874, M.trim)
-    fill(4, 1, 866, 4, 1, 874, M.trim)
-    fill(-1, 2, 869, 1, 3, 871, M.gold)
-    A.lamp(0, y(4), 870)
-
-    -- Deux étals couverts, laissant un large axe jusqu'à l'hôtel de ville.
-    for _, x in ipairs({-12, 12}) do
-        fill(x - 3, 0, 863, x + 3, 0, 868, M.wood)
-        fill(x - 3, 3, 862, x + 3, 3, 869, (x < 0) and M.tile_red or M.roof)
-        fill(x - 3, 1, 863, x + 3, 1, 863, M.trim)
-        put(x - 2, 1, 865, M.crate)
-        put(x + 2, 1, 865, M.barrel)
+    -- Petite place de débarquement à l'est du bras de canal, reliée au pont.
+    fill(78, 0, 866, 95, 0, 881, M.floor)
+    fill(78, 0, 866, 95, 0, 867, M.trim)
+    fill(78, 0, 880, 95, 0, 881, M.trim)
+    fill(78, 0, 866, 79, 0, 881, M.trim)
+    fill(94, 0, 866, 95, 0, 881, M.trim)
+    fill(83, 0, 871, 89, 0, 877, M.stone)
+    fill(84, 1, 872, 88, 1, 876, water_node)
+    for _, x in ipairs({79, 89}) do
+        fill(x, 0, 875, x + 4, 0, 879, M.wood)
+        fill(x, 4, 874, x + 4, 4, 880, (x < 85) and M.tile_red or M.roof)
+        put(x + 1, 1, 876, M.crate)
+        put(x + 3, 1, 877, M.barrel)
     end
-
-    -- Pierre de passage vers l'ancien quartier du Château des Brumes.
-    put(0, 1, 877, "gdo_city:waystone")
-    put(-15, 1, 878, M.banner)
-    put(15, 1, 878, M.banner)
+    put(85, 1, 878, "gdo_city:waystone")
+    lamp(85, 4, 878)
 end
+
 
 local function build_houses()
-    local houses = {
-        {-52, 790, 11, 12, 1}, {-36, 790, 11, 12, 2},
-        {-20, 790, 11, 12, 3}, {17, 790, 11, 12, 4},
-        {38, 790, 11, 12, 5},
-        {-52, 813, 11, 12, 6}, {-36, 813, 11, 12, 7},
-        {-20, 813, 11, 12, 8}, {17, 813, 11, 12, 9},
-        {38, 813, 11, 12, 10},
-        {-52, 860, 11, 12, 11}, {-36, 860, 11, 12, 12},
-        {-52, 883, 11, 12, 13}, {-36, 883, 11, 12, 14},
-        {39, 860, 10, 12, 15}, {39, 883, 10, 12, 16},
-        {49, 860, 9, 12, 17}, {49, 883, 9, 12, 18},
-    }
-    for _, h in ipairs(houses) do
-        build_house(h[1], h[2], h[3], h[4], h[5])
+    -- Maisons mitoyennes serrées en deux fronts continus, tournés vers le canal.
+    local positions = {-58, -43, -28, -13, 2, 17, 32}
+    for i, x in ipairs(positions) do
+        build_house(x, 811, 15, 22, i, "south")
+        build_house(x, 860, 15, 22, i + 8, "north")
+    end
+    -- Échoppes et maisons hautes qui ferment visuellement le bassin portuaire.
+    for i, p in ipairs({
+        {-89, 868, 13}, {-73, 868, 15}, {-57, 868, 12},
+        {-89, 787, 14}, {-72, 787, 12}, {-55, 787, 15},
+        {72, 810, 12}, {72, 832, 14},
+    }) do
+        build_house(p[1], p[2], 14, 20, p[3] + i, "south")
     end
 end
 
+
+
 local function build_greenery()
-    -- Petits jardins de rive, arbres et bancs ; les plantations restent hors des rues.
+    -- Arbres de quai et arbre clair à floraison blanche près de la plage.
     for _, p in ipairs({
-        {x = -55, z = 875}, {x = -47, z = 877}, {x = 48, z = 905},
-        {x = 52, z = 905}, {x = 50, z = 910},
+        {x = -94, z = 875}, {x = -92, z = 884}, {x = 91, z = 906},
+        {x = 94, z = 910}, {x = 88, z = 913},
     }) do
         fill(p.x, 1, p.z, p.x, 5, p.z, "gdo_core:arbre")
         for dx = -2, 2 do
             for dz = -2, 2 do
                 if math.abs(dx) + math.abs(dz) <= 3 then
-                    put(p.x + dx, 5, p.z + dz, "gdo_core:feuilles")
-                    put(p.x + dx, 6, p.z + dz, "gdo_core:feuilles")
+                    put(p.x + dx, 6, p.z + dz, M.leaves)
+                    put(p.x + dx, 7, p.z + dz, M.leaves)
                 end
             end
         end
     end
-    for _, p in ipairs({{x = -44, z = 872}, {x = 44, z = 906}}) do
-        put(p.x, 1, p.z, M.bench)
-        A.lamp(p.x, y(4), p.z + 2)
-    end
+    put(-85, 1, 872, M.bench)
+    lamp(-85, 4, 874)
 end
+
+
 
 local function build_south_gate()
-    -- Porte sud et deux petites tours ; raccord au chemin venant des autres régions.
-    fill(-58, 1, 914, -8, 5, 915, M.stone)
-    fill(8, 1, 914, 58, 5, 915, M.stone)
-    clear(-4, 1, 914, 4, 5, 915)
-    fill(-7, 1, 914, -5, 7, 915, M.trim)
-    fill(5, 1, 914, 7, 7, 915, M.trim)
-    fill(-7, 8, 914, 7, 8, 915, M.gold)
-    build_spire(-10, 914, 2, 8)
-    build_spire(10, 914, 2, 8)
-    A.lamp(0, y(9), 914)
+    -- Muraille arrière et porte fortifiée, derrière la silhouette de la cathédrale.
+    fill(-96, 1, 940, -12, 16, 943, M.stone)
+    fill(12, 1, 940, 96, 16, 943, M.stone)
+    clear(-11, 1, 940, 11, 10, 943)
+    fill(-14, 1, 940, -12, 19, 943, M.trim)
+    fill(12, 1, 940, 14, 19, 943, M.trim)
+    fill(-14, 20, 940, 14, 20, 943, M.roof)
+    for _, x in ipairs({-88, -55, -22, 22, 55, 88}) do
+        build_spire(x, 941, 4, 14)
+    end
 end
+
+
 
 local function build_roads()
-    -- Rue principale nord-sud, promenades des quais et venelles est-ouest.
-    fill(-7, 0, 780, 7, 0, 835, M.path)
-    fill(-56, 0, 830, 56, 0, 833, M.path)
-    fill(-56, 0, 854, 56, 0, 857, M.path)
-    fill(-56, 0, 807, 56, 0, 809, M.path)
-    fill(-56, 0, 829, -40, 0, 829, M.trim)
-    fill(-56, 0, 858, -40, 0, 858, M.trim)
-    fill(35, 0, 851, 37, 0, 914, M.path)
-    fill(18, 0, 881, 56, 0, 883, M.path)
-
-    -- Pavage décoratif des carrefours.
-    for _, x in ipairs({-27, 5, 44}) do
-        fill(x - 3, 0, 830, x + 3, 0, 835, M.floor)
-        fill(x - 3, 0, 853, x + 3, 0, 858, M.floor)
+    -- Promenades de pierre sur les deux berges et axe d'accès au quartier haut.
+    fill(-95, 0, 831, 60, 0, 834, M.path)
+    fill(-95, 0, 854, 60, 0, 857, M.path)
+    fill(52, 0, 854, 56, 0, 939, M.path)
+    fill(58, 0, 899, 91, 0, 902, M.path)
+    for _, x in ipairs({-25, 18, 53}) do
+        fill(x - 2, 0, 833, x + 2, 0, 854, M.floor)
     end
 end
+
+
 
 local function build_lighting()
-    for x = -52, 52, 13 do
-        for _, z in ipairs({833, 854, 808, 881}) do
-            A.lamp(x, y(4), z)
-            put(x, 0, z, M.stone)
-        end
+    for x = -90, 90, 15 do
+        lamp(x, 4, 831)
+        lamp(x, 4, 856)
     end
-    for z = 790, 910, 16 do
-        A.lamp(-55, y(4), z)
-        A.lamp(55, y(4), z)
+    for z = 790, 930, 18 do
+        lamp(-94, 4, z)
+        lamp(91, 4, z)
     end
 end
 
+local function build_ships()
+    -- Trois navires marchands : coques, ponts, mâts et voiles dans le bassin ouest.
+    local function ship(x, z, length, sail)
+        for row = 0, 5 do
+            local half = math.floor(length / 2 * (1 - math.abs(row - 2.5) / 4))
+            fill(x - half, -1, z + row, x + half, -1, z + row, M.wood)
+            if half > 1 then
+                fill(x - half + 1, -2, z + row, x + half - 1, -2, z + row, M.wood)
+            end
+        end
+        local deck_half = math.floor(length / 2) - 2
+        fill(x - deck_half, 0, z + 1, x + deck_half, 0, z + 4, M.wood)
+        fill(x, 1, z + 2, x, 15, z + 2, M.wood)
+        fill(x - 1, 4, z + 1, x + 1, 12, z + 1, sail)
+        fill(x - 1, 5, z + 3, x + 1, 13, z + 3, sail)
+        put(x, 14, z + 2, M.trim)
+    end
+    ship(-84, 832, 25, M.plaster)
+    ship(-75, 848, 21, M.tile_red)
+    ship(-87, 857, 17, M.plaster)
+    for _, x in ipairs({-96, -90, -68}) do
+        fill(x, 1, 862, x, 12, 862, M.wood)
+        fill(x - 4, 11, 862, x + 4, 11, 862, M.wood)
+        put(x, 10, 861, M.barrel)
+        put(x + 2, 1, 864, M.crate)
+    end
+end
+
+local function build_cathedral()
+    -- Cathédrale monumentale et tours secondaires, en fond de perspective.
+    fill(20, 0, 884, 82, 0, 931, M.floor)
+    fill(25, 1, 886, 77, 12, 928, M.stone)
+    clear(27, 1, 888, 75, 10, 926)
+    clear(46, 1, 886, 57, 7, 894)
+    for _, x in ipairs({27, 35, 67, 75}) do
+        fill(x, 1, 888, x + 1, 11, 926, M.trim)
+    end
+    for _, z in ipairs({898, 908, 918}) do
+        put(25, 5, z, M.trim); put(25, 6, z, M.glass); put(25, 7, z, M.trim)
+        put(77, 5, z, M.trim); put(77, 6, z, M.glass); put(77, 7, z, M.trim)
+    end
+    for layer = 0, 11 do
+        fill(25 + layer, 13 + layer, 885, 77 - layer, 13 + layer, 929,
+            (layer % 3 == 0) and M.tile_red or M.roof)
+    end
+    build_spire(51, 906, 4, 23)
+    build_spire(30, 887, 3, 16)
+    build_spire(72, 887, 3, 16)
+end
+
+
+
 local function build_city()
-    -- Le secteur n'a pas d'emprise sur les cartes du château ou des villages de guilde.
     A.flatten_rect(BOUNDS, base_y, 192)
-    clear(BOUNDS.x1, 1, BOUNDS.z1, BOUNDS.x2, 30, BOUNDS.z2)
+    A.clear(BOUNDS.x1, base_y + 1, BOUNDS.z1, BOUNDS.x2, 192, BOUNDS.z2)
 
-    -- Canaux principaux et bassin portuaire.
-    build_channel(-55, 838, 56, 849)
-    build_channel(-57, 827, -40, 860)
-    build_channel(22, 848, 33, 910)
+    -- Bassin ouest relié au canal principal, puis bras vers la plage.
+    build_channel(-96, 827, -62, 862)
+    build_channel(-66, 838, 65, 849)
+    build_channel(58, 845, 72, 912)
 
-    -- Quais, promenades, rues et ponts.
     build_roads()
     build_bridges()
     build_docks()
-
-    -- Bâtiments et lieux de vie.
+    build_ships()
     build_houses()
     build_market()
     build_city_hall()
-    build_greenery()
+    build_cathedral()
     build_south_gate()
+    build_greenery()
     build_lighting()
+
+    -- Plage en escalier sur le coude du canal, comme dans la seconde vue NLite.
+    for step = 0, 5 do
+        fill(84 + step * 2, -step, 888 + step, 96, -step, 894 + step, "gdo_core:sable")
+    end
 
     A.fix_light(BOUNDS)
     ready = true
     storage:set_int("city_version", VERSION)
     storage:set_int("city_base_y", base_y)
     storage:set_int("city_base_initialized", 1)
-    minetest.log("action", "[GDO][CITY] Cité des Canaux construite et conservée comme région indépendante.")
+    minetest.log("action", "[GDO][CITY] Port elfique reconstruit sur terrain continental.")
 end
+
+local function spawn_position()
+    return {x = wx(SPAWN.x), y = y(1), z = wz(SPAWN.z)}
+end
+
+
 
 local function finish_pending_spawns()
     for name in pairs(pending_spawns) do
         local player = minetest.get_player_by_name(name)
         if player then
-            player:set_pos({x = SPAWN.x, y = y(1), z = SPAWN.z})
-            if player.set_velocity then player:set_velocity({x = 0, y = 0, z = 0}) end
-            minetest.chat_send_player(name, "Bienvenue dans la Cité des Canaux ! Explore le port, les ponts et la place de l'hôtel de ville. /gdo_castle permet de rejoindre le Château des Brumes.")
+            if ready then
+                player:set_pos(spawn_position())
+                if player.set_velocity then player:set_velocity({x = 0, y = 0, z = 0}) end
+                minetest.chat_send_player(name, "Bienvenue au Port elfique ! Explore les quais, les navires, le canal et la cathédrale. /gdo_castle permet de rejoindre le Château des Brumes.")
+            else
+                local castle_y = gdo_castle_storage:get_int("architecture_castle_level")
+                player:set_pos({x = 0, y = castle_y + 1, z = 68})
+                minetest.chat_send_player(name, "Aucun site terrestre n'est encore validé pour le port elfique. Tu commences au Château des Brumes.")
+            end
         end
         pending_spawns[name] = nil
     end
@@ -378,20 +446,23 @@ function gdo_city.spawn(player)
         pending_spawns[name] = true
         return true
     end
-    player:set_pos({x = SPAWN.x, y = y(1), z = SPAWN.z})
+    player:set_pos(spawn_position())
     if player.set_velocity then player:set_velocity({x = 0, y = 0, z = 0}) end
     return true
 end
 
--- Région scénarisée en lecture seule ; les villages et terres sauvages restent inchangés.
-if gdo_zones and gdo_zones.register_readonly_zone then
-    gdo_zones.register_readonly_zone({
-        name = CITY_NAME,
-        description = "Cité portuaire, canaux, hôtel de ville, quais, ponts et maisons",
-        min = {x = BOUNDS.x1, y = -32, z = BOUNDS.z1},
-        max = {x = BOUNDS.x2, y = 192, z = BOUNDS.z2},
-    })
+local function register_city_zone()
+    if gdo_zones and gdo_zones.register_readonly_zone then
+        gdo_zones.register_readonly_zone({
+            name = CITY_NAME,
+            description = "Port elfique, maisons mitoyennes, bassin, canal, ponts, cathédrale et remparts",
+            min = {x = BOUNDS.x1, y = -32, z = BOUNDS.z1},
+            max = {x = BOUNDS.x2, y = 192, z = BOUNDS.z2},
+        })
+    end
 end
+
+
 
 minetest.register_node("gdo_city:waystone", {
     description = "Pierre de passage — Château des Brumes",
@@ -411,13 +482,13 @@ minetest.register_node("gdo_city:waystone", {
 })
 
 minetest.register_chatcommand("gdo_city", {
-    description = "Rejoindre la Cité des Canaux",
+    description = "Rejoindre le Port elfique",
     func = function(name)
         local player = minetest.get_player_by_name(name)
         if not player then return false, "Joueur introuvable." end
         gdo_city.spawn(player)
         if not ready then return true, "La cité termine sa préparation ; tu y seras envoyé dès qu'elle sera prête." end
-        return true, "Bienvenue dans la Cité des Canaux."
+        return true, "Bienvenue au Port elfique."
     end,
 })
 
@@ -432,59 +503,236 @@ minetest.register_chatcommand("gdo_castle", {
     end,
 })
 
-local function wait_for_site()
-    if building or ready then return end
-    if not gdo_castle_storage or gdo_castle_storage:get_int("architecture_site_version") < 1 then
-        minetest.after(2, wait_for_site)
-        return
+local function make_bounds(x, z)
+    return {x1 = x - RADIUS, x2 = x + RADIUS, z1 = z - RADIUS, z2 = z + RADIUS}
+end
+
+local function dry_surface(x, z)
+    local surface = A.find_surface_y(x, z)
+    if not surface then return nil end
+    local above = minetest.get_node_or_nil({x = x, y = surface + 1, z = z})
+    if not above or above.name == "ignore" then return nil end
+    local def = minetest.registered_nodes[above.name]
+    if def and def.liquidtype and def.liquidtype ~= "none" then return nil end
+    return surface
+end
+
+local function inspect_site(x, z)
+    local values, total = {}, 0
+    for sx = x - RADIUS + 8, x + RADIUS - 8, 16 do
+        for sz = z - RADIUS + 8, z + RADIUS - 8, 16 do
+            total = total + 1
+            local ground = dry_surface(sx, sz)
+            if ground then values[#values + 1] = ground end
+        end
     end
+    if #values / total < 0.985 then return nil end
+    table.sort(values)
+    local low = values[math.max(1, math.floor(#values * 0.05))]
+    local high = values[math.min(#values, math.ceil(#values * 0.95))]
+    if high - low > 24 then return nil end
+    return values[math.floor((#values + 1) / 2)]
+end
 
-    local castle_y = gdo_castle_storage:get_int("architecture_castle_level")
-    base_y = storage:get_int("city_base_y")
-    building = true
-    local emerge_failed = false
+local function coarse_site_ok(x, z)
+    local values = {}
+    for _, dx in ipairs({-80, 0, 80}) do
+        for _, dz in ipairs({-80, 0, 80}) do
+            local ground = dry_surface(x + dx, z + dz)
+            if ground then values[#values + 1] = ground end
+        end
+    end
+    if #values < 8 then return false end
+    table.sort(values)
+    return values[#values] - values[1] <= 32
+end
 
+local function emerge_box(bounds, callback)
+    local failed = false
     minetest.emerge_area(
-        {x = BOUNDS.x1, y = -32, z = BOUNDS.z1},
-        {x = BOUNDS.x2, y = 192, z = BOUNDS.z2},
+        {x = bounds.x1, y = SITE_Y_MIN, z = bounds.z1},
+        {x = bounds.x2, y = SITE_Y_MAX, z = bounds.z2},
         function(_, action, remaining)
-            if action == minetest.EMERGE_ERRORED or action == minetest.EMERGE_CANCELLED then
-                emerge_failed = true
-            end
-            if remaining == 0 then
-                if emerge_failed then
-                    building = false
-                    minetest.log("error", "[GDO][CITY] Impossible de charger les chunks de la cité ; la génération sera retentée.")
-                    minetest.after(5, wait_for_site)
-                    return
-                end
-                if storage:get_int("city_version") < VERSION then
-                    if storage:get_int("city_base_initialized") == 1 then
-                        -- Une reconstruction ne doit pas faire dériver l'altitude à cause
-                        -- des fondations GDO déjà présentes sous la ville.
-                        base_y = storage:get_int("city_base_y")
-                    else
-                        -- Échantillonner après l'émergence : avant celle-ci, la zone peut être
-                        -- composée de nœuds "ignore" et produire une altitude erronée.
-                        local sampled = A.median_surface(BOUNDS, 12)
-                        base_y = sampled or castle_y
-                    end
-                    storage:set_int("city_base_y", base_y)
-                    build_city()
-                else
-                    base_y = storage:get_int("city_base_y")
-                    ready = true
-                    minetest.log("action", "[GDO][CITY] Cité déjà présente ; aucune reconstruction nécessaire.")
-                end
-                building = false
-                finish_pending_spawns()
-            end
+            if action == minetest.EMERGE_ERRORED or action == minetest.EMERGE_CANCELLED then failed = true end
+            if remaining == 0 then callback(failed) end
         end
     )
 end
 
+local function cleanup_legacy(callback)
+    if storage:get_int("city_legacy_migrated") == 1 then callback(true); return end
+    if storage:get_int("city_version") < 1 then
+        storage:set_int("city_legacy_migrated", 1)
+        callback(true)
+        return
+    end
+    emerge_box(LEGACY_BOUNDS, function(failed)
+        if failed then callback(false); return end
+        local old_y = storage:get_int("city_base_y")
+        local levels = {}
+        for _, point in ipairs({
+            {-60, 780}, {-60, 850}, {-60, 920}, {0, 778},
+            {0, 922}, {60, 780}, {60, 850}, {60, 920},
+        }) do
+            for sy = 192, -32, -1 do
+                local node = minetest.get_node_or_nil({x = point[1], y = sy, z = point[2]})
+                if node and node.name ~= "ignore" then
+                    local def = minetest.registered_nodes[node.name]
+                    if def and def.liquidtype and def.liquidtype ~= "none" then
+                        levels[#levels + 1] = sy
+                        break
+                    end
+                end
+            end
+        end
+        table.sort(levels)
+        local waterline = (#levels > 0) and levels[math.floor((#levels + 1) / 2)] or old_y
+        local floor = math.min(old_y, waterline) - 4
+        local low = math.min(old_y - 2, floor)
+        local high = math.max(old_y + 34, waterline)
+        for x = LEGACY_BOUNDS.x1, LEGACY_BOUNDS.x2 do
+            for z = LEGACY_BOUNDS.z1, LEGACY_BOUNDS.z2 do
+                A.clear(x, low, z, x, high, z)
+                local dx, dz = x / 56, (z - 850) / 68
+                local distance = dx * dx + dz * dz
+                if distance <= 0.82 then
+                    A.fill(x, floor, z, x, floor + 1, z, M.stone)
+                    A.fill(x, floor + 2, z, x, waterline, z, water_node)
+                elseif distance <= 1.05 then
+                    A.fill(x, floor, z, x, waterline - 1, z, "gdo_core:sable")
+                    A.put(x, waterline, z, "gdo_core:sable")
+                else
+                    A.put(x, waterline - 1, z, "gdo_core:terre")
+                    A.put(x, waterline, z, M.grass)
+                end
+            end
+        end
+        storage:set_int("city_legacy_migrated", 1)
+        A.fix_light(LEGACY_BOUNDS)
+        minetest.log("action", "[GDO][CITY] Ancienne emprise v1 transformée en lagune au niveau de l'eau locale.")
+        callback(true)
+    end)
+end
+
+local function set_site(x, z, ground_y)
+    center_x, center_z, base_y = x, z, ground_y
+    BOUNDS = make_bounds(x, z)
+    gdo_city.bounds = BOUNDS
+    gdo_city.center = {x = x, y = ground_y, z = z}
+    storage:set_int("city_x", x)
+    storage:set_int("city_z", z)
+    storage:set_int("city_y", ground_y)
+    storage:set_int("city_site", 1)
+    register_city_zone()
+end
+
+local function finish_pending()
+    for name in pairs(pending_spawns) do
+        local player = minetest.get_player_by_name(name)
+        if player then
+            if ready then
+                player:set_pos(spawn_position())
+            else
+                local castle_y = gdo_castle_storage:get_int("architecture_castle_level")
+                player:set_pos({x = 0, y = castle_y + 1, z = 68})
+            end
+            pending_spawns[name] = nil
+        end
+    end
+end
+
+local function candidate_search(index)
+    if building or ready then return end
+    if index > #SITE_CANDIDATES then
+        minetest.log("error", "[GDO][CITY] Aucun site continental assez plat trouvé. Aucune ville ne sera construite dans l'eau.")
+        finish_pending()
+        minetest.after(60, function() if not ready then candidate_search(1) end end)
+        return
+    end
+    local candidate = SITE_CANDIDATES[index]
+    local bounds = make_bounds(candidate[1], candidate[2])
+    if not (bounds.x2 < LEGACY_BOUNDS.x1 or bounds.x1 > LEGACY_BOUNDS.x2
+        or bounds.z2 < LEGACY_BOUNDS.z1 or bounds.z1 > LEGACY_BOUNDS.z2) then
+        candidate_search(index + 1)
+        return
+    end
+    local samples = {}
+    for _, dx in ipairs({-80, 0, 80}) do
+        for _, dz in ipairs({-80, 0, 80}) do
+            samples[#samples + 1] = {x = candidate[1] + dx, z = candidate[2] + dz}
+        end
+    end
+    local remaining, failed = #samples, false
+    for _, point in ipairs(samples) do
+        minetest.emerge_area(
+            {x = point.x, y = SITE_Y_MIN, z = point.z},
+            {x = point.x, y = SITE_Y_MAX, z = point.z},
+            function(_, action, left)
+                if action == minetest.EMERGE_ERRORED or action == minetest.EMERGE_CANCELLED then failed = true end
+                if left == 0 then
+                    remaining = remaining - 1
+                    if remaining == 0 then
+                        if failed or not coarse_site_ok(candidate[1], candidate[2]) then
+                            candidate_search(index + 1)
+                            return
+                        end
+                        emerge_box(bounds, function(emerge_failed)
+                            if emerge_failed then candidate_search(index + 1); return end
+                            local ground_y = inspect_site(candidate[1], candidate[2])
+                            if not ground_y then candidate_search(index + 1); return end
+                            set_site(candidate[1], candidate[2], ground_y)
+                            building = true
+                            cleanup_legacy(function(ok)
+                                if ok then build_city() end
+                                building = false
+                                finish_pending()
+                            end)
+                        end)
+                    end
+                end
+            end
+        )
+    end
+end
+
+local function start_city()
+    if building or ready then return end
+    if not gdo_castle_storage or gdo_castle_storage:get_int("architecture_site_version") < 1 then
+        minetest.after(3, start_city)
+        return
+    end
+    if storage:get_int("city_site") == 1 then
+        center_x = storage:get_int("city_x")
+        center_z = storage:get_int("city_z")
+        base_y = storage:get_int("city_y")
+        BOUNDS = make_bounds(center_x, center_z)
+        gdo_city.bounds = BOUNDS
+        gdo_city.center = {x = center_x, y = base_y, z = center_z}
+        register_city_zone()
+        building = true
+        emerge_box(BOUNDS, function(failed)
+            if failed then building = false; minetest.after(10, start_city); return end
+            if storage:get_int("city_version") < VERSION then
+                cleanup_legacy(function(ok)
+                    if ok then build_city() end
+                    building = false
+                    finish_pending()
+                end)
+            else
+                ready = true
+                building = false
+                finish_pending()
+            end
+        end)
+    else
+        candidate_search(1)
+    end
+end
+
+
+
 minetest.register_on_mods_loaded(function()
-    minetest.after(4, wait_for_site)
+    minetest.after(4, start_city)
 end)
 
 minetest.register_on_joinplayer(function(player)
@@ -501,25 +749,25 @@ minetest.register_on_respawnplayer(function(player)
 end)
 
 minetest.register_chatcommand("gdo_city_info", {
-    description = "Affiche l'état de la Cité des Canaux",
+    description = "Affiche l'état du port elfique",
     func = function()
-        return true, string.format("%s — version %d/%d — prête=%s — centre: X=%d, Z=%d — altitude=%d",
+        return true, string.format("%s — version %d/%d — prêt=%s — centre X=%d Z=%d Y=%d",
             CITY_NAME, storage:get_int("city_version"), VERSION,
-            ready and "oui" or "en préparation", SPAWN.x, SPAWN.z, base_y or 0)
-    end,
+            ready and "oui" or "non", center_x, center_z, base_y or 0)
+    end
 })
 
 minetest.register_chatcommand("gdo_city_rebuild", {
-    description = "Reconstruit la Cité des Canaux (zone réservée)",
+    description = "Reconstruit le Port elfique (zone réservée)",
     privs = {server = true},
     func = function()
         if building then return false, "La génération de la cité est déjà en cours." end
         storage:set_int("city_version", 0)
         ready = false
         pending_spawns = {}
-        wait_for_site()
-        return true, "Reconstruction de la Cité des Canaux demandée. Seule son emprise sera remplacée."
+        start_city()
+        return true, "Reconstruction du Port elfique demandée. Seule son emprise sera remplacée."
     end,
 })
 
-minetest.log("action", "[GDO City] La Cité des Canaux est enregistrée ; elle sera générée après le site du château.")
+minetest.log("action", "[GDO City] Le Port elfique est enregistré ; elle sera générée après le site du château.")

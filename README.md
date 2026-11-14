@@ -27,25 +27,25 @@ Voir [docs/nlite-port.md](docs/nlite-port.md) pour l'inventaire de l'archive, la
 
 GDO repose sur **un seul Royaume du Nawak persistant**, commun à l'ensemble des joueurs du serveur officiel. Les régions sont conservées côte à côte dans le même monde :
 
-1. **La Cité des Canaux** : nouvelle ville portuaire, canaux, ponts, quais, marché, hôtel de ville et point d'apparition principal.
+1. **Le Port elfique NLite** : bassin à navires, canal entre des maisons mitoyennes, ponts, cathédrale, remparts et plage en escalier ; point d'apparition principal.
 2. **Le Château des Brumes** : forteresse-école gothique, lieux de quêtes et espaces scénarisés.
 3. **Les villages de guildes** : quatre villages fondateurs et villages créés par les joueurs.
 4. **Les parcelles personnelles** : une parcelle et une maison de départ par joueur dans son village de guilde.
 5. **Les terres sauvages** : zones d'exploration, de récolte, de combat et de construction libre.
 
-La Cité des Canaux s'inspire de la capture de ville portuaire elfique elven.png présente dans le diaporama du modpack NLite. C'est une reconstruction procédurale originale ; aucun monde Minecraft ni asset tiers n'est copié dans le dépôt.
+Le Port elfique est reconstruit à partir des deux vues `elven.png` et `praiaelven.png` présentes dans l'archive NLite. L'archive ne contient pas de sauvegarde de monde ni de structure exportée ; la reproduction des volumes visibles est procédurale, sans prétendre copier les parties masquées au bloc près.
 
 ![Vue d'ensemble illustrée du Royaume du Nawak](docs/visuals/royaume-du-nawak.svg)
 
 ![Organisation des espaces du monde partagé](docs/visuals/organisation-du-monde.svg)
 
-![Plan de la Cité des Canaux](docs/visuals/cite-des-canaux-plan.svg)
+![Plan du Port elfique](docs/visuals/cite-des-canaux-plan.svg)
 
 ## État du projet
 
 **Prototype RPG — première région urbaine ajoutée.** Le jeu possède une base locale jouable : personnage à créer, dix races, trois classes, progression XP, capacités, sorts, armes, créatures de test, première quête de chasse, monnaie locale et montures.
 
-La Cité des Canaux est maintenant une région indépendante, générée sur une emprise dédiée au sud du secteur du château. Elle contient un canal principal, un bassin portuaire, un canal secondaire, des ponts, des quais, des maisons à colombages, un marché et un hôtel de ville. Les nouveaux personnages y apparaissent ; le Château des Brumes et les villages de guildes restent présents à leurs emplacements existants.
+Le Port elfique est généré sur un emplacement continental validé au démarrage. Sa composition reprend les vues NLite : bassin avec navires, canal bordé de maisons mitoyennes, ponts arqués, cathédrale, remparts et plage en escalier. Si aucun site terrestre assez plat n'est disponible, les joueurs restent au château au lieu d'apparaître sous l'eau. Le Château des Brumes et les villages de guildes restent à leurs emplacements existants.
 
 Les constructions de la cité et du château sont protégées. Le reste du monde demeure libre selon les règles GDO. Les nouvelles entités utilisent encore des formes cubiques et des textures provisoires. Le spawn naturel des créatures est plafonné et exclut les zones urbaines protégées.
 
@@ -74,16 +74,16 @@ Dans Luanti, crée un monde et sélectionne **Gros Débile Online** comme jeu. S
 | `/gdo_bestiary` | Afficher le bestiaire |
 | `/gdo_quests` | Ouvrir le tableau des aventuriers |
 | `/gdo_wallet` / `/gdo_pay` | Consulter ou transférer sa monnaie |
-| `/gdo_city` | Rejoindre la Cité des Canaux |
+| `/gdo_city` | Rejoindre le Port elfique |
 | `/gdo_castle` | Rejoindre le Château des Brumes |
 | `/gdo_city_info` | Consulter l'état de génération de la cité |
 
-Les administrateurs disposent aussi de `/gdo_city_rebuild` pour reconstruire uniquement la nouvelle emprise urbaine. Cette commande efface les constructions dans la zone réservée de la cité ; elle ne touche pas au château ni aux villages de guildes.
+Les administrateurs disposent aussi de `/gdo_city_rebuild` pour reconstruire uniquement l'emprise enregistrée du port. La commande ne déplace pas la carte et ne touche pas au château ni aux villages de guildes.
 
 ## Règles de construction et protection des zones
 
 Le monde suit un modèle volontairement simple :
-- **Zones de scénario en lecture seule** : la Cité des Canaux, le Château des Brumes, ses pavillons et les lieux de tutoriel sont protégés.
+- **Zones de scénario en lecture seule** : le Port elfique, le Château des Brumes, ses pavillons et les lieux de tutoriel sont protégés.
 - **Villages de guildes** : les bâtiments communs et parcelles suivent les droits de la guilde.
 - **Monde libre en dehors** : aucun claim général ; les joueurs peuvent construire, modifier le paysage, creuser et démolir les constructions des autres.
 - **Pas de protection automatique des bases sauvages** : construire quelque part ne confère pas de propriété exclusive sur cet endroit.
