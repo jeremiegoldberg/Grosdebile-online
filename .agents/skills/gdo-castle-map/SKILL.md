@@ -30,7 +30,7 @@ game/gdo/mods/gdo_castle/
 
 - Le point d'entrée actif de l'architecture modulaire est `architecture/init.lua`, appelé depuis `gdo_castle/init.lua`.
 - Les anciennes fonctions de génération présentes dans `gdo_castle/init.lua` et l'ancien constructeur `dourdan.lua` sont des références historiques. Ne pas les réactiver ni les modifier pour construire la nouvelle carte, sauf demande explicite de migration.
-- Les zones 00, 10, 20, 30 et la première tranche de la zone 70 (escaliers du châtelet) sont implémentées. Les autres éléments de 40 à 99 restent à construire.
+- Les zones 00, 10, 20, 30, 40 et la première tranche de la zone 70 (escaliers du châtelet) sont implémentées. Les zones 50, 60, 80, 90, 95 et 99 restent à construire ; la circulation verticale du donjon reste à compléter.
 - Toujours relire le code courant et le README avant de modifier une zone. Les coordonnées et versions du code priment sur une ancienne note.
 
 ## Repère spatial et niveau de référence
@@ -62,7 +62,7 @@ Les limites sont des emprises de travail. Elles doivent être vérifiées dans l
 | 10 — Enceinte | `zones/10_enclosure.lua` | Courtines, courtines sud interrompues, chemins de ronde et créneaux | Implémentée |
 | 20 — Châtelet | `zones/20_gatehouse.lua` | Deux tours de porte, portail, herse, galerie haute, passage et pont-levis | Implémentée |
 | 30 — Tours | `zones/30_towers.lua` | Quatre tours d'angle chanfreinées, raccordées aux courtines et chemins de ronde | Implémentée ; validation en jeu requise |
-| 40 — Donjon | `zones/40_keep.lua` | Donjon principal, niveaux, salles, toiture et circulations | À construire |
+| 40 — Donjon | `zones/40_keep.lua` | Donjon central à deux étages, quatre tourelles et grande toiture à deux pans | Implémentée ; validation en jeu requise |
 | 50 — Résidence | `zones/50_residential.lua` | Grande salle, appartements et espaces de réception | À construire |
 | 60 — Bâtiments de cour | `zones/60_courtyard_buildings.lua` | Chapelle, ateliers, école et bâtiments de service | À construire |
 | 70 — Escaliers | `zones/70_stairs.lua` | Deux volées de deux blocs de large dans le châtelet, du rez-de-chaussée au plancher +9 ; autres escaliers à venir | Partiellement implémentée ; validation en jeu requise |
@@ -273,8 +273,10 @@ Ne pas générer toutes les zones futures d'un seul coup. Construire un lot limi
 | `/gdo_zone30_info` | Affiche l'état de la zone 30 |
 | `/gdo_stairs` | Reconstruit les escaliers du premier étage du châtelet |
 | `/gdo_stairs_info` | Affiche l'état de la zone 70 (escaliers du châtelet) |
+| `/gdo_zone40` | Reconstruit le donjon central |
+| `/gdo_zone40_info` | Affiche l'état du donjon central |
 
-Les commandes de reconstruction doivent être utilisées dans le bon ordre lorsque des zones se recouvrent. `/gdo_zone10` reconstruit en cascade les zones 10, 20, 30 et 70. `/gdo_zone20` reconstruit le châtelet puis ses escaliers. Après une reconstruction des tours seules, `/gdo_zone30` suffit.
+Les commandes de reconstruction doivent être utilisées dans le bon ordre lorsque des zones se recouvrent. `/gdo_zone10` reconstruit en cascade les zones 10, 20, 30, 40 et 70. `/gdo_zone20` reconstruit le châtelet puis ses escaliers. Après une reconstruction des tours seules, `/gdo_zone30` suffit.
 
 ## Critères d'acceptation d'une zone
 
@@ -291,3 +293,14 @@ Une zone n'est pas terminée parce que le générateur ne plante pas. Elle est p
 - les versions, commandes et documents correspondent au code livré.
 
 En cas de défaut, corriger la zone et faire rejouer ses dépendances avant de considérer le raccord comme terminé.
+
+### Zone 40 — Donjon central
+
+- Emprise X -16..16, Z -37..-5 ; hauteur maximale +32.
+- Corps rectangulaire X -12..12, Z -33..-9 ; planchers aux niveaux 0, +8 et +16.
+- Quatre tourelles d'angle de hauteurs différentes structurent la silhouette.
+- Grand toit à deux pans fortement incliné, avec tuiles/ardoises sombres, pignon et faîtage.
+- Entrée principale au sud, face à la cour, porche encadré et sol sans marche ajoutée.
+- Les étages supérieurs nécessitent encore des escaliers internes : ne pas annoncer le donjon comme entièrement explorable avant leur intégration à la zone 70.
+- Commandes : `/gdo_zone40`, `/gdo_zone40_info`.
+
