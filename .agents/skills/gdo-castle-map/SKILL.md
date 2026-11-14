@@ -30,7 +30,7 @@ game/gdo/mods/gdo_castle/
 
 - Le point d'entrée actif de l'architecture modulaire est `architecture/init.lua`, appelé depuis `gdo_castle/init.lua`.
 - Les anciennes fonctions de génération présentes dans `gdo_castle/init.lua` et l'ancien constructeur `dourdan.lua` sont des références historiques. Ne pas les réactiver ni les modifier pour construire la nouvelle carte, sauf demande explicite de migration.
-- Les zones 00, 10 et 20 sont implémentées. Les zones 30 à 99 décrites plus bas sont le plan de construction, pas du code déjà disponible.
+- Les zones 00, 10, 20, 30 et la première tranche de la zone 70 (escaliers du châtelet) sont implémentées. Les autres éléments de 40 à 99 restent à construire.
 - Toujours relire le code courant et le README avant de modifier une zone. Les coordonnées et versions du code priment sur une ancienne note.
 
 ## Repère spatial et niveau de référence
@@ -61,11 +61,11 @@ Les limites sont des emprises de travail. Elles doivent être vérifiées dans l
 | 00 — Site | `zones/00_site.lua` | Échantillonnage du terrain, plateau du château, terrasse du village, parvis et altitude de référence | Implémentée |
 | 10 — Enceinte | `zones/10_enclosure.lua` | Courtines, courtines sud interrompues, chemins de ronde et créneaux | Implémentée |
 | 20 — Châtelet | `zones/20_gatehouse.lua` | Deux tours de porte, portail, herse, galerie haute, passage et pont-levis | Implémentée |
-| 30 — Tours | `zones/30_towers.lua` | Tours d'angle et autres tours indépendantes | À construire |
+| 30 — Tours | `zones/30_towers.lua` | Quatre tours d'angle chanfreinées, raccordées aux courtines et chemins de ronde | Implémentée ; validation en jeu requise |
 | 40 — Donjon | `zones/40_keep.lua` | Donjon principal, niveaux, salles, toiture et circulations | À construire |
 | 50 — Résidence | `zones/50_residential.lua` | Grande salle, appartements et espaces de réception | À construire |
 | 60 — Bâtiments de cour | `zones/60_courtyard_buildings.lua` | Chapelle, ateliers, école et bâtiments de service | À construire |
-| 70 — Escaliers | `zones/70_stairs.lua` | Escaliers droits, en U et hélicoïdaux, testés séparément | À construire |
+| 70 — Escaliers | `zones/70_stairs.lua` | Deux volées de deux blocs de large dans le châtelet, du rez-de-chaussée au plancher +9 ; autres escaliers à venir | Partiellement implémentée ; validation en jeu requise |
 | 80 — Cour | `zones/80_courtyard.lua` | Pavage, puits, jardins, mobilier et petits éléments | À construire |
 | 90 — Village | `zones/90_village.lua` | Rues, maisons, auberge, commerces et ateliers | À construire |
 | 95 — Paysage | `zones/95_landscape.lua` | Raccordement du terrain, arbres, champs, mares et chemins | À construire |
@@ -124,6 +124,28 @@ Conséquences :
 2. Après une reconstruction manuelle de la zone 10, reconstruire également la zone 20 avec `/gdo_zone20`, sinon la courtine peut reboucher ou perturber des éléments du châtelet.
 3. Si la géométrie de la zone 10 est changée dans cette zone de recouvrement, vérifier si la version de la zone 20 doit aussi être incrémentée.
 4. Ne pas déplacer les piliers de raccordement sans vérifier la continuité complète des courtines, du chemin de ronde et des tours.
+
+### Zone 30 — Tours d'angle
+
+Quatre tours sont centrées en (-37,-39), (37,-39), (-37,37) et (37,37). Chacune remplace le noyau d'angle de la zone 10 et absorbe l'extrémité des deux courtines qui s'y rencontrent.
+
+- Les portes basses sont orientées vers la cour.
+- Deux ouvertures hautes raccordent les deux chemins de ronde qui arrivent réellement à l'angle ; les faces extérieures restent fermées.
+- Les sols de raccord à `base_y + 10` doivent être continus entre la courtine et l'intérieur de la tour.
+- Les tours sont chanfreinées, creuses, éclairées et terminées par un parapet crénelé.
+- Commandes : `/gdo_zone30` et `/gdo_zone30_info`.
+
+### Zone 70 — Escaliers du châtelet
+
+La première tranche de cette zone construit un escalier dans chacune des deux tours de la zone 20.
+
+- Chaque volée fait deux blocs de large.
+- Tour ouest : X -15 à -14 ; tour est : X 14 à 15.
+- Les volées montent vers Z positif, de Z 27 à 35, et débouchent sur le premier plancher à `base_y + 9`.
+- Seul le nœud `gdo_castle:refit_stair` constitue les marches. Aucun cube plein de soutien n'est ajouté sous les marches.
+- Le module ne nettoie que ses colonnes d'escalier et le petit palier.
+- La reconstruction de la zone 20 invalide la version stockée de la zone 70, puis reconstruit les escaliers.
+- Commandes : `/gdo_stairs` et `/gdo_stairs_info`.
 
 ## Règles impératives de construction
 
@@ -247,8 +269,12 @@ Ne pas générer toutes les zones futures d'un seul coup. Construire un lot limi
 | `/gdo_zone10_info` | Affiche l'état de la zone 10 |
 | `/gdo_zone20` | Force la reconstruction du châtelet uniquement |
 | `/gdo_zone20_info` | Affiche l'état de la zone 20 |
+| `/gdo_zone30` | Reconstruit les quatre tours d'angle |
+| `/gdo_zone30_info` | Affiche l'état de la zone 30 |
+| `/gdo_stairs` | Reconstruit les escaliers du premier étage du châtelet |
+| `/gdo_stairs_info` | Affiche l'état de la zone 70 (escaliers du châtelet) |
 
-Les commandes de reconstruction doivent être utilisées dans le bon ordre lorsque des zones se recouvrent. Pour reconstruire les courtines sud et leur jonction : exécuter `/gdo_zone10`, puis `/gdo_zone20`.
+Les commandes de reconstruction doivent être utilisées dans le bon ordre lorsque des zones se recouvrent. `/gdo_zone10` reconstruit en cascade les zones 10, 20, 30 et 70. `/gdo_zone20` reconstruit le châtelet puis ses escaliers. Après une reconstruction des tours seules, `/gdo_zone30` suffit.
 
 ## Critères d'acceptation d'une zone
 
