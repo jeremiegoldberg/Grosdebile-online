@@ -30,7 +30,7 @@ game/gdo/mods/gdo_castle/
 
 - Le point d'entrée actif de l'architecture modulaire est `architecture/init.lua`, appelé depuis `gdo_castle/init.lua`.
 - Les anciennes fonctions de génération présentes dans `gdo_castle/init.lua` et l'ancien constructeur `dourdan.lua` sont des références historiques. Ne pas les réactiver ni les modifier pour construire la nouvelle carte, sauf demande explicite de migration.
-- Les zones 00, 10, 20, 30, 40 et la première tranche de la zone 70 (escaliers du châtelet) sont implémentées. Les zones 50, 60, 80, 90, 95 et 99 restent à construire ; la circulation verticale du donjon reste à compléter.
+- Les zones 00, 10, 20, 30, 40 et la première tranche de la zone 70 (escaliers du châtelet) sont intégrées au bootstrap. Le fichier 50_residential.lua est un prototype non chargé et doit être repositionné. Les zones 60, 80, 90, 95 et 99 restent à construire ; les escaliers du donjon et des ailes restent à compléter.
 - Toujours relire le code courant et le README avant de modifier une zone. Les coordonnées et versions du code priment sur une ancienne note.
 
 ## Repère spatial et niveau de référence
@@ -52,6 +52,22 @@ Le niveau de référence est `base_y`, égal à la surface supérieure du platea
 
 Ne jamais confondre l'altitude du bloc de sol (`base_y`) et la position des pieds du joueur (`base_y + 1`).
 
+## Direction architecturale — référence Brukenthal
+
+Utiliser [Brukenthal — Minecraft-France](https://www.minecraft-france.fr/map-brukenthal-dark-castle/) et [la présentation Team Lyrah sur Planet Minecraft](https://www.planetminecraft.com/project/minecraft-timelapse-project-brukenthal-a-dark-castle/) comme références d'ambiance et de composition, sans reproduire la carte bloc pour bloc.
+
+À transposer dans le Château des Brumes :
+- une citadelle qui domine nettement les bâtiments voisins ;
+- un donjon haut, massif et gothique, avec un profil vertical irrégulier ;
+- plusieurs tours et tourelles de hauteurs différentes, chacune coiffée d'une toiture étroite et pentue ;
+- de longs pans d'ardoise, pignons visibles, faîtages, lucarnes et contreforts ;
+- des ailes en pierre qui contiennent des salles réelles, pas des façades creuses ;
+- des cours intérieures, galeries, passages couverts et couloirs qui forment un réseau cohérent ;
+- de grandes colonnes, salles de garde, appartements et salles de réception ;
+- des couleurs de pierre sourdes, du bois sombre et une lumière chaude mais ponctuelle.
+
+La référence met aussi en scène une forteresse sur un relief rocheux, des conifères, un lac et un bourg étagé en contrebas. Ces éléments relèvent des zones 50, 90 et 95 ; ne pas les simuler par des décorations isolées autour du donjon.
+
 ## Découpage de la carte
 
 Les limites sont des emprises de travail. Elles doivent être vérifiées dans le code de chaque zone avant tout changement.
@@ -62,16 +78,16 @@ Les limites sont des emprises de travail. Elles doivent être vérifiées dans l
 | 10 — Enceinte | `zones/10_enclosure.lua` | Courtines, courtines sud interrompues, chemins de ronde et créneaux | Implémentée |
 | 20 — Châtelet | `zones/20_gatehouse.lua` | Deux tours de porte, portail, herse, galerie haute, passage et pont-levis | Implémentée |
 | 30 — Tours | `zones/30_towers.lua` | Quatre tours d'angle chanfreinées, raccordées aux courtines et chemins de ronde | Implémentée ; validation en jeu requise |
-| 40 — Donjon | `zones/40_keep.lua` | Donjon central à deux étages, quatre tourelles et grande toiture à deux pans | Implémentée ; validation en jeu requise |
-| 50 — Résidence | `zones/50_residential.lua` | Grande salle, appartements et espaces de réception | À construire |
+| 40 — Citadelle | `zones/40_keep.lua` | Donjon gothique, huit tours inégales, ailes habitées, toiture pentue et cour intérieure | Implémentée ; validation en jeu requise |
+| 50 — Bourg / bâtiments habités | `zones/50_residential.lua` | Prototype de maisons à colombages ; futur bourg à niveaux | Prototype non chargé ; à repositionner |
 | 60 — Bâtiments de cour | `zones/60_courtyard_buildings.lua` | Chapelle, ateliers, école et bâtiments de service | À construire |
-| 70 — Escaliers | `zones/70_stairs.lua` | Deux volées de deux blocs de large dans le châtelet, du rez-de-chaussée au plancher +9 ; autres escaliers à venir | Partiellement implémentée ; validation en jeu requise |
+| 70 — Escaliers | `zones/70_stairs.lua` | Escaliers du châtelet déjà codés ; à compléter pour le donjon, les ailes et les tours | Partiellement implémentée ; validation en jeu requise |
 | 80 — Cour | `zones/80_courtyard.lua` | Pavage, puits, jardins, mobilier et petits éléments | À construire |
 | 90 — Village | `zones/90_village.lua` | Rues, maisons, auberge, commerces et ateliers | À construire |
 | 95 — Paysage | `zones/95_landscape.lua` | Raccordement du terrain, arbres, champs, mares et chemins | À construire |
 | 99 — Connexions | `zones/99_connections.lua` | Liaisons finales entre zones, portes, chemins et ponts secondaires | À construire |
 
-Ne pas inventer les emprises des zones 30 à 99 avant d'avoir établi un plan de coordonnées qui tient compte des bâtiments et connexions déjà présents.
+Ne pas inventer ou déplacer une emprise sans vérifier les constructions voisines, les passages, les cours et les futures circulations.
 
 ### Zone 00 — Site
 
@@ -135,9 +151,26 @@ Quatre tours sont centrées en (-37,-39), (37,-39), (-37,37) et (37,37). Chacune
 - Les tours sont chanfreinées, creuses, éclairées et terminées par un parapet crénelé.
 - Commandes : `/gdo_zone30` et `/gdo_zone30_info`.
 
-### Zone 70 — Escaliers du châtelet
+### Zone 40 — Citadelle gothique
 
-La première tranche de cette zone construit un escalier dans chacune des deux tours de la zone 20.
+Emprise actuelle : X -27 à 27, Z -38 à -3 ; la silhouette monte jusqu'à environ `base_y + 47`.
+
+Composition :
+- Donjon central : X -10..10, Z -36..-19, planchers aux niveaux +8, +16 et +24.
+- Toiture centrale en ardoise à deux pans très pentus, pignons et faîtage.
+- Aile ouest et aile est : X -25..-12 et X 12..25, Z -35..-7, deux niveaux, pierre au rez-de-chaussée et colombages/enduit à l'étage.
+- Passage d'entrée sud : X -2..2, reliant la cour extérieure à la cour intérieure.
+- Cour intérieure ouverte au ciel, entre le donjon et le bâtiment d'entrée, avec fontaine.
+- Huit tours de hauteurs différentes : quatre tourelles autour du donjon et quatre sur les ailes.
+- Des portes latérales relient le donjon aux ailes ; les portes des ailes débouchent sur la cour.
+
+Ne pas déplacer cette emprise sans vérifier les tours d'angle (zone 30), les ailes et le futur bourg (zone 50). Les intérieurs des niveaux hauts et les escaliers du donjon restent à faire : les planchers supérieurs ne sont pas encore déclarés entièrement accessibles.
+
+Commande : `/gdo_zone40` reconstruit la citadelle ; `/gdo_zone40_info` affiche son état.
+
+### Zone 70 — Escaliers et circulations verticales
+
+La première tranche de cette zone construit un escalier dans chacune des deux tours de la zone 20. Les prochaines extensions doivent desservir les planchers du donjon, des ailes et des tours de la zone 40.
 
 - Chaque volée fait deux blocs de large.
 - Tour ouest : X -15 à -14 ; tour est : X 14 à 15.
@@ -225,8 +258,8 @@ Ne pas utiliser le numéro de version pour masquer une erreur de génération : 
 2. Construire les courtines (10).
 3. Construire le châtelet et les raccords au sud (20).
 4. Ajouter les tours et vérifier leur jonction avec les murs (30).
-5. Construire le donjon et ses circulations intérieures (40).
-6. Construire la résidence et les grandes salles (50).
+5. Construire la citadelle gothique et ses cours intérieures (40).
+6. Construire les salles spécialisées et les appartements de la citadelle (50).
 7. Ajouter les bâtiments de service (60).
 8. Créer et tester les escaliers (70).
 9. Aménager la cour sans réduire les chemins (80).
@@ -293,14 +326,3 @@ Une zone n'est pas terminée parce que le générateur ne plante pas. Elle est p
 - les versions, commandes et documents correspondent au code livré.
 
 En cas de défaut, corriger la zone et faire rejouer ses dépendances avant de considérer le raccord comme terminé.
-
-### Zone 40 — Donjon central
-
-- Emprise X -16..16, Z -37..-5 ; hauteur maximale +32.
-- Corps rectangulaire X -12..12, Z -33..-9 ; planchers aux niveaux 0, +8 et +16.
-- Quatre tourelles d'angle de hauteurs différentes structurent la silhouette.
-- Grand toit à deux pans fortement incliné, avec tuiles/ardoises sombres, pignon et faîtage.
-- Entrée principale au sud, face à la cour, porche encadré et sol sans marche ajoutée.
-- Les étages supérieurs nécessitent encore des escaliers internes : ne pas annoncer le donjon comme entièrement explorable avant leur intégration à la zone 70.
-- Commandes : `/gdo_zone40`, `/gdo_zone40_info`.
-
