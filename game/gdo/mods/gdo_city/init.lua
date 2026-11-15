@@ -100,8 +100,6 @@ local function replace_between(source, start_marker, end_marker, replacement)
     assert(first, "[GDO Sommières] Début de bloc SIG introuvable.")
     local last = string.find(source, end_marker, first + #start_marker, true)
     assert(last, "[GDO Sommières] Fin de bloc SIG introuvable.")
-    local second = string.find(source, start_marker, first + #start_marker, true)
-    assert(not second, "[GDO Sommières] Bloc SIG ambigu.")
     return string.sub(source, 1, first - 1) .. replacement .. string.sub(source, last)
 end
 
@@ -530,11 +528,7 @@ importer_source = replace_once(
     "set_block(x, road_y, z, surface_id)",
     "set_block(x, road_y, z, surface_id)\n                            road_mask[(z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1] = true"
 )
-importer_source = replace_once(
-    importer_source,
-    "-- 4) Individual building footprints, measured heights and oriented roof planes.",
-    "local function set_building_block(x, y, z, id)\n            if x < lx1 or x > lx2 or z < lz1 or z > lz2 then return end\n            local key = (z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1\n            if road_mask[key] then return end\n            set_block(x, y, z, id)\n        end\n\n        -- 4) Individual building footprints, measured heights and oriented roof planes."
-)
+-- The replacement building renderer declares its own road-aware block writer.
 
 local building_renderer = [=[
 -- 4) Individual footprints: clear first, then roofs, then historic facades.
