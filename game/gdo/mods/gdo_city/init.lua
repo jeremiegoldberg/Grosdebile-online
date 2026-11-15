@@ -1009,6 +1009,171 @@ importer_source = replace_once(
                 elseif r.sf == "paving_stones" or r.sf == "paved" then surface_id = ids.road_stone
                 elseif r.c == "major" or r.c == "mid" then surface_id = ids.road_asphalt end]=]
 )
+-- Extend the importer over a transition apron and join the surveyed DEM to mapgen terrain.
+importer_source = replace_once(
+    importer_source,
+    "local x1, x2, z1, z2 = data.meta.bbox[1], data.meta.bbox[3], data.meta.bbox[2], data.meta.bbox[4]",
+    "local transition_margin = cfg.transition_margin or 0\n    local x1 = math.floor(math.min(data.meta.bbox[1], t.xmin) - transition_margin)\n    local x2 = math.ceil(math.max(data.meta.bbox[3], t.xmax) + transition_margin)\n    local z1 = math.floor(math.min(data.meta.bbox[2], t.zmin) - transition_margin)\n    local z2 = math.ceil(math.max(data.meta.bbox[4], t.zmax) + transition_margin)"
+)
+importer_source = replace_once(
+    importer_source,
+    "local function get_surface(x, z)\n            return world_y(terrain_sample(t, x + 0.5, z + 0.5), cfg)\n        end",
+    "local function get_surface(x, z)\n            return world_y(transition_elevation(x + 0.5, z + 0.5), cfg)\n        end"
+)
+
+local terrain_blend = [=[
+local function wZ(z) return cfg.center_z + z + cfg.shift_z end
+local source_grids = {t}
+if data.terrain_extension then
+    source_grids[#source_grids + 1] = data.terrain_extension
+end
+local function source_grid_at(x, z)
+    local nearest, nearest_d2, nearest_dx, nearest_dz
+    for _, grid in ipairs(source_grids) do
+        local dx = math.max(grid.xmin - x, 0, x - grid.xmax)
+        local dz = math.max(grid.zmin - z, 0, z - grid.zmax)
+        if dx == 0 and dz == 0 then return grid, true, 0, 0 end
+        local d2 = dx * dx + dz * dz
+        if not nearest_d2 or d2 < nearest_d2 then
+            nearest, nearest_d2, nearest_dx, nearest_dz = grid, d2, dx, dz
+        end
+    end
+    return nearest, false, nearest_dx or 0, nearest_dz or 0
+end
+
+local sample_step = 16
+local sample_x0 = math.floor(x1 / sample_step) * sample_step
+local sample_z0 = math.floor(z1 / sample_step) * sample_step
+local sample_x1 = math.ceil(x2 / sample_step) * sample_step
+local sample_z1 = math.ceil(z2 / sample_step) * sample_step
+local sample_nx = math.floor((sample_x1 - sample_x0) / sample_step) + 1
+local sample_nz = math.floor((sample_z1 - sample_z0) / sample_step) + 1
+local ambient_grid = {}
+
+for iz = 0, sample_nz - 1 do
+    local sz = sample_z0 + iz * sample_step
+    for ix = 0, sample_nx - 1 do
+        local sx = sample_x0 + ix * sample_step
+        local grid, inside = source_grid_at(sx, sz)
+        local elevation
+        if inside then
+            elevation = terrain_sample(grid, sx, sz)
+        else
+            local natural_y
+            if cfg.find_surface_y then natural_y = cfg.find_surface_y(wX(sx), wZ(sz)) end
+            if natural_y then
+                elevation = cfg.ref_elevation + natural_y - cfg.base_y
+            else
+                elevation = terrain_sample(grid,
+                    clamp(sx, grid.xmin, grid.xmax),
+                    clamp(sz, grid.zmin, grid.zmax))
+            end
+        end
+        ambient_grid[iz * sample_nx + ix + 1] = elevation
+    end
+end
+
+local function ambient_surface_elevation(x, z)
+    local fx = clamp((x - sample_x0) / sample_step, 0, sample_nx - 1)
+    local fz = clamp((z - sample_z0) / sample_step, 0, sample_nz - 1)
+    local x0, z0 = math.floor(fx), math.floor(fz)
+    local x1s, z1s = math.min(sample_nx - 1, x0 + 1), math.min(sample_nz - 1, z0 + 1)
+    local tx, tz = fx - x0, fz - z0
+    local i0, i1 = z0 * sample_nx, z1s * sample_nx
+    local a = ambient_grid[i0 + x0 + 1]
+    local b = ambient_grid[i0 + x1s + 1]
+    local c = ambient_grid[i1 + x0 + 1]
+    local d = ambient_grid[i1 + x1s + 1]
+    local upper = a + (b - a) * tx
+    local lower = c + (d - c) * tx
+    return upper + (lower - upper) * tz
+end
+
+local function transition_elevation(x, z)
+    local grid, inside, dx, dz = source_grid_at(x, z)
+    if inside then return terrain_sample(grid, x, z) end
+    local edge_elevation = terrain_sample(grid,
+        clamp(x, grid.xmin, grid.xmax),
+        clamp(z, grid.zmin, grid.zmax))
+    local ambient_elevation = ambient_surface_elevation(x, z)
+    local distance = math.sqrt(dx * dx + dz * dz)
+    local fade = transition_margin > 0 and clamp(distance / transition_margin, 0, 1) or 1
+    return edge_elevation + (ambient_elevation - edge_elevation) * fade
+end
+
+local function is_surveyed_terrain(x, z)
+    local _, inside = source_grid_at(x, z)
+    return inside
+end]=]
+importer_source = replace_once(
+    importer_source,
+    "local function wZ(z) return cfg.center_z + z + cfg.shift_z end",
+    terrain_blend
+)
+
+importer_source = replace_once(
+    importer_source,
+    [=[        -- 1) Clear this tile, then reconstruct the natural RGE ALTI terrain at one metre.
+        for z = lz1, lz2 do
+            for x = lx1, lx2 do
+                local sx, sz = wX(x), wZ(z)
+                for y = y_min, y_max do
+                    vmdata[area:index(sx, y, sz)] = ids.air
+                end
+                local ground = get_surface(x, z)
+                ground = clamp(ground, y_min + 1, y_max - 1)
+                for y = y_min, ground - 4 do
+                    vmdata[area:index(sx, y, sz)] = ids.stone
+                end
+                for y = math.max(y_min, ground - 3), ground - 1 do
+                    vmdata[area:index(sx, y, sz)] = ids.soil
+                end
+                vmdata[area:index(sx, ground, sz)] = ids.grass
+                tile_cache[(z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1] = ground
+            end
+        end]=],
+    [=[        -- 1) Exact RGE ALTI in the survey; gradual terrain connection outside.
+        for z = lz1, lz2 do
+            for x = lx1, lx2 do
+                local sx, sz = wX(x), wZ(z)
+                local ground = clamp(get_surface(x, z), y_min + 1, y_max - 1)
+                if is_surveyed_terrain(x + 0.5, z + 0.5) then
+                    for y = y_min, y_max do
+                        vmdata[area:index(sx, y, sz)] = ids.air
+                    end
+                    for y = y_min, ground - 4 do
+                        vmdata[area:index(sx, y, sz)] = ids.stone
+                    end
+                    for y = math.max(y_min, ground - 3), ground - 1 do
+                        vmdata[area:index(sx, y, sz)] = ids.soil
+                    end
+                    vmdata[area:index(sx, ground, sz)] = ids.grass
+                else
+                    local native_ground = clamp(
+                        world_y(ambient_surface_elevation(x + 0.5, z + 0.5), cfg),
+                        y_min + 1, y_max - 1)
+                    local delta = ground - native_ground
+                    if math.abs(delta) >= 1 then
+                        local clear_from = math.min(ground, native_ground) + 1
+                        local clear_to = math.min(y_max, math.max(ground, native_ground) + 24)
+                        for y = clear_from, clear_to do
+                            vmdata[area:index(sx, y, sz)] = ids.air
+                        end
+                        if ground > native_ground then
+                            for y = native_ground + 1, ground - 3 do
+                                vmdata[area:index(sx, y, sz)] = ids.stone
+                            end
+                        end
+                        for y = math.max(y_min, ground - 2), ground - 1 do
+                            vmdata[area:index(sx, y, sz)] = ids.soil
+                        end
+                        vmdata[area:index(sx, ground, sz)] = ids.grass
+                    end
+                end
+                tile_cache[(z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1] = ground
+            end
+        end]=]
+)
 local importer_chunk, importer_err = loader(importer_source, "@gdo_city/gis_import.lua")
 assert(importer_chunk, importer_err)
 _G.__gdo_city_gis_importer = importer_chunk()
