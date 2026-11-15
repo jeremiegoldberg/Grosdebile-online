@@ -105,6 +105,13 @@ local function replace_between(source, start_marker, end_marker, replacement)
     return string.sub(source, 1, first - 1) .. replacement .. string.sub(source, last)
 end
 
+-- Include both contiguous Pont Tibère GIS segments: six main spans plus the short approach span.
+importer_source = replace_once(
+    importer_source,
+    "if length > 30 then pont_tibere[#pont_tibere + 1] = {road = r, length = length} end",
+    "if length > 5 then pont_tibere[#pont_tibere + 1] = {road = r, length = length} end"
+)
+
 -- Select the extended IGN crop outside the compact town DEM.
 importer_source = replace_once(
     importer_source,
@@ -218,7 +225,7 @@ local bridge_renderer = [=[
 -- 3b) Pont Tibère : arches romaines ouvertes, piles massives et avant-becs.
         for _, bridge in ipairs(pont_tibere) do
             local r, pts, length = bridge.road, bridge.road.p, bridge.length
-            local count = clamp(round(length / 12), 5, 8)
+            local count = clamp(round(length / 12), 1, 8)
             local span = length / count
             local cumulative, walked = {}, 0
             for i = 1, #pts - 1 do
