@@ -372,7 +372,14 @@ local function prepare_site()
                     minetest.log("error","[GDO] Échec du chargement du terrain pour la zone 00.")
                     return
                 end
-                local ok,message=build_site()
+                local saved_levels
+                if saved_version>0 then
+                    saved_levels={
+                        castle_y=storage:get_int(LEVEL_CASTLE_KEY),
+                        village_y=storage:get_int(LEVEL_VILLAGE_KEY),
+                    }
+                end
+                local ok,message=build_site(saved_levels)
                 if not ok then minetest.log("error","[GDO] "..message) end
             end
         end
