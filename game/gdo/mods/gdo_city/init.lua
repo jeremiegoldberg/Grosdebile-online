@@ -825,6 +825,72 @@ importer_source = replace_once(
     "vm:write_to_map(true)\n        if tile_data[5] and minetest.fix_light then\n            minetest.fix_light(\n                {x = wX(lx1), y = y_min, z = wZ(lz1)},\n                {x = wX(lx2), y = y_max, z = wZ(lz2)})\n        end\n        completed = completed + 1"
 )
 
+-- Trees must not occupy roads, footways, bridge decks or their clearance envelope.
+local tree_ingest = [=[for _, tr in ipairs(data.nature.trees or {}) do
+        trees[#trees + 1] = tr
+    end]=]
+local tree_filter = [=[for _, tr in ipairs(data.nature.trees or {}) do
+        trees[#trees + 1] = tr
+    end
+
+    -- Keep trunks and full crowns clear of every mapped road and bridge.
+    -- Index the road segments spatially to avoid an O(trees x roads) scan.
+    local tree_cell_size = 32
+    local max_tree_radius = 0
+    for _, tr in ipairs(trees) do
+        max_tree_radius = math.max(max_tree_radius, tr[6] or 0)
+    end
+    local tree_road_index = {}
+    for _, seg in ipairs(segments) do
+        local a, b = seg.a, seg.b
+        local margin = (seg.road.w or 3) / 2 + max_tree_radius + 1.5
+        local cx1 = math.floor((math.min(a[1], b[1]) - margin) / tree_cell_size)
+        local cx2 = math.floor((math.max(a[1], b[1]) + margin) / tree_cell_size)
+        local cz1 = math.floor((math.min(a[2], b[2]) - margin) / tree_cell_size)
+        local cz2 = math.floor((math.max(a[2], b[2]) + margin) / tree_cell_size)
+        for cz = cz1, cz2 do
+            for cx = cx1, cx2 do
+                local key = cx .. ":" .. cz
+                tree_road_index[key] = tree_road_index[key] or {}
+                tree_road_index[key][#tree_road_index[key] + 1] = seg
+            end
+        end
+    end
+
+    local safe_trees, blocked_tree_count = {}, 0
+    for _, tr in ipairs(trees) do
+        local x, z, radius = tr[1], tr[2], tr[6] or 0
+        local key = math.floor(x / tree_cell_size) .. ":" .. math.floor(z / tree_cell_size)
+        local candidates = tree_road_index[key] or {}
+        local blocked = false
+        for _, seg in ipairs(candidates) do
+            local a, b = seg.a, seg.b
+            local dx, dz = b[1] - a[1], b[2] - a[2]
+            local length2 = dx * dx + dz * dz
+            local f = 0
+            if length2 > 0 then
+                f = clamp(((x - a[1]) * dx + (z - a[2]) * dz) / length2, 0, 1)
+            end
+            local px, pz = a[1] + dx * f, a[2] + dz * f
+            local clearance = (seg.road.w or 3) / 2 + radius + 1.5
+            local ox, oz = x - px, z - pz
+            if ox * ox + oz * oz < clearance * clearance then
+                blocked = true
+                break
+            end
+        end
+        if blocked then
+            blocked_tree_count = blocked_tree_count + 1
+        else
+            safe_trees[#safe_trees + 1] = tr
+        end
+    end
+    trees = safe_trees
+    minetest.log("action", string.format(
+        "[GDO][SOMMIERES] Arbres protégés des routes et ponts : %d retirés ; %d conservés.",
+        blocked_tree_count, #trees))]=]
+importer_source = replace_once(importer_source, tree_ingest, tree_filter)
+
 -- The replacement building renderer uses set_building_block directly.
 local importer_chunk, importer_err = loader(importer_source, "@gdo_city/gis_import.lua")
 assert(importer_chunk, importer_err)
@@ -832,7 +898,7 @@ _G.__gdo_city_gis_importer = importer_chunk()
 
 local renderer_source = minetest.decompress(read_file("renderer.deflate"), "deflate")
 assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
-renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 16")
+renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 17")
 renderer_source = replace_once(renderer_source,
     "local importer = assert(_G.__gdo_city_gis_importer, \"[GDO Sommières] Importeur SIG absent.\")",
     "local function emerge_river_corridor(y_min, y_max, callback)\n    local tile_size, margin = 32, 40\n    local tiles, seen = {}, {}\n    for _, line in ipairs((data.water and data.water.lines) or {}) do\n        if line.n == \"Le Vidourle\" and line.p and #line.p > 1 then\n            for i = 1, #line.p - 1 do\n                local a, b = line.p[i], line.p[i + 1]\n                local x1 = math.floor((math.min(a[1], b[1]) - margin) / tile_size) * tile_size\n                local x2 = math.floor((math.max(a[1], b[1]) + margin) / tile_size) * tile_size\n                local z1 = math.floor((math.min(a[2], b[2]) - margin) / tile_size) * tile_size\n                local z2 = math.floor((math.max(a[2], b[2]) + margin) / tile_size) * tile_size\n                for z = z1, z2, tile_size do\n                    for x = x1, x2, tile_size do\n                        local key = x .. \":\" .. z\n                        if not seen[key] then\n                            seen[key] = true\n                            tiles[#tiles + 1] = {x, z}\n                        end\n                    end\n                end\n            end\n        end\n    end\n\n    if #tiles == 0 then callback(false); return end\n    local pending, failed = #tiles, false\n    for _, tile in ipairs(tiles) do\n        minetest.emerge_area(\n            {x = world_x(tile[1]), y = y_min, z = world_z(tile[2])},\n            {x = world_x(tile[1] + tile_size - 1), y = y_max, z = world_z(tile[2] + tile_size - 1)},\n            function(_, action, remaining)\n                if action == minetest.EMERGE_ERRORED or action == minetest.EMERGE_CANCELLED then\n                    failed = true\n                end\n                if remaining == 0 then\n                    pending = pending - 1\n                    if pending == 0 then callback(failed) end\n                end\n            end\n        )\n    end\nend\n\nlocal importer = assert(_G.__gdo_city_gis_importer, \"[GDO Sommières] Importeur SIG absent.\")"
