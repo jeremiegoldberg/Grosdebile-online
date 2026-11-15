@@ -3,7 +3,7 @@
 -- No staircases are generated here. Interior levels are reserved for zone 70.
 return function(A)
     local Z={}
-    Z.VERSION=4
+    Z.VERSION=5
     Z.bounds={x1=-18,x2=18,z1=24,z2=61}
     Z.opening={x1=-3,x2=3,z1=33,z2=40}
     Z.drawbridge={x1=-3,x2=3,z1=42,z2=58}
