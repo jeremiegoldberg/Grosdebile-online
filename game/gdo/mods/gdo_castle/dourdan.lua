@@ -1798,16 +1798,9 @@ minetest.register_on_mods_loaded(function()
     minetest.after(5,generate_if_needed)
 end)
 
-minetest.register_on_joinplayer(function(player)
-    minetest.after(2,function()
-        if player and player:is_player() then safe_spawn(player) end
-    end)
-end)
+-- Le point d'arrivée est désormais géré par gdo_city : les nouveaux joueurs
+-- et les réapparitions ne doivent plus être téléportés sur le château.
 
-minetest.register_on_respawnplayer(function(player)
-    safe_spawn(player)
-    return true
-end)
 
 minetest.register_chatcommand("chateau_pos", {
     description = "Affiche les coordonnées et les blocs devant le joueur",
