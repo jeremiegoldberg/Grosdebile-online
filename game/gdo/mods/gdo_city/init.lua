@@ -750,7 +750,7 @@ for _, b in ipairs(visible_buildings) do
                 local f = step / steps
                 local px = math.floor(a[1] + dx * f + 0.5)
                 local pz = math.floor(a[2] + dz * f + 0.5)
-                set_building_block(px, top_y + 1, pz, ids.roof_parapet)
+                set_building_block(px, top_y + 2, pz, ids.roof_parapet)
             end
         end
     end
