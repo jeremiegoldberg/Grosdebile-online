@@ -978,13 +978,33 @@ local tree_filter = [=[for _, tr in ipairs(data.nature.trees or {}) do
 importer_source = replace_once(importer_source, tree_ingest, tree_filter)
 
 -- The replacement building renderer uses set_building_block directly.
+importer_source = replace_once(
+    importer_source,
+    [=[local is_bridge = r.br == 1
+                local surface_id = ids.road_stone
+                if r.sf == "asphalt" then surface_id = ids.road_asphalt
+                elseif r.sf == "dirt" then surface_id = ids.road_dirt
+                elseif r.sf == "concrete" then surface_id = ids.road_concrete
+                elseif r.sf == "paving_stones" or r.sf == "paved" then surface_id = ids.road_stone
+                elseif r.c == "major" or r.c == "mid" then surface_id = ids.road_asphalt end]=],
+    [=[local is_bridge = r.br == 1
+                local road_cx, road_cz = (a[1] + b[1]) * 0.5, (a[2] + b[2]) * 0.5
+                local dx_old, dz_old = road_cx - 84.76, road_cz - 143.44
+                local historic_street = dx_old * dx_old + dz_old * dz_old <= 260 * 260
+                local surface_id = ids.road_stone
+                if r.sf == "asphalt" and not historic_street then surface_id = ids.road_asphalt
+                elseif r.sf == "dirt" then surface_id = ids.road_dirt
+                elseif r.sf == "concrete" and not historic_street then surface_id = ids.road_concrete
+                elseif r.sf == "paving_stones" or r.sf == "paved" then surface_id = ids.road_stone
+                elseif (r.c == "major" or r.c == "mid") and not historic_street then surface_id = ids.road_asphalt end]=]
+)
 local importer_chunk, importer_err = loader(importer_source, "@gdo_city/gis_import.lua")
 assert(importer_chunk, importer_err)
 _G.__gdo_city_gis_importer = importer_chunk()
 
 local renderer_source = minetest.decompress(read_file("renderer.deflate"), "deflate")
 assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
-renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 19")
+renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 20")
 renderer_source = replace_once(
     renderer_source,
     [=[center_x, center_z, base_y = candidate[1], candidate[2], ground_y]=],
