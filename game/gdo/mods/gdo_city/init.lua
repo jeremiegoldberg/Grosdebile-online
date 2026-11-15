@@ -82,6 +82,24 @@ end
 local importer_source = minetest.decompress(read_file("gis_import.deflate"), "deflate")
 assert(importer_source, "[GDO Sommières] Importeur GIS compressé invalide.")
 
+local function replace_between(source, start_marker, end_marker, replacement)
+    local first = string.find(source, start_marker, 1, true)
+    assert(first, "[GDO Sommières] Début de bloc SIG introuvable.")
+    local last = string.find(source, end_marker, first + #start_marker, true)
+    assert(last, "[GDO Sommières] Fin de bloc SIG introuvable.")
+    local second = string.find(source, start_marker, first + #start_marker, true)
+    assert(not second, "[GDO Sommières] Bloc SIG ambigu.")
+    return string.sub(source, 1, first - 1) .. replacement .. string.sub(source, last)
+end
+
+-- Use the measured height as a relative dimension, independent of rounding
+-- the absolute elevation datum at the base and at the roof separately.
+importer_source = replace_once(
+    importer_source,
+    "b._base_y = world_y(b.b, cfg)\n        b._top_y = world_y(b.b + b.h, cfg)",
+    "b._base_y = world_y(b.b, cfg)\n        b._height_nodes = math.max(1, round(b.h or 0))\n        b._top_y = b._base_y + b._height_nodes"
+)
+
 -- Roofs must be a one-node-thick sloped surface, not a solid mass between
 -- the eaves and ridge. Keep the roof within the surveyed building footprint.
 importer_source = replace_once(
