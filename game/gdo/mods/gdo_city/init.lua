@@ -1420,13 +1420,30 @@ end
 
 function _G.gdo_city.spawn(player)
     if not player or not player:is_player() then return false end
-    local pos = find_town_spawn_surface()
-    if not pos then
-        minetest.log("warning", "[GDO Sommières] Surface de départ introuvable près de la place du Marché.")
-        return false
+    local function place_player(attempt)
+        if not player or not player:is_player() then return end
+        local pos = find_town_spawn_surface()
+        if pos then
+            player:set_pos(pos)
+            if player.set_velocity then player:set_velocity({x=0,y=0,z=0}) end
+            minetest.log("action", string.format(
+                "[GDO Sommières] Arrivée en ville : %d, %d, %d.", pos.x, pos.y, pos.z))
+            return
+        end
+        if attempt < 8 then
+            minetest.after(1, function() place_player(attempt + 1) end)
+        else
+            minetest.log("error", "[GDO Sommières] Impossible de trouver une surface sûre près de la place du Marché.")
+        end
     end
-    player:set_pos(pos)
-    if player.set_velocity then player:set_velocity({x=0,y=0,z=0}) end
+    minetest.emerge_area(
+        {x=67, y=-32, z=798}, {x=87, y=128, z=818},
+        function(_, _, remaining)
+            if remaining == 0 then
+                minetest.after(0.2, function() place_player(1) end)
+            end
+        end
+    )
     return true
 end
 
