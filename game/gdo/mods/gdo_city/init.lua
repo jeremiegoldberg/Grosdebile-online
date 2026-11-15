@@ -544,7 +544,9 @@ importer_source = replace_once(
 -- The replacement building renderer declares its own road-aware block writer.
 
 local building_renderer = [=[
--- 4) Individual footprints: clear first, then roofs, then historic facades.
+-- 4) Parcel-faithful, stylised medieval village buildings.
+-- Cadastral footprints and measured wall heights are kept unchanged. Only
+-- the architectural treatment is simplified into a coherent voxel style.
 local visible_buildings = {}
 local building_footprint_mask = {}
 
@@ -555,8 +557,71 @@ local function set_building_block(x, y, z, id)
     set_block(x, y, z, id)
 end
 
--- Pass 1: clear all interiors before drawing any facade, so adjacent houses
--- cannot erase one another. Heights stay tied to each BD TOPO measurement.
+local function is_simple_house(b)
+    local kind = string.lower(b.t or "yes")
+    local area = math.max(0, b._x2 - b._x1) * math.max(0, b._z2 - b._z1)
+    if area > 1600 then return false end
+    if kind == "industrial" or kind == "warehouse" or kind == "factory"
+        or kind == "school" or kind == "kindergarten" or kind == "hospital"
+        or kind == "office" or kind == "service" or kind == "church"
+        or kind == "temple" or kind == "castle" or kind == "tower"
+        or kind == "city_gate" or kind == "greenhouse" then
+        return false
+    end
+    if b.hist == "castle" or b.hist == "city_gate" then return false end
+    if b.n == "Beffroi de Sommières" or b.n == "Porte du Bourguet"
+        or b.n == "Église Saint-Pons" or b.n == "Château de Villevieille" then
+        return false
+    end
+    return true
+end
+
+local function prepare_house_roof(b, seed)
+    local o = b.r and b.r.o
+    local cx, cz, w, d, angle
+    if o then
+        cx, cz, w, d, angle = o[1], o[2], o[3], o[4], o[5] or 0
+    else
+        cx, cz = (b._x1 + b._x2) * 0.5, (b._z1 + b._z2) * 0.5
+        w, d, angle = b._x2 - b._x1, b._z2 - b._z1, 0
+    end
+    w, d = math.max(2, w or 2), math.max(2, d or 2)
+    -- Keep the ridge on the longer axis, which makes small houses read as
+    -- proper cottages rather than square flat-roofed boxes.
+    if w < d then
+        w, d = d, w
+        angle = angle + math.pi / 2
+    end
+    local source_shape = (b.r and b.r.s) or "gab"
+    local shape = source_shape == "hip" or source_shape == "pyr" and "hip" or "gab"
+    if source_shape == "hip" or source_shape == "pyr" then shape = "hip" else shape = "gab" end
+    local rise = math.max(3, math.min(5, round(math.max(2.2, b.rh or 1.6) * 1.35)))
+    if (b._top_y - b._base_y) >= 12 then rise = math.min(rise, 4) end
+    b._house_roof = {cx, cz, w, d, angle, shape, rise}
+    -- A warm terracotta majority, with some surveyed roof colours retained.
+    b._house_roof_id = (seed % 3 == 0) and b._roof_id or ids.roof_default
+    b._house_timber = seed % 4 ~= 0
+end
+
+local function house_roof_height(b, x, z)
+    local o = b._house_roof
+    local cx, cz, w, d, angle, shape, rise = o[1], o[2], o[3], o[4], o[5], o[6], o[7]
+    local dx, dz = x + 0.5 - cx, z + 0.5 - cz
+    local ca, sa = math.cos(angle), math.sin(angle)
+    local u = dx * ca + dz * sa
+    local v = -dx * sa + dz * ca
+    local W, D = math.max(0.75, w / 2 + 0.45), math.max(0.75, d / 2 + 0.45)
+    local slope = math.abs(v) / D
+    if shape == "hip" then
+        local ridge = math.max(0.8, w / 2 - d / 2)
+        local hip = math.max(0, (math.abs(u) - ridge) / math.max(0.5, W - ridge))
+        slope = math.max(slope, hip)
+    end
+    return b._top_y + 1 + round(rise * clamp(1 - slope, 0, 1))
+end
+
+-- Pass 1: clear only the exact surveyed parcel interiors. No footprint is
+-- expanded, contracted, squared-off or moved to fit the new house style.
 for _, b in ipairs(buildings) do
     if bbox_hits(b._x1, b._x2, b._z1, b._z2, lx1, lx2, lz1, lz2, 1) then
         visible_buildings[#visible_buildings + 1] = b
@@ -577,105 +642,106 @@ for _, b in ipairs(buildings) do
     end
 end
 
--- Pass 2: measured roof planes, followed by the occasional old chimney stack.
+-- Pass 2: short, thick, stepped roofs. The roof volume is only two blocks
+-- deep, not a solid pyramid filling the whole space below the ridge.
 for _, b in ipairs(visible_buildings) do
+    local seed = math.floor(math.abs((b.p[1][1] or 0) * 31 + (b.p[1][2] or 0) * 17 + (b.h or 0) * 13))
+    local simple_house = is_simple_house(b)
+    if simple_house then prepare_house_roof(b, seed) end
+
     local ax1, ax2 = math.max(lx1, math.floor(b._x1)), math.min(lx2, math.ceil(b._x2))
     local az1, az2 = math.max(lz1, math.floor(b._z1)), math.min(lz2, math.ceil(b._z2))
     for z = az1, az2 do
         for x = ax1, ax2 do
             if in_building(x + 0.5, z + 0.5, b) then
-                local roof_y = make_roof_height(b, x, z)
-                if roof_y then
-                    for roof_block_y = b._top_y + 1, roof_y do
-                        set_building_block(x, roof_block_y, z, b._roof_id)
-                    end
+                local roof_y = simple_house and house_roof_height(b, x, z) or make_roof_height(b, x, z)
+                local roof_id = simple_house and b._house_roof_id or b._roof_id
+                for y = math.max(b._top_y + 1, roof_y - 1), roof_y do
+                    set_building_block(x, y, z, roof_id)
                 end
             end
         end
     end
 
-    local kind = b.t or "yes"
-    local seed = math.floor(math.abs((b.p[1][1] or 0) * 31 + (b.p[1][2] or 0) * 17 + (b.h or 0) * 13))
-    local roof = b.r or {}
-    if roof.s ~= "flat" and roof.o and kind ~= "tower" and kind ~= "church"
-        and kind ~= "castle" and seed % 8 == 0 then
-        local o = roof.o
-        local angle = o[5] or 0
-        local rx = math.floor(o[1] + math.cos(angle) * (o[3] or 0) * 0.18 + 0.5)
-        local rz = math.floor(o[2] - math.sin(angle) * (o[3] or 0) * 0.18 + 0.5)
-        local ry = make_roof_height(b, rx, rz)
-        if ry then
-            set_building_block(rx, ry + 1, rz, ids.chimney)
-            set_building_block(rx, ry + 2, rz, ids.chimney)
-            set_building_block(rx, ry + 3, rz, ids.limestone_trim)
+    -- Dark timber fascia along the eaves gives the roof a layered Minecraft
+    -- silhouette without enlarging the measured plot.
+    if simple_house and b._house_timber then
+        for i = 1, #b.p do
+            local a, c = b.p[i], b.p[i % #b.p + 1]
+            local dx, dz = c[1] - a[1], c[2] - a[2]
+            local length = math.sqrt(dx * dx + dz * dz)
+            local steps = math.max(1, math.ceil(length))
+            for step = 0, steps do
+                local f = step / steps
+                local x = round(a[1] + dx * f)
+                local z = round(a[2] + dz * f)
+                set_building_block(x, b._top_y + 1, z, ids.wood)
+            end
+        end
+    else
+        -- The larger monuments retain their measured roof and sparse chimney.
+        local kind = b.t or "yes"
+        if not simple_house and b.r and b.r.s ~= "flat" and b.r.o
+            and kind ~= "tower" and kind ~= "church" and kind ~= "castle" and seed % 8 == 0 then
+            local o = b.r.o
+            local angle = o[5] or 0
+            local rx = round(o[1] + math.cos(angle) * (o[3] or 0) * 0.18)
+            local rz = round(o[2] - math.sin(angle) * (o[3] or 0) * 0.18)
+            local ry = make_roof_height(b, rx, rz)
+            set_building_block(rx, ry + 1, rz, ids.wood)
         end
     end
 end
 
--- Pass 3: Languedoc facades. Pale limewash stays visible, the ground floor is
--- stone, corners are dressed, and selective string-courses break up tall walls.
+-- Pass 3: compact cottage façades. Stone plinth, warm plaster, restrained
+-- exposed timber, small openings and real measured heights.
 for _, b in ipairs(visible_buildings) do
     local floor_y, top_y = b._base_y, b._top_y
     local kind = b.t or "yes"
+    local simple_house = b._house_roof ~= nil
     local seed = math.floor(math.abs((b.p[1][1] or 0) * 31 + (b.p[1][2] or 0) * 17 + (b.h or 0) * 13))
-    local style = seed % 7
-    local dx_core, dz_core = (b._x1 + b._x2) / 2 - 84.76, (b._z1 + b._z2) / 2 - 143.44
-    local footprint_area = math.max(0, b._x2 - b._x1) * math.max(0, b._z2 - b._z1)
-    local historic_core = dx_core * dx_core + dz_core * dz_core <= 260 * 260
-        and footprint_area <= 1400 and kind ~= "industrial" and kind ~= "greenhouse"
-        and kind ~= "school" and kind ~= "kindergarten" and kind ~= "office" and kind ~= "service"
-    local bands, timber = false, false
-    local religious = kind == "church" or kind == "temple"
+    local timber_frame = simple_house and b._house_timber
     local named_gate = b.n == "Porte du Bourguet"
     local named_belfry = b.n == "Beffroi de Sommières"
         or b.n == "La tour de l'horloge" or b.n == "Tour Bermond"
+    local religious = kind == "church" or kind == "temple"
     local fortified = kind == "tower" or kind == "castle" or kind == "city_gate"
         or b.hist == "city_gate" or b.hist == "castle"
     local rings = {b.p}
-    if b.ho then
-        for _, hole in ipairs(b.ho) do rings[#rings + 1] = hole end
-    end
+    if b.ho then for _, hole in ipairs(b.ho) do rings[#rings + 1] = hole end end
 
     for _, ring in ipairs(rings) do
         for i = 1, #ring do
             local p0, p1 = ring[i], ring[i % #ring + 1]
             local dx, dz = p1[1] - p0[1], p1[2] - p0[2]
             local length = math.sqrt(dx * dx + dz * dz)
-            local steps = math.max(1, math.ceil(length * 1.4))
+            local steps = math.max(1, math.ceil(length * 1.5))
             for step = 0, steps do
                 local f = step / steps
-                local x = math.floor(p0[1] + dx * f + 0.5)
-                local z = math.floor(p0[2] + dz * f + 0.5)
+                local x, z = round(p0[1] + dx * f), round(p0[2] + dz * f)
                 if x >= lx1 and x <= lx2 and z >= lz1 and z <= lz2 then
                     local corner = step == 0 or step == steps
                     for y = floor_y - 1, top_y do
                         local rel = y - floor_y
-                        local wall_id = b._wall_id
-                        if historic_core then
-                            if rel <= 0 then
-                                wall_id = ids.ashlar
-                            elseif rel == (top_y - floor_y) then
-                                wall_id = ids.limestone_trim
-                            elseif corner and rel > 0 and rel % 2 == 0 then
-                                wall_id = ids.ashlar
-                            end
-                        elseif rel <= 1 then
+                        local wall_id = (rel <= 1) and ids.ashlar or b._wall_id
+                        if timber_frame and rel > 1 and (rel == 3 or rel == 6 or rel == top_y - floor_y) then
+                            wall_id = ids.wood
+                        elseif timber_frame and corner and rel > 1 then
+                            wall_id = ids.wood
+                        elseif not simple_house and fortified then
                             wall_id = ids.ashlar
-                        elseif rel == (top_y - floor_y) then
+                        elseif not simple_house and corner and rel > 1 and rel % 3 == 0 then
                             wall_id = ids.limestone_trim
-                        elseif corner and rel > 1 and rel % 3 == 0 then
-                            wall_id = ids.ashlar
-                        end
-                        if fortified and rel == (top_y - floor_y) then
-                            wall_id = ids.ashlar
                         end
                         set_building_block(x, y, z, wall_id)
                     end
-                    -- Buttresses only on actual large religious or defensive buildings.
-                    if (kind == "church" or kind == "temple" or fortified)
-                        and corner and length >= 7 then
-                        for y = floor_y + 2, top_y - 1 do
-                            if y % 4 == 0 then set_building_block(x, y, z, ids.ashlar) end
+                    if simple_house and timber_frame and corner then
+                        for y = floor_y + 1, top_y do
+                            set_building_block(x, y, z, ids.wood)
+                        end
+                    elseif simple_house and corner and not timber_frame then
+                        for y = floor_y + 1, top_y - 1, 2 do
+                            set_building_block(x, y, z, ids.limestone_trim)
                         end
                     end
                 end
@@ -683,18 +749,25 @@ for _, b in ipairs(visible_buildings) do
         end
     end
 
-    -- Merlons belong to named/typed defensive structures, not ordinary roofs.
-    if fortified then
-        for _, ring in ipairs({b.p}) do
-            for i = 1, #ring do
-                local a, d = ring[i], ring[i % #ring + 1]
-                local dx, dz = d[1] - a[1], d[2] - a[2]
-                local steps = math.max(1, math.ceil(math.sqrt(dx * dx + dz * dz)))
-                for step = 0, steps, 2 do
-                    local f = step / steps
-                    local x = math.floor(a[1] + dx * f + 0.5)
-                    local z = math.floor(a[2] + dz * f + 0.5)
-                    set_building_block(x, top_y + 1, z, ids.ashlar)
+    -- Small gable infill closes the end walls below the steep tiled roof.
+    if simple_house and b._house_roof[6] == "gab" then
+        local o = b._house_roof
+        local cx, cz, w, d, angle, rise = o[1], o[2], o[3], o[4], o[5], o[7]
+        local ca, sa = math.cos(angle), math.sin(angle)
+        local half_w, half_d = w / 2, d / 2
+        local steps = math.max(2, math.ceil(d))
+        for _, side in ipairs({-1, 1}) do
+            local u = side * half_w
+            for step = 0, steps do
+                local v = -half_d + 2 * half_d * step / steps
+                local x = round(cx + u * ca - v * sa)
+                local z = round(cz + u * sa + v * ca)
+                local h = round(rise * (1 - math.abs(v) / math.max(0.5, half_d)))
+                for y = top_y + 1, top_y + h do
+                    set_building_block(x, y, z, b._wall_id)
+                end
+                if timber_frame and h > 0 then
+                    set_building_block(x, top_y + h, z, ids.wood)
                 end
             end
         end
@@ -703,123 +776,75 @@ for _, b in ipairs(visible_buildings) do
     register_wall_windows(set_building_block, b, b.p, cfg,
         ids.glass, ids.limestone_trim, ids.shutter, ids.door, ids, segments)
 
-    -- Fill the triangular end walls of measured two-pitch roofs.
-    local roof = b.r or {}
-    if roof.s == "gab" and roof.o and (b.rh or 0) >= 0.5 then
-        local o = roof.o
-        local rx, rz, rw, rd, angle = o[1], o[2], o[3], o[4], o[5] or 0
-        local half_w, half_d = math.max(0.5, rw / 2), math.max(0.5, rd / 2)
-        local ca, sa = math.cos(angle), math.sin(angle)
-        local steps = math.max(2, math.ceil(half_d * 2))
-        for _, side in ipairs({-1, 1}) do
-            local u = side * half_w
-            for step = 0, steps do
-                local v = -half_d + 2 * half_d * step / steps
-                local px = math.floor(rx + u * ca - v * sa + 0.5)
-                local pz = math.floor(rz + u * sa + v * ca + 0.5)
-                local rise = math.max(0, math.floor((b.rh or 0) * (1 - math.abs(v) / half_d) + 0.5))
-                for y = top_y + 1, top_y + rise do
-                    set_building_block(px, y, pz, b._wall_id)
-                end
-            end
-        end
-    elseif roof.s == "flat" and historic_core then
-        -- The low acroterion is a 42 cm nodebox, not a full-height modern parapet.
+    -- Defensive and religious landmarks remain visually distinct from houses.
+    if fortified then
         for i = 1, #b.p do
             local a, c = b.p[i], b.p[i % #b.p + 1]
             local dx, dz = c[1] - a[1], c[2] - a[2]
-            local length = math.sqrt(dx * dx + dz * dz)
-            local steps = math.max(1, math.ceil(length))
-            for step = 0, steps do
+            local steps = math.max(1, math.ceil(math.sqrt(dx * dx + dz * dz)))
+            for step = 0, steps, 2 do
                 local f = step / steps
-                local px = math.floor(a[1] + dx * f + 0.5)
-                local pz = math.floor(a[2] + dz * f + 0.5)
-                set_building_block(px, top_y + 2, pz, ids.roof_parapet)
+                set_building_block(round(a[1] + dx * f), top_y + 1, round(a[2] + dz * f), ids.ashlar)
             end
         end
     end
 
-    -- Churches and temples receive a compact bell tower and a stepped local
-    -- roof cap. Its base remains within the measured building height.
-    if religious and (named_belfry or b.n == "Église Saint-Pons") and (b.h or 0) >= 8 then
+    if religious and named_belfry and (b.h or 0) >= 8 then
         local roof = b.r or {}
-        local cx = math.floor((roof.o and roof.o[1] or (b._x1 + b._x2) / 2) + 0.5)
-        local cz = math.floor((roof.o and roof.o[2] or (b._z1 + b._z2) / 2) + 0.5)
+        local cx = round((roof.o and roof.o[1]) or ((b._x1 + b._x2) / 2))
+        local cz = round((roof.o and roof.o[2]) or ((b._z1 + b._z2) / 2))
         local tower_base = math.max(floor_y + 3, top_y - 5)
         for y = tower_base, top_y + 1 do
             for dx = -1, 1 do
                 for dz = -1, 1 do
                     if math.abs(dx) == 1 or math.abs(dz) == 1 then
-                        set_block(cx + dx, y, cz + dz, ids.ashlar)
+                        set_building_block(cx + dx, y, cz + dz, ids.ashlar)
                     end
                 end
             end
         end
-        -- Open belfry on the four faces.
-        for _, p in ipairs({
-            {cx, top_y, cz - 1}, {cx, top_y, cz + 1},
-            {cx - 1, top_y, cz}, {cx + 1, top_y, cz},
-        }) do
-            set_block(p[1], p[2], p[3], ids.glass)
+        for _, p in ipairs({{cx, top_y, cz - 1}, {cx, top_y, cz + 1},
+            {cx - 1, top_y, cz}, {cx + 1, top_y, cz}}) do
+            set_building_block(p[1], p[2], p[3], ids.glass)
         end
         for layer = 0, 2 do
-            local inset = layer
-            for dx = -1 + inset, 1 - inset do
-                for dz = -1 + inset, 1 - inset do
-                    set_block(cx + dx, top_y + 2 + layer, cz + dz, b._roof_id)
+            for dx = -1 + layer, 1 - layer do
+                for dz = -1 + layer, 1 - layer do
+                    set_building_block(cx + dx, top_y + 2 + layer, cz + dz, b._roof_id)
                 end
             end
         end
-        set_block(cx, top_y + 5, cz, ids.limestone_trim)
+        set_building_block(cx, top_y + 5, cz, ids.limestone_trim)
     end
 
-    -- The Porte du Bourguet is a real passage, not a blind rectangular facade.
+    -- The Porte du Bourguet keeps its open passage and stone arch.
     if named_gate then
         local longest, edge = 0, nil
         for i = 1, #b.p do
-            local a, d = b.p[i], b.p[i % #b.p + 1]
-            local len = math.sqrt((d[1] - a[1])^2 + (d[2] - a[2])^2)
-            if len > longest then longest, edge = len, {a, d} end
+            local a, c = b.p[i], b.p[i % #b.p + 1]
+            local len = math.sqrt((c[1] - a[1])^2 + (c[2] - a[2])^2)
+            if len > longest then longest, edge = len, {a, c} end
         end
         if edge and longest >= 4 then
-            local a, d = edge[1], edge[2]
-            local dx, dz = d[1] - a[1], d[2] - a[2]
-            local x = math.floor((a[1] + d[1]) / 2 + 0.5)
-            local z = math.floor((a[2] + d[2]) / 2 + 0.5)
+            local a, c = edge[1], edge[2]
+            local dx, dz = c[1] - a[1], c[2] - a[2]
+            local x, z = round((a[1] + c[1]) / 2), round((a[2] + c[2]) / 2)
             if math.abs(dx) >= math.abs(dz) then
                 for off = -1, 1 do
-                    for y = floor_y + 1, floor_y + 4 do
-                        set_block(x + off, y, z, ids.air)
-                    end
+                    for y = floor_y + 1, floor_y + 4 do set_block(x + off, y, z, ids.air) end
                 end
-                for off = -2, 2 do
-                    set_building_block(x + off, floor_y + 5, z, ids.limestone_trim)
-                end
-                for y = floor_y + 1, floor_y + 4 do
-                    set_building_block(x - 2, y, z, ids.ashlar)
-                    set_building_block(x + 2, y, z, ids.ashlar)
-                end
+                for off = -2, 2 do set_building_block(x + off, floor_y + 5, z, ids.limestone_trim) end
             else
                 for off = -1, 1 do
-                    for y = floor_y + 1, floor_y + 4 do
-                        set_block(x, y, z + off, ids.air)
-                    end
+                    for y = floor_y + 1, floor_y + 4 do set_block(x, y, z + off, ids.air) end
                 end
-                for off = -2, 2 do
-                    set_building_block(x, floor_y + 5, z + off, ids.limestone_trim)
-                end
-                for y = floor_y + 1, floor_y + 4 do
-                    set_building_block(x, y, z - 2, ids.ashlar)
-                    set_building_block(x, y, z + 2, ids.ashlar)
-                end
+                for off = -2, 2 do set_building_block(x, floor_y + 5, z + off, ids.limestone_trim) end
             end
         end
     end
 
-    -- Named clock towers and the Beffroi get a visible stone clock face.
     if named_belfry then
-        local cx = math.floor((b._x1 + b._x2) / 2 + 0.5)
-        local cz = math.floor((b._z1 + b._z2) / 2 + 0.5)
+        local cx, cz = round((b._x1 + b._x2) / 2), round((b._z1 + b._z2) / 2)
         local clock_y = math.max(floor_y + 4, top_y - 5)
         for _, face in ipairs({"north", "south", "east", "west"}) do
             if face == "north" or face == "south" then
@@ -843,44 +868,38 @@ for _, b in ipairs(visible_buildings) do
             end
         end
     end
-
 end
 
--- In the dense old town, narrow residual strips beside attached houses are
--- paved calades, not bright green lawns. Road cells and adjacent plots win.
+-- In the dense centre, tiny residual strips beside attached houses are paved,
+-- not bright lawn. The actual building footprints and street cells take priority.
 for _, b in ipairs(visible_buildings) do
     local bx = (b._x1 + b._x2) / 2 - 84.76
     local bz = (b._z1 + b._z2) / 2 - 143.44
-    local footprint_area = math.max(0, b._x2 - b._x1) * math.max(0, b._z2 - b._z1)
-    local historic = bx * bx + bz * bz <= 260 * 260 and footprint_area <= 1400
-        and b.t ~= "industrial" and b.t ~= "greenhouse" and b.t ~= "school"
-        and b.t ~= "kindergarten" and b.t ~= "office" and b.t ~= "service"
-    if historic then
-        local ring = b.p
-        local area = 0
-        for i = 1, #ring do
-            local a, c = ring[i], ring[i % #ring + 1]
-            area = area + a[1] * c[2] - c[1] * a[2]
-        end
-        local orientation = area >= 0 and 1 or -1
-        for i = 1, #ring do
-            local a, c = ring[i], ring[i % #ring + 1]
+    local area = math.max(0, b._x2 - b._x1) * math.max(0, b._z2 - b._z1)
+    if bx * bx + bz * bz <= 260 * 260 and area <= 1400 then
+        for i = 1, #b.p do
+            local a, c = b.p[i], b.p[i % #b.p + 1]
             local dx, dz = c[1] - a[1], c[2] - a[2]
             local length = math.sqrt(dx * dx + dz * dz)
             if length > 1.5 then
+                local area_sum = 0
+                for j = 1, #b.p do
+                    local p, q = b.p[j], b.p[j % #b.p + 1]
+                    area_sum = area_sum + p[1] * q[2] - q[1] * p[2]
+                end
+                local orientation = area_sum >= 0 and 1 or -1
                 local nx, nz = orientation * dz / length, -orientation * dx / length
                 local steps = math.max(1, math.ceil(length * 1.5))
                 for step = 0, steps do
                     local f = step / steps
-                    local ex, ez = a[1] + dx * f, a[2] + dz * f
-                    for _, offset in ipairs({1, 2}) do
-                        local px = math.floor(ex + nx * offset + 0.5)
-                        local pz = math.floor(ez + nz * offset + 0.5)
-                        if px >= lx1 and px <= lx2 and pz >= lz1 and pz <= lz2 then
-                            local key = (pz - lz1) * (lx2 - lx1 + 1) + (px - lx1) + 1
+                    for offset = 1, 2 do
+                        local x = round(a[1] + dx * f + nx * offset)
+                        local z = round(a[2] + dz * f + nz * offset)
+                        if x >= lx1 and x <= lx2 and z >= lz1 and z <= lz2 then
+                            local key = (z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1
                             if not road_mask[key] and not building_footprint_mask[key] then
                                 local ground = tile_cache[key]
-                                if ground then set_building_block(px, ground, pz, ids.road_stone) end
+                                if ground then set_building_block(x, ground, z, ids.road_stone) end
                             end
                         end
                     end
@@ -889,7 +908,6 @@ for _, b in ipairs(visible_buildings) do
         end
     end
 end
-
 
 ]=]
 importer_source = replace_between(
@@ -1000,7 +1018,7 @@ _G.__gdo_city_gis_importer = importer_chunk()
 
 local renderer_source = minetest.decompress(read_file("renderer.deflate"), "deflate")
 assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
-renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 21")
+renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 22")
 renderer_source = replace_once(
     renderer_source,
     [=[center_x, center_z, base_y = candidate[1], candidate[2], ground_y]=],
