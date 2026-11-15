@@ -47,6 +47,19 @@ assert(core_json, "[GDO Sommières] Impossible de décompresser le relevé géog
 _G.__gdo_city_embedded_core = minetest.parse_json(core_json)
 assert(_G.__gdo_city_embedded_core and _G.__gdo_city_embedded_core.buildings,
     "[GDO Sommières] Relevé géographique invalide.")
+-- Extended Vidourle corridor and matching IGN terrain crop from the Sommières 3D archive.
+local hydrology_raw = minetest.decompress(
+    b64decode(read_file("data/sommieres_hydrology.b64")), "deflate")
+assert(hydrology_raw, "[GDO Sommières] Extension hydrologique invalide.")
+local hydrology = minetest.parse_json(hydrology_raw)
+assert(hydrology and hydrology.terrain and hydrology.lines and hydrology.lines[1],
+    "[GDO Sommières] Tracé du Vidourle ou terrain étendu manquant.")
+_G.__gdo_city_embedded_core.terrain_extension = hydrology.terrain
+_G.__gdo_city_embedded_core.water.lines = hydrology.lines
+minetest.log("action", string.format(
+    "[GDO][SOMMIERES] Vidourle étendu : %d points ; DEM IGN %dx%d.",
+    #hydrology.lines[1].p, hydrology.terrain.nx, hydrology.terrain.nz))
+
 
 -- Restore BD TOPO / OSM building metadata removed from the compact GIS core.
 local metadata_raw = minetest.decompress(
@@ -91,6 +104,220 @@ local function replace_between(source, start_marker, end_marker, replacement)
     assert(not second, "[GDO Sommières] Bloc SIG ambigu.")
     return string.sub(source, 1, first - 1) .. replacement .. string.sub(source, last)
 end
+
+-- Select the extended IGN crop outside the compact town DEM.
+importer_source = replace_once(
+    importer_source,
+    "local function get_surface(x, z)\n            return world_y(terrain_sample(t, x + 0.5, z + 0.5), cfg)\n        end",
+    "local function get_surface(x, z)\n            local sx, sz = x + 0.5, z + 0.5\n            local ext, grid = data.terrain_extension, t\n            if ext and sx >= ext.xmin and sx <= ext.xmax and sz >= ext.zmin and sz <= ext.zmax\n                and not (sx >= t.xmin and sx <= t.xmax and sz >= t.zmin and sz <= t.zmax) then\n                grid = ext\n            end\n            return world_y(terrain_sample(grid, sx, sz), cfg)\n        end"
+)
+
+-- Add small 32m map tiles touched by the river line; no large rectangular extension.
+local base_tile_loop = "    for z0 = tz0, tz1 - 1, tile do\n        for x0 = tx0, tx1 - 1, tile do\n            tiles[#tiles + 1] = {x0, math.min(x0 + tile - 1, math.ceil(x2)), z0, math.min(z0 + tile - 1, math.ceil(z2))}\n        end\n    end"
+local extended_tile_loop = base_tile_loop .. "\n\n    local tile_seen = {}\n    for _, td in ipairs(tiles) do tile_seen[td[1] .. \\":\\" .. td[3]] = true end\n    for _, line in ipairs((data.water and data.water.lines) or {}) do\n        if line.n == \\"Le Vidourle\\" and line.p and #line.p > 1 then\n            local margin = (line.w or 14) / 2 + 8\n            for i = 1, #line.p - 1 do\n                local a, b = line.p[i], line.p[i + 1]\n                local gx1 = math.max(data.terrain_extension.xmin, math.min(a[1], b[1]) - margin)\n                local gx2 = math.min(data.terrain_extension.xmax, math.max(a[1], b[1]) + margin)\n                local gz1 = math.max(data.terrain_extension.zmin, math.min(a[2], b[2]) - margin)\n                local gz2 = math.min(data.terrain_extension.zmax, math.max(a[2], b[2]) + margin)\n                if gx1 <= gx2 and gz1 <= gz2 then\n                    local x0, xlast = math.floor(gx1 / tile) * tile, math.floor(gx2 / tile) * tile\n                    local z0, zlast = math.floor(gz1 / tile) * tile, math.floor(gz2 / tile) * tile\n                    for tz = z0, zlast, tile do\n                        for tx = x0, xlast, tile do\n                            local key = tx .. \\":\\" .. tz\n                            if not tile_seen[key] then\n                                tiles[#tiles + 1] = {tx, tx + tile - 1, tz, tz + tile - 1}\n                                tile_seen[key] = true\n                            end\n                        end\n                    end\n                end\n            end\n        end\n    end"
+importer_source = replace_once(importer_source, base_tile_loop, extended_tile_loop)
+
+-- Water follows the surveyed river centerline and elevations; adjoining banks become gravel shelves.
+local road_marker = "-- 3) Street and square surfaces. Elevation values come from the GIS road centre-lines."
+local river_layer = [=[
+        -- 2b) Extended Vidourle, rasterised from its measured centerline and per-point elevations.
+        for _, line in ipairs((data.water and data.water.lines) or {}) do
+            if line.n == "Le Vidourle" and line.p and #line.p > 1 then
+                local radius = math.max(14, (line.w or 14) / 2)
+                local radius2, bank2 = radius * radius, (radius + 5) * (radius + 5)
+                for i = 1, #line.p - 1 do
+                    local a, b = line.p[i], line.p[i + 1]
+                    local margin = radius + 5
+                    local ax1 = math.max(lx1, math.floor(math.min(a[1], b[1]) - margin))
+                    local ax2 = math.min(lx2, math.ceil(math.max(a[1], b[1]) + margin))
+                    local az1 = math.max(lz1, math.floor(math.min(a[2], b[2]) - margin))
+                    local az2 = math.min(lz2, math.ceil(math.max(a[2], b[2]) + margin))
+                    if ax1 <= ax2 and az1 <= az2 then
+                        local ya = (line.y and line.y[i]) or 20.5
+                        local yb = (line.y and line.y[i + 1]) or 20.5
+                        for z = az1, az2 do
+                            for x = ax1, ax2 do
+                                local dist2, f = nearest_segment(x + 0.5, z + 0.5,
+                                    a[1], a[2], b[1], b[2])
+                                local elev = ya + (yb - ya) * f
+                                local water_y = world_y(elev, cfg)
+                                if dist2 <= radius2 then
+                                    local ground = get_surface(x, z)
+                                    local bed = math.max(y_min + 1, math.min(ground - 1, water_y - 4))
+                                    set_block(x, bed, z, ids.riverbed)
+                                    for y = bed + 1, math.min(y_max, water_y) do
+                                        set_block(x, y, z, ids.water)
+                                    end
+                                    for y = water_y + 1, math.min(y_max, ground) do
+                                        set_block(x, y, z, ids.air)
+                                    end
+                                elseif dist2 <= bank2 then
+                                    local ground = get_surface(x, z)
+                                    if ground >= water_y and ground <= water_y + 5 then
+                                        set_block(x, ground, z, ids.river_pebbles)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+]=]
+importer_source = replace_once(importer_source, road_marker, river_layer .. road_marker)
+
+-- Pont Tibère uses dressed stone rather than an asphalt road surface.
+importer_source = replace_once(
+    importer_source,
+    "if r.sf == \\"asphalt\\" then surface_id = ids.road_asphalt",
+    "if is_bridge and r.n == \\"Pont Tibère\\" then surface_id = ids.road_stone\n                elseif r.sf == \\"asphalt\\" then surface_id = ids.road_asphalt"
+)
+
+-- Rebuild the Roman bridge as a sequence of open arches, piers and pointed cutwaters.
+local bridge_start = "-- 3b) Pont Tibère : arches maçonnées sous le tablier, dans son axe diagonal relevé."
+local bridge_end = "-- 4) Individual building footprints, measured heights and oriented roof planes."
+local bridge_renderer = [=[
+-- 3b) Pont Tibère : arches romaines ouvertes, piles massives et avant-becs.
+        for _, bridge in ipairs(pont_tibere) do
+            local r, pts, length = bridge.road, bridge.road.p, bridge.length
+            local count = clamp(round(length / 12), 5, 8)
+            local span = length / count
+            local cumulative, walked = {}, 0
+            for i = 1, #pts - 1 do
+                local a, b = pts[i], pts[i + 1]
+                local dx, dz = b[1] - a[1], b[2] - a[2]
+                local seglen = math.sqrt(dx * dx + dz * dz)
+                cumulative[#cumulative + 1] = {
+                    a = a, b = b, start = walked, finish = walked + seglen,
+                    len = seglen, dx = dx, dz = dz,
+                }
+                walked = walked + seglen
+            end
+
+            local function sample_bridge(distance)
+                local seg = cumulative[#cumulative]
+                for _, candidate in ipairs(cumulative) do
+                    if distance <= candidate.finish then seg = candidate; break end
+                end
+                local f = clamp((distance - seg.start) / math.max(0.01, seg.len), 0, 1)
+                local tx, tz = seg.dx / math.max(0.01, seg.len), seg.dz / math.max(0.01, seg.len)
+                local elev = (seg.a[3] or 25.18) + ((seg.b[3] or 25.18) - (seg.a[3] or 25.18)) * f
+                return seg.a[1] + seg.dx * f, seg.a[2] + seg.dz * f, tx, tz, elev
+            end
+
+            local half_width = math.max(3, math.floor((r.w or 7.2) / 2))
+            local bed_y = world_y(17.5, cfg)
+            local spring_y = bed_y + 2
+            local arch_rise = 3
+
+            -- Abutments tie both ends into the river banks.
+            for _, distance in ipairs({0, length}) do
+                local cx, cz, tx, tz = sample_bridge(distance)
+                local nx, nz = -tz, tx
+                for along = -2, 2 do
+                    for lateral = -half_width - 1, half_width + 1 do
+                        local px = round(cx + tx * along + nx * lateral)
+                        local pz = round(cz + tz * along + nz * lateral)
+                        if px >= lx1 and px <= lx2 and pz >= lz1 and pz <= lz2 then
+                            for y = bed_y, spring_y + 1 do
+                                set_block(px, y, pz, ids.bridge_stone)
+                            end
+                        end
+                    end
+                end
+            end
+
+            -- Spandrels sit above a real curved intrados; water openings stay hollow.
+            for arch = 0, count - 1 do
+                local steps = math.max(8, math.ceil(span * 2))
+                for step = 0, steps do
+                    local t = step / steps
+                    local distance = arch * span + t * span
+                    local cx, cz, tx, tz, deck_elev = sample_bridge(distance)
+                    local nx, nz = -tz, tx
+                    local deck_y = world_y(deck_elev, cfg)
+                    local curve = math.sqrt(math.max(0, 1 - (2 * t - 1) ^ 2))
+                    local intrados = spring_y + round(arch_rise * curve)
+                    for lateral = -half_width, half_width do
+                        local px = round(cx + nx * lateral)
+                        local pz = round(cz + nz * lateral)
+                        if px >= lx1 and px <= lx2 and pz >= lz1 and pz <= lz2 then
+                            if step % 2 == 0 then
+                                set_block(px, intrados, pz, ids.limestone_trim)
+                                set_block(px, intrados + 1, pz, ids.bridge_stone)
+                            else
+                                set_block(px, intrados, pz, ids.bridge_stone)
+                            end
+                            for y = intrados + 2, deck_y - 1 do
+                                set_block(px, y, pz, ids.bridge_stone)
+                            end
+                        end
+                    end
+                end
+            end
+
+            -- Transverse piers at the springing points and triangular cutwaters on both sides.
+            for pier = 0, count do
+                local cx, cz, tx, tz = sample_bridge(pier * span)
+                local nx, nz = -tz, tx
+                for along = -1, 1 do
+                    for lateral = -half_width, half_width do
+                        local px = round(cx + tx * along + nx * lateral)
+                        local pz = round(cz + tz * along + nz * lateral)
+                        if px >= lx1 and px <= lx2 and pz >= lz1 and pz <= lz2 then
+                            for y = bed_y, spring_y + arch_rise do
+                                set_block(px, y, pz, ids.bridge_stone)
+                            end
+                        end
+                    end
+                end
+                for _, side in ipairs({-1, 1}) do
+                    for projection = 1, 3 do
+                        local half_along = 3 - projection
+                        for along = -half_along, half_along do
+                            local px = round(cx + tx * along + nx * side * (half_width + projection))
+                            local pz = round(cz + tz * along + nz * side * (half_width + projection))
+                            if px >= lx1 and px <= lx2 and pz >= lz1 and pz <= lz2 then
+                                for y = bed_y, bed_y + 2 do
+                                    set_block(px, y, pz, ids.bridge_stone)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+
+            -- Stone parapets and regularly spaced posts.
+            for _, seg in ipairs(cumulative) do
+                local steps = math.max(1, math.ceil(seg.len))
+                for i = 0, steps do
+                    local f = i / steps
+                    local cx = seg.a[1] + seg.dx * f
+                    local cz = seg.a[2] + seg.dz * f
+                    local nx, nz = -seg.dz / math.max(0.01, seg.len), seg.dx / math.max(0.01, seg.len)
+                    local deck_y = world_y((seg.a[3] or 25.18) + ((seg.b[3] or 25.18) - (seg.a[3] or 25.18)) * f, cfg)
+                    for _, side in ipairs({-1, 1}) do
+                        local rx = round(cx + nx * side * (half_width + 0.5))
+                        local rz = round(cz + nz * side * (half_width + 0.5))
+                        set_block(rx, deck_y + 1, rz, ids.limestone_trim)
+                        if i % 4 == 0 then
+                            set_block(rx, deck_y + 2, rz, ids.bridge_stone)
+                            set_block(rx, deck_y + 3, rz, ids.limestone_trim)
+                        end
+                    end
+                end
+            end
+        end
+
+]=]
+importer_source = replace_between(
+    importer_source,
+    bridge_start,
+    bridge_end,
+    bridge_renderer .. bridge_end
+)
+
 
 -- Use the measured height as a relative dimension, independent of rounding
 -- the absolute elevation datum at the base and at the roof separately.
@@ -417,7 +644,7 @@ _G.__gdo_city_gis_importer = importer_chunk()
 
 local renderer_source = minetest.decompress(read_file("renderer.deflate"), "deflate")
 assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
-renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 11")
+renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 12")
 renderer_source = replace_once(renderer_source, "local wall_ids, roof_ids = {}, {}", "    -- Architectural relief for medieval Languedoc facades.\n    register_node(\"gdo_city:timber_beam\", \"Poutre de chêne ancien\", atlas_tile(1, 0))\n    register_node(\"gdo_city:window_arch\", \"Claveau de fenêtre\", atlas_tile(3, 0))\n    register_node(\"gdo_city:chimney\", \"Souche de cheminée ancienne\", atlas_tile(0, 3), {\n        drawtype = \"nodebox\", node_box = {type = \"fixed\", fixed = {\n            {-0.28, -0.5, -0.28, 0.28, 0.5, 0.28},\n        }},\n    })\n    register_node(\"gdo_city:shop_awning\", \"Store de boutique\", atlas_tile(0, 2), {\n        drawtype = \"nodebox\", walkable = false,\n        node_box = {type = \"fixed\", fixed = {\n            {-0.5, -0.45, -0.52, 0.5, -0.31, 0.42},\n            {-0.5, -0.50, 0.38, 0.5, -0.43, 0.48},\n        }},\n    })\n    register_node(\"gdo_city:iron_balcony_ns\", \"Balcon en ferronnerie\", atlas_tile(2, 2), {\n        drawtype = \"nodebox\", walkable = false,\n        node_box = {type = \"fixed\", fixed = {\n            {-0.5, -0.48, -0.52, 0.5, -0.40, 0.52},\n            {-0.5, -0.40, -0.52, -0.44, 0.08, -0.45},\n            {0.44, -0.40, -0.52, 0.5, 0.08, -0.45},\n            {-0.5, 0.03, -0.52, 0.5, 0.08, -0.45},\n            {-0.28, -0.40, -0.52, -0.23, 0.05, -0.45},\n            {0.23, -0.40, -0.52, 0.28, 0.05, -0.45},\n        }},\n    })\n    register_node(\"gdo_city:iron_balcony_ew\", \"Balcon en ferronnerie latéral\", atlas_tile(2, 2), {\n        drawtype = \"nodebox\", walkable = false,\n        node_box = {type = \"fixed\", fixed = {\n            {-0.52, -0.48, -0.5, 0.52, -0.40, 0.5},\n            {-0.52, -0.40, -0.5, -0.45, 0.08, 0.5},\n            {-0.52, 0.03, -0.5, -0.45, 0.08, 0.5},\n            {-0.52, -0.40, -0.28, -0.45, 0.05, -0.23},\n            {-0.52, -0.40, 0.23, -0.45, 0.05, 0.28},\n        }},\n    })\nlocal wall_ids, roof_ids = {}, {}")
 renderer_source = replace_once(renderer_source, "shutter = cid(\"gdo_city:shutter\"), door = cid(\"gdo_city:wooden_door\"),", "shutter = cid(\"gdo_city:shutter\"), door = cid(\"gdo_city:wooden_door\"),\n        timber = cid(\"gdo_city:timber_beam\"), arch = cid(\"gdo_city:window_arch\"),\n        chimney = cid(\"gdo_city:chimney\"), awning = cid(\"gdo_city:shop_awning\"),\n        balcony_ns = cid(\"gdo_city:iron_balcony_ns\"), balcony_ew = cid(\"gdo_city:iron_balcony_ew\"),")
 local renderer_chunk, renderer_err = loader(renderer_source, "@gdo_city/renderer.lua")
