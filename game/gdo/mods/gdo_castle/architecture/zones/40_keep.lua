@@ -4,7 +4,7 @@
 -- adaptation for the GDO castle plan, not a block-for-block reproduction.
 return function(A)
     local Z={}
-    Z.VERSION=2
+    Z.VERSION=3
     Z.bounds={x1=-27,x2=27,z1=-38,z2=-3}
     Z.height=48
 
