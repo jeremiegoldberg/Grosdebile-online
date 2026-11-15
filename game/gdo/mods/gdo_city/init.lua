@@ -565,6 +565,33 @@ local function is_simple_house(b)
     return not is_height_landmark(b)
 end
 
+-- Turn every ordinary GIS building footprint into a small cottage set back
+-- inside its existing footprint. This keeps the street plan and town extent,
+-- while opening green gaps between neighbouring houses.
+local function set_back_house_footprint(b)
+    if not is_simple_house(b) then return end
+    local min_x, max_x, min_z, max_z = math.huge, -math.huge, math.huge, -math.huge
+    local cx, cz = 0, 0
+    for _, p in ipairs(b.p) do
+        cx, cz = cx + p[1], cz + p[2]
+        min_x, max_x = math.min(min_x, p[1]), math.max(max_x, p[1])
+        min_z, max_z = math.min(min_z, p[2]), math.max(max_z, p[2])
+    end
+    cx, cz = cx / #b.p, cz / #b.p
+    local narrow = math.max(4, math.min(max_x - min_x, max_z - min_z))
+    local scale = clamp(1 - 2.6 / narrow, 0.58, 0.82)
+    b._house_scale = scale
+    for _, p in ipairs(b.p) do
+        p[1] = cx + (p[1] - cx) * scale
+        p[2] = cz + (p[2] - cz) * scale
+    end
+    b._x1, b._x2, b._z1, b._z2 = math.huge, -math.huge, math.huge, -math.huge
+    for _, p in ipairs(b.p) do
+        b._x1, b._x2 = math.min(b._x1, p[1]), math.max(b._x2, p[1])
+        b._z1, b._z2 = math.min(b._z1, p[2]), math.max(b._z2, p[2])
+    end
+end
+
 local function prepare_house_roof(b, seed)
     local o = b.r and b.r.o
     local cx, cz, w, d, angle
@@ -575,6 +602,8 @@ local function prepare_house_roof(b, seed)
         w, d, angle = b._x2 - b._x1, b._z2 - b._z1, 0
     end
     w, d = math.max(2, w or 2), math.max(2, d or 2)
+    local setback = b._house_scale or 0.72
+    w, d = w * setback, d * setback
     -- Keep the ridge on the longer axis, which makes small houses read as
     -- proper cottages rather than square flat-roofed boxes.
     if w < d then
@@ -584,12 +613,11 @@ local function prepare_house_roof(b, seed)
     local source_shape = (b.r and b.r.s) or "gab"
     local shape = "gab"
     if source_shape == "hip" or source_shape == "pyr" then shape = "hip" end
-    local rise = math.max(4, math.min(6, round(math.max(2.8, b.rh or 1.8) * 1.4)))
-    if (b._top_y - b._base_y) >= 12 then rise = math.min(rise, 4) end
+    local rise = math.max(3, math.min(4, round(math.max(2.2, b.rh or 1.5) * 1.15)))
     b._house_roof = {cx, cz, w, d, angle, shape, rise}
     -- A warm terracotta majority, with some surveyed roof colours retained.
     b._house_roof_id = (seed % 3 == 0) and b._roof_id or ids.roof_default
-    b._house_timber = seed % 4 ~= 0
+    b._house_timber = seed % 4 == 0
 end
 
 local function house_roof_height(b, x, z)
@@ -613,7 +641,10 @@ end
 -- expanded, contracted, squared-off or moved to fit the new house style.
 for _, b in ipairs(buildings) do
     if not is_height_landmark(b) then
-        b._top_y = math.min(b._top_y, b._base_y + 9)
+        -- One or two inhabited storeys, three only for the largest houses.
+        local wall_height = math.max(4, math.min(7, round((b.h or 5) * 0.72)))
+        b._top_y = b._base_y + wall_height
+        set_back_house_footprint(b)
     end
     if bbox_hits(b._x1, b._x2, b._z1, b._z2, lx1, lx2, lz1, lz2, 1) then
         visible_buildings[#visible_buildings + 1] = b
@@ -648,15 +679,13 @@ for _, b in ipairs(visible_buildings) do
             if in_building(x + 0.5, z + 0.5, b) then
                 local roof_y = simple_house and house_roof_height(b, x, z) or make_roof_height(b, x, z)
                 local roof_id = simple_house and b._house_roof_id or b._roof_id
-                for y = math.max(b._top_y + 1, roof_y - 2), roof_y do
-                    set_building_block(x, y, z, roof_id)
-                end
+                -- A thin, single-node tiled roof; no oversized solid roof mass.
+                set_building_block(x, roof_y, z, roof_id)
             end
         end
     end
 
-    -- Dark timber fascia along the eaves gives the roof a layered Minecraft
-    -- silhouette without enlarging the measured plot.
+    -- Restrained timber fascia; most cottages use lime plaster and stone.
     if simple_house and b._house_timber then
         for i = 1, #b.p do
             local a, c = b.p[i], b.p[i % #b.p + 1]
@@ -1181,7 +1210,7 @@ _G.__gdo_city_gis_importer = importer_chunk()
 
 local renderer_source = minetest.decompress(read_file("renderer.deflate"), "deflate")
 assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
-renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 24")
+renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 25")
 renderer_source = replace_once(
     renderer_source,
     [=[center_x, center_z, base_y = candidate[1], candidate[2], ground_y]=],
