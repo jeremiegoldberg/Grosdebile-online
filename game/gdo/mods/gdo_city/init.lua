@@ -69,7 +69,7 @@ if full_gis_file then
         #core.buildings, #core.roads, #(core.nature.trees or {}), #core.pois))
 else
     minetest.log("warning",
-        "[GDO][SOMMIERES] SIG compact actif. Génère data/sommieres_full_gis.b64 depuis l'archive 3D pour retrouver les 4 500 bâtiments.")
+        "[GDO][SOMMIERES] ATTENTION : SIG compact actif (815 empreintes simplifiées). Le village détaillé exige game/gdo/mods/gdo_city/data/sommieres_full_gis.b64 ; génère-le avec : python3 tools/build_sommieres_gis.py /chemin/vers/sommieres3d.zip")
 end
 -- Extended Vidourle corridor and matching IGN terrain crop from the Sommières 3D archive.
 local hydrology_raw = minetest.decompress(
@@ -1213,7 +1213,7 @@ _G.__gdo_city_gis_importer = importer_chunk()
 
 local renderer_source = minetest.decompress(read_file("renderer.deflate"), "deflate")
 assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
-renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 26")
+renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 27")
 renderer_source = replace_once(
     renderer_source,
     [=[center_x, center_z, base_y = candidate[1], candidate[2], ground_y]=],
