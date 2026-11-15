@@ -214,6 +214,88 @@ importer_source = replace_once(
     "-- 4) Individual building footprints, measured heights and oriented roof planes.",
     "local function set_building_block(x, y, z, id)\n            if x < lx1 or x > lx2 or z < lz1 or z > lz2 then return end\n            local key = (z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1\n            if road_mask[key] then return end\n            set_block(x, y, z, id)\n        end\n\n        -- 4) Individual building footprints, measured heights and oriented roof planes."
 )
+
+local building_renderer = [=[
+-- 4) Individual building footprints: clear first, roof second, façades last.
+local visible_buildings = {}
+-- Pass 1: clear every footprint before placing any roof or wall. This prevents
+-- a neighbour's interior-clearing pass from erasing an already-built façade.
+for _, b in ipairs(buildings) do
+    if bbox_hits(b._x1, b._x2, b._z1, b._z2, lx1, lx2, lz1, lz2, 1) then
+        visible_buildings[#visible_buildings + 1] = b
+        local floor_y, top_y = b._base_y, b._top_y
+        local ax1, ax2 = math.max(lx1, math.floor(b._x1)), math.min(lx2, math.ceil(b._x2))
+        local az1, az2 = math.max(lz1, math.floor(b._z1)), math.min(lz2, math.ceil(b._z2))
+        for z = az1, az2 do
+            for x = ax1, ax2 do
+                if in_building(x + 0.5, z + 0.5, b) then
+                    set_block(x, floor_y, z, ids.floor)
+                    for y = floor_y + 1, math.min(y_max, top_y) do
+                        set_block(x, y, z, ids.air)
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Pass 2: one roof surface per building, using its measured type, dimensions,
+-- orientation and roof rise from r.s, r.o and rh.
+for _, b in ipairs(visible_buildings) do
+    local ax1, ax2 = math.max(lx1, math.floor(b._x1)), math.min(lx2, math.ceil(b._x2))
+    local az1, az2 = math.max(lz1, math.floor(b._z1)), math.min(lz2, math.ceil(b._z2))
+    for z = az1, az2 do
+        for x = ax1, ax2 do
+            if in_building(x + 0.5, z + 0.5, b) then
+                local roof_y = make_roof_height(b, x, z)
+                if roof_y then set_block(x, roof_y, z, b._roof_id) end
+            end
+        end
+    end
+end
+
+-- Pass 3: façades follow the individual polygon rings and the exact measured
+-- building top. Type-aware windows are generated only after all clearing.
+for _, b in ipairs(visible_buildings) do
+    local floor_y, top_y = b._base_y, b._top_y
+    local rings = {b.p}
+    if b.ho then
+        for _, hole in ipairs(b.ho) do rings[#rings + 1] = hole end
+    end
+    for _, ring in ipairs(rings) do
+        for i = 1, #ring do
+            local p0, p1 = ring[i], ring[i % #ring + 1]
+            local dx, dz = p1[1] - p0[1], p1[2] - p0[2]
+            local length = math.sqrt(dx * dx + dz * dz)
+            local steps = math.max(1, math.ceil(length * 1.4))
+            for step = 0, steps do
+                local f = step / steps
+                local x = math.floor(p0[1] + dx * f + 0.5)
+                local z = math.floor(p0[2] + dz * f + 0.5)
+                if x >= lx1 and x <= lx2 and z >= lz1 and z <= lz2 then
+                    for y = floor_y - 1, top_y do
+                        local wall_id = (y <= floor_y + 1) and ids.ashlar or b._wall_id
+                        set_block(x, y, z, wall_id)
+                    end
+                    if step == 0 then
+                        set_block(x, top_y, z, ids.limestone_trim)
+                        set_block(x, floor_y + 2, z, ids.limestone_trim)
+                    end
+                end
+            end
+        end
+    end
+    register_wall_windows(set_block, b, b.p, cfg,
+        ids.glass, ids.limestone_trim, ids.shutter, ids.door)
+end
+
+]=]
+importer_source = replace_between(
+    importer_source,
+    "-- 4) Individual building footprints, measured heights and oriented roof planes.",
+    "-- 4b) Covered lanes and passages mapped by OSM are kept open beneath the houses.",
+    building_renderer .. "-- 4b) Covered lanes and passages mapped by OSM are kept open beneath the houses."
+)
 importer_source = replace_once(importer_source, "set_block(x, floor_y, z, ids.floor)", "set_building_block(x, floor_y, z, ids.floor)")
 importer_source = replace_once(importer_source, "set_block(x, roof_y, z, roof_id)", "set_building_block(x, roof_y, z, roof_id)")
 importer_source = replace_once(importer_source, "set_block(x, y, z, wall_id)", "set_building_block(x, y, z, wall_id)")
