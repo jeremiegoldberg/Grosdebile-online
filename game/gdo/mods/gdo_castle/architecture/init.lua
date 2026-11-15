@@ -326,6 +326,7 @@ end)
 
 local function prepare_site()
     if building then return end
+    local saved_version=storage:get_int(SITE_KEY)
     -- Les zones architecturales ne doivent jamais être posées dans des
     -- mapblocks encore absents. Même une sauvegarde déjà à jour doit d'abord
     -- faire émerger tout le terrain naturel sous le château et ses abords.
