@@ -150,7 +150,7 @@ local extended_tile_loop = [=[    for z0 = tz0, tz1 - 1, tile do
                         for tx = x0, xlast, tile do
                             local key = tx .. ":" .. tz
                             if not tile_seen[key] then
-                                tiles[#tiles + 1] = {tx, tx + tile - 1, tz, tz + tile - 1}
+                                tiles[#tiles + 1] = {tx, tx + tile - 1, tz, tz + tile - 1, true}
                                 tile_seen[key] = true
                             end
                         end
@@ -790,6 +790,13 @@ importer_source = replace_between(
     "-- 4b) Covered lanes and passages mapped by OSM are kept open beneath the houses.",
     building_renderer .. "-- 4b) Covered lanes and passages mapped by OSM are kept open beneath the houses."
 )
+-- Recalculate lighting independently for river-only tiles outside the compact town bounds.
+importer_source = replace_once(
+    importer_source,
+    "vm:write_to_map(true)\n        completed = completed + 1",
+    "vm:write_to_map(true)\n        if tile_data[5] and minetest.fix_light then\n            minetest.fix_light(\n                {x = wX(lx1), y = y_min, z = wZ(lz1)},\n                {x = wX(lx2), y = y_max, z = wZ(lz2)})\n        end\n        completed = completed + 1"
+)
+
 -- The replacement building renderer uses set_building_block directly.
 local importer_chunk, importer_err = loader(importer_source, "@gdo_city/gis_import.lua")
 assert(importer_chunk, importer_err)
