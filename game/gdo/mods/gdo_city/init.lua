@@ -972,19 +972,19 @@ renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERS
 renderer_source = replace_once(
     renderer_source,
     [=[center_x, center_z, base_y = candidate[1], candidate[2], ground_y]=],
-    [=[center_x, center_z, base_y = candidate[1], candidate[2], math.floor(ref_elevation + 1.5)]=]
+    [=[center_x, center_z, base_y = candidate[1], candidate[2], math.floor(ref_elevation + (tonumber(minetest.get_mapgen_setting("water_level")) or 1) + 0.5)]=]
 )
 renderer_source = replace_once(
     renderer_source,
     [=[base_y = storage:get_int("city_y")]=],
-    [=[base_y = math.floor(ref_elevation + 1.5)
+    [=[base_y = math.floor(ref_elevation + (tonumber(minetest.get_mapgen_setting("water_level")) or 1) + 0.5)
         storage:set_int("city_y", base_y)]=]
 )
 renderer_source = replace_once(
     renderer_source,
     [=[local natural = A.find_surface_y(rx, rz)
                             if natural then base_y = natural; storage:set_int("city_y", natural) end]=],
-    [=[base_y = math.floor(ref_elevation + 1.5)
+    [=[base_y = math.floor(ref_elevation + (tonumber(minetest.get_mapgen_setting("water_level")) or 1) + 0.5)
                         storage:set_int("city_y", base_y)]=]
 )
 renderer_source = replace_once(
