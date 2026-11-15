@@ -409,43 +409,24 @@ local function register_wall_windows(set_block, b, ring, cfg, glass_id, sill_id,
     local kind = b.t or "yes"
     local cx, cz = (b._x1 + b._x2) / 2, (b._z1 + b._z2) / 2
     local dx, dz = cx - 84.76, cz - 143.44
-    local box_area = math.max(0, b._x2 - b._x1) * math.max(0, b._z2 - b._z1)
-    local historic = dx * dx + dz * dz <= 260 * 260 and box_area <= 1400
+    local footprint_area = math.max(0, b._x2 - b._x1) * math.max(0, b._z2 - b._z1)
+    local historic = dx * dx + dz * dz <= 260 * 260 and footprint_area <= 1400
         and kind ~= "industrial" and kind ~= "greenhouse" and kind ~= "school"
         and kind ~= "kindergarten" and kind ~= "office" and kind ~= "service"
-    local spacing = historic and 4.6 or 6.5
+    local spacing = historic and 5.2 or 7.0
     local floor_step, first_level, window_height = historic and 3 or 4, 3, 2
-    local use_shutters = historic or kind == "detached" or kind == "farm"
     local use_balcony = historic and (b.h or 0) >= 10
-    -- Store awnings are limited to tagged retail buildings. No AC units,
-    -- ventilation boxes or random modern fixtures are generated on houses.
     local use_awning = historic and kind == "retail"
-    local religious = kind == "church" or kind == "temple"
-    local named_gate = b.n == "Porte du Bourguet"
-    local named_belfry = b.n == "Beffroi de Sommières"
-        or b.n == "La tour de l'horloge" or b.n == "Tour Bermond"
-    local fortified = kind == "tower" or kind == "castle" or kind == "city_gate"
-        or b.hist == "city_gate" or b.hist == "castle"
-    if religious or fortified then
-        spacing, floor_step, first_level = 8.0, 4, 4
-        use_shutters, use_balcony, use_awning = false, false, false
-    elseif kind == "apartments" or kind == "terrace" then
-        spacing, floor_step, first_level = historic and 4.8 or 5.8, 3, 3
-    elseif kind == "detached" or kind == "farm" or kind == "hut" then
-        spacing, floor_step, first_level = 7.0, 3, 3
-        use_balcony = false
-    elseif kind == "industrial" or kind == "office" or kind == "service" or kind == "greenhouse" then
-        spacing, floor_step, first_level = 9.0, 4, 3
-        use_shutters, use_balcony, use_awning = false, false, false
-    end
-
     local floor_y, top_y = b._base_y, b._top_y
+
+    -- Choose the frontage closest to a surveyed street; skip party walls
+    -- and short polygon fragments that cannot hold a believable opening.
     local edges = {}
     for i = 1, #ring do
         local a, c = ring[i], ring[i % #ring + 1]
         local dx, dz = c[1] - a[1], c[2] - a[2]
         local length = math.sqrt(dx * dx + dz * dz)
-        if length >= 4.2 then
+        if length >= 7.0 then
             local mx, mz = (a[1] + c[1]) / 2, (a[2] + c[2]) / 2
             local road_distance = math.huge
             for _, seg in ipairs(road_segments or {}) do
@@ -467,6 +448,7 @@ local function register_wall_windows(set_block, b, ring, cfg, glass_id, sill_id,
     if edges[1].distance == math.huge then
         table.sort(edges, function(a, c) return a.length > c.length end)
     end
+
     local chosen = {}
     for i, edge in ipairs(edges) do
         local near_street = edge.distance <= 12
@@ -476,11 +458,18 @@ local function register_wall_windows(set_block, b, ring, cfg, glass_id, sill_id,
         end
     end
     local front = chosen[1]
+
     for edge_index, edge in ipairs(chosen) do
         local a, c, length = edge.a, edge.c, edge.length
         local dx, dz = c[1] - a[1], c[2] - a[2]
         local nx, nz = dz / length, -dx / length
         local dominant_x = math.abs(dx) >= math.abs(dz)
+        local window_id
+        if dominant_x then
+            window_id = (nz < 0) and ids.window_north or ids.window_south
+        else
+            window_id = (nx < 0) and ids.window_west or ids.window_east
+        end
         local ox, oz = math.floor(nx + 0.5), math.floor(nz + 0.5)
         local count = math.max(1, math.floor((length - 2.4) / spacing))
         for n = 1, count do
@@ -489,17 +478,10 @@ local function register_wall_windows(set_block, b, ring, cfg, glass_id, sill_id,
             local z = math.floor(a[2] + dz * t + 0.5)
             local balcony_done = false
             for fy = floor_y + first_level, top_y - window_height, floor_step do
-                if dominant_x then
-                    set_block(x - 1, fy, z, ids.ashlar)
-                    set_block(x + 1, fy, z, ids.ashlar)
-                else
-                    set_block(x, fy, z - 1, ids.ashlar)
-                    set_block(x, fy, z + 1, ids.ashlar)
+                -- A narrow transparent pane flush with the facade, not a glass cube.
+                for dy = 0, window_height - 1 do
+                    set_block(x, fy + dy, z, window_id)
                 end
-                set_block(x, fy - 1, z, sill_id)
-                set_block(x, fy + window_height, z, ids.arch)
-                for dy = 0, window_height - 1 do set_block(x, fy + dy, z, glass_id) end
-                if use_shutters then set_block(x + ox, fy, z + oz, shutter_id) end
                 if use_balcony and edge_index == 1 and not balcony_done
                     and fy >= floor_y + floor_step * 2 and n == math.ceil(count / 2) then
                     set_block(x, fy - 1, z, dominant_x and ids.balcony_ns or ids.balcony_ew)
@@ -513,25 +495,12 @@ local function register_wall_windows(set_block, b, ring, cfg, glass_id, sill_id,
         end
     end
 
-    -- One entrance on the street-facing wall, never one randomly on every side.
+    -- One discreet wooden entrance on the street-facing frontage.
     local a, c = front.a, front.c
-    local dx, dz = c[1] - a[1], c[2] - a[2]
     local x = math.floor((a[1] + c[1]) / 2 + 0.5)
     local z = math.floor((a[2] + c[2]) / 2 + 0.5)
     set_block(x, floor_y + 1, z, door_id)
     set_block(x, floor_y + 2, z, door_id)
-    if math.abs(dx) >= math.abs(dz) then
-        set_block(x - 1, floor_y + 1, z, ids.ashlar)
-        set_block(x + 1, floor_y + 1, z, ids.ashlar)
-        set_block(x - 1, floor_y + 2, z, ids.ashlar)
-        set_block(x + 1, floor_y + 2, z, ids.ashlar)
-    else
-        set_block(x, floor_y + 1, z - 1, ids.ashlar)
-        set_block(x, floor_y + 1, z + 1, ids.ashlar)
-        set_block(x, floor_y + 2, z - 1, ids.ashlar)
-        set_block(x, floor_y + 2, z + 1, ids.ashlar)
-    end
-    set_block(x, floor_y + 3, z, ids.arch)
 end
 
 ]=]
@@ -547,7 +516,7 @@ importer_source = replace_between(
 importer_source = replace_once(
     importer_source,
     "local W, D = math.max(0.5, w / 2 + 0.4), math.max(0.5, d / 2 + 0.4)",
-    "local W, D = math.max(0.5, w / 2), math.max(0.5, d / 2)\n    -- Clip the roof to its surveyed rectangle; do not create fallback eaves outside it.\n    if math.abs(u) > W or math.abs(v) > D then return nil end"
+    "local W, D = math.max(0.5, w / 2 + 0.4), math.max(0.5, d / 2 + 0.4)"
 )
 -- Roof cells are emitted only by the replacement three-pass building renderer below.
 -- Do not patch the old per-building loop: it has been removed from this importer.
@@ -568,6 +537,7 @@ importer_source = replace_once(
 local building_renderer = [=[
 -- 4) Individual footprints: clear first, then roofs, then historic facades.
 local visible_buildings = {}
+local building_footprint_mask = {}
 
 local function set_building_block(x, y, z, id)
     if x < lx1 or x > lx2 or z < lz1 or z > lz2 then return end
@@ -587,6 +557,7 @@ for _, b in ipairs(buildings) do
         for z = az1, az2 do
             for x = ax1, ax2 do
                 if in_building(x + 0.5, z + 0.5, b) then
+                    building_footprint_mask[(z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1] = true
                     set_building_block(x, floor_y, z, ids.floor)
                     for y = floor_y + 1, math.min(y_max, top_y) do
                         set_building_block(x, y, z, ids.air)
@@ -605,7 +576,11 @@ for _, b in ipairs(visible_buildings) do
         for x = ax1, ax2 do
             if in_building(x + 0.5, z + 0.5, b) then
                 local roof_y = make_roof_height(b, x, z)
-                if roof_y then set_building_block(x, roof_y, z, b._roof_id) end
+                if roof_y then
+                    for roof_block_y = b._top_y + 1, roof_y do
+                        set_building_block(x, roof_block_y, z, b._roof_id)
+                    end
+                end
             end
         end
     end
@@ -859,6 +834,51 @@ for _, b in ipairs(visible_buildings) do
             end
         end
     end
+
+-- In the dense old town, narrow residual strips beside attached houses are
+-- paved calades, not bright green lawns. Road cells and adjacent plots win.
+for _, b in ipairs(visible_buildings) do
+    local bx = (b._x1 + b._x2) / 2 - 84.76
+    local bz = (b._z1 + b._z2) / 2 - 143.44
+    local footprint_area = math.max(0, b._x2 - b._x1) * math.max(0, b._z2 - b._z1)
+    local historic = bx * bx + bz * bz <= 260 * 260 and footprint_area <= 1400
+        and b.t ~= "industrial" and b.t ~= "greenhouse" and b.t ~= "school"
+        and b.t ~= "kindergarten" and b.t ~= "office" and b.t ~= "service"
+    if historic then
+        local ring = b.p
+        local area = 0
+        for i = 1, #ring do
+            local a, c = ring[i], ring[i % #ring + 1]
+            area = area + a[1] * c[2] - c[1] * a[2]
+        end
+        local orientation = area >= 0 and 1 or -1
+        for i = 1, #ring do
+            local a, c = ring[i], ring[i % #ring + 1]
+            local dx, dz = c[1] - a[1], c[2] - a[2]
+            local length = math.sqrt(dx * dx + dz * dz)
+            if length > 1.5 then
+                local nx, nz = orientation * dz / length, -orientation * dx / length
+                local steps = math.max(1, math.ceil(length * 1.5))
+                for step = 0, steps do
+                    local f = step / steps
+                    local ex, ez = a[1] + dx * f, a[2] + dz * f
+                    for _, offset in ipairs({1, 2}) do
+                        local px = math.floor(ex + nx * offset + 0.5)
+                        local pz = math.floor(ez + nz * offset + 0.5)
+                        if px >= lx1 and px <= lx2 and pz >= lz1 and pz <= lz2 then
+                            local key = (pz - lz1) * (lx2 - lx1 + 1) + (px - lx1) + 1
+                            if not road_mask[key] and not building_footprint_mask[key] then
+                                local ground = tile_cache[key]
+                                if ground then set_building_block(px, ground, pz, ids.road_stone) end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
 end
 
 ]=]
@@ -948,7 +968,65 @@ _G.__gdo_city_gis_importer = importer_chunk()
 
 local renderer_source = minetest.decompress(read_file("renderer.deflate"), "deflate")
 assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
-renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 18")
+renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 19")
+renderer_source = replace_once(
+    renderer_source,
+    [=[center_x, center_z, base_y = candidate[1], candidate[2], ground_y]=],
+    [=[center_x, center_z, base_y = candidate[1], candidate[2], math.floor(ref_elevation + 1.5)]=]
+)
+renderer_source = replace_once(
+    renderer_source,
+    [=[base_y = storage:get_int("city_y")]=],
+    [=[base_y = math.floor(ref_elevation + 1.5)
+        storage:set_int("city_y", base_y)]=]
+)
+renderer_source = replace_once(
+    renderer_source,
+    [=[local natural = A.find_surface_y(rx, rz)
+                            if natural then base_y = natural; storage:set_int("city_y", natural) end]=],
+    [=[base_y = math.floor(ref_elevation + 1.5)
+                        storage:set_int("city_y", base_y)]=]
+)
+renderer_source = replace_once(
+    renderer_source,
+    [=[atlas_tile(0, 0) .. "^[multiply:" .. color]=],
+    [=["sommieres_plaster.png^[multiply:" .. color]=]
+)
+renderer_source = replace_once(
+    renderer_source,
+    [=[register_node("gdo_city:window_arch", "Claveau de fenêtre", atlas_tile(3, 0))]=],
+    [=[register_node("gdo_city:window_arch", "Claveau de fenêtre", atlas_tile(3, 0))
+    local glass_def = minetest.registered_nodes[M.glass] or {}
+    local glass_tiles = glass_def.tiles or {}
+    local glass_texture = glass_tiles[1] or atlas_tile(1, 2)
+    local function register_window_plane(name, fixed)
+        minetest.register_node(name, {
+            description = "Fenêtre ancienne",
+            drawtype = "nodebox",
+            tiles = {glass_texture},
+            paramtype = "light",
+            sunlight_propagates = true,
+            use_texture_alpha = "blend",
+            walkable = false,
+            node_box = {type = "fixed", fixed = fixed},
+            selection_box = {type = "fixed", fixed = fixed},
+            groups = {cracky = 2, not_in_creative_inventory = 1},
+        })
+    end
+    register_window_plane("gdo_city:window_north", {{-0.30,-0.46,-0.50,0.30,0.46,-0.43}})
+    register_window_plane("gdo_city:window_south", {{-0.30,-0.46,0.43,0.30,0.46,0.50}})
+    register_window_plane("gdo_city:window_west", {{-0.50,-0.46,-0.30,-0.43,0.46,0.30}})
+    register_window_plane("gdo_city:window_east", {{0.43,-0.46,-0.30,0.50,0.46,0.30}})]=]
+)
+renderer_source = replace_once(
+    renderer_source,
+    [=[shutter = cid("gdo_city:shutter"), door = cid("gdo_city:wooden_door"),]=],
+    [=[shutter = cid("gdo_city:shutter"), door = cid("gdo_city:wooden_door"),
+        window_north = cid("gdo_city:window_north"),
+        window_south = cid("gdo_city:window_south"),
+        window_west = cid("gdo_city:window_west"),
+        window_east = cid("gdo_city:window_east"),]=]
+)
 renderer_source = replace_once(renderer_source,
     "local importer = assert(_G.__gdo_city_gis_importer, \"[GDO Sommières] Importeur SIG absent.\")",
     "local function emerge_river_corridor(y_min, y_max, callback)\n    local tile_size, margin = 32, 40\n    local tiles, seen = {}, {}\n    for _, line in ipairs((data.water and data.water.lines) or {}) do\n        if line.n == \"Le Vidourle\" and line.p and #line.p > 1 then\n            for i = 1, #line.p - 1 do\n                local a, b = line.p[i], line.p[i + 1]\n                local x1 = math.floor((math.min(a[1], b[1]) - margin) / tile_size) * tile_size\n                local x2 = math.floor((math.max(a[1], b[1]) + margin) / tile_size) * tile_size\n                local z1 = math.floor((math.min(a[2], b[2]) - margin) / tile_size) * tile_size\n                local z2 = math.floor((math.max(a[2], b[2]) + margin) / tile_size) * tile_size\n                for z = z1, z2, tile_size do\n                    for x = x1, x2, tile_size do\n                        local key = x .. \":\" .. z\n                        if not seen[key] then\n                            seen[key] = true\n                            tiles[#tiles + 1] = {x, z}\n                        end\n                    end\n                end\n            end\n        end\n    end\n\n    if #tiles == 0 then callback(false); return end\n    local pending, failed = #tiles, false\n    for _, tile in ipairs(tiles) do\n        minetest.emerge_area(\n            {x = world_x(tile[1]), y = y_min, z = world_z(tile[2])},\n            {x = world_x(tile[1] + tile_size - 1), y = y_max, z = world_z(tile[2] + tile_size - 1)},\n            function(_, action, remaining)\n                if action == minetest.EMERGE_ERRORED or action == minetest.EMERGE_CANCELLED then\n                    failed = true\n                end\n                if remaining == 0 then\n                    pending = pending - 1\n                    if pending == 0 then callback(failed) end\n                end\n            end\n        )\n    end\nend\n\nlocal importer = assert(_G.__gdo_city_gis_importer, \"[GDO Sommières] Importeur SIG absent.\")"
