@@ -297,7 +297,7 @@ importer_source = replace_between(
     building_renderer .. "-- 4b) Covered lanes and passages mapped by OSM are kept open beneath the houses."
 )
 importer_source = replace_once(importer_source, "set_block(x, floor_y, z, ids.floor)", "set_building_block(x, floor_y, z, ids.floor)")
-importer_source = replace_once(importer_source, "set_block(x, roof_y, z, roof_id)", "set_building_block(x, roof_y, z, roof_id)")
+importer_source = replace_once(importer_source, "set_block(x, roof_y, z, b._roof_id)", "set_building_block(x, roof_y, z, b._roof_id)")
 importer_source = replace_once(importer_source, "set_block(x, y, z, wall_id)", "set_building_block(x, y, z, wall_id)")
 importer_source = replace_once(importer_source, "set_block(x, top_y, z, ids.limestone_trim)", "set_building_block(x, top_y, z, ids.limestone_trim)")
 importer_source = replace_once(importer_source, "set_block(x, floor_y + 2, z, ids.limestone_trim)", "set_building_block(x, floor_y + 2, z, ids.limestone_trim)")
@@ -312,7 +312,7 @@ _G.__gdo_city_gis_importer = importer_chunk()
 
 local renderer_source = minetest.decompress(read_file("renderer.deflate"), "deflate")
 assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
-renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 8")
+renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 9")
 local renderer_chunk, renderer_err = loader(renderer_source, "@gdo_city/renderer.lua")
 assert(renderer_chunk, renderer_err)
 renderer_chunk()
