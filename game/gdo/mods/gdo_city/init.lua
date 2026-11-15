@@ -579,7 +579,10 @@ local function set_back_house_footprint(b)
     end
     cx, cz = cx / #b.p, cz / #b.p
     local narrow = math.max(4, math.min(max_x - min_x, max_z - min_z))
-    local scale = clamp(1 - 2.6 / narrow, 0.58, 0.82)
+    local broad = math.max(max_x - min_x, max_z - min_z)
+    -- Even very large former blocks become cottages, never apartment slabs.
+    local scale = math.min(clamp(1 - 2.6 / narrow, 0.58, 0.82), 15 / math.max(1, broad))
+    scale = math.max(0.28, scale)
     b._house_scale = scale
     for _, p in ipairs(b.p) do
         p[1] = cx + (p[1] - cx) * scale
@@ -1210,7 +1213,7 @@ _G.__gdo_city_gis_importer = importer_chunk()
 
 local renderer_source = minetest.decompress(read_file("renderer.deflate"), "deflate")
 assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
-renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 25")
+renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 26")
 renderer_source = replace_once(
     renderer_source,
     [=[center_x, center_z, base_y = candidate[1], candidate[2], ground_y]=],
