@@ -1018,22 +1018,48 @@ importer_source = replace_once(
 
 local terrain_blend = [=[
 local function wZ(z) return cfg.center_z + z + cfg.shift_z end
-local source_grids = {t}
-if data.terrain_extension then
-    source_grids[#source_grids + 1] = data.terrain_extension
-end
-local function source_grid_at(x, z)
-    local nearest, nearest_d2, nearest_dx, nearest_dz
-    for _, grid in ipairs(source_grids) do
-        local dx = math.max(grid.xmin - x, 0, x - grid.xmax)
-        local dz = math.max(grid.zmin - z, 0, z - grid.zmax)
-        if dx == 0 and dz == 0 then return grid, true, 0, 0 end
-        local d2 = dx * dx + dz * dz
-        if not nearest_d2 or d2 < nearest_d2 then
-            nearest, nearest_d2, nearest_dx, nearest_dz = grid, d2, dx, dz
+local ext = data.terrain_extension
+local river_source_buckets, river_cell_size = {}, 64
+for _, line in ipairs((data.water and data.water.lines) or {}) do
+    if line.n == "Le Vidourle" and line.p then
+        for i = 1, #line.p - 1 do
+            local a, b = line.p[i], line.p[i + 1]
+            local margin = 48
+            local cx1 = math.floor((math.min(a[1], b[1]) - margin) / river_cell_size)
+            local cx2 = math.floor((math.max(a[1], b[1]) + margin) / river_cell_size)
+            local cz1 = math.floor((math.min(a[2], b[2]) - margin) / river_cell_size)
+            local cz2 = math.floor((math.max(a[2], b[2]) + margin) / river_cell_size)
+            local segment = {a = a, b = b}
+            for cz = cz1, cz2 do
+                for cx = cx1, cx2 do
+                    local key = cx .. ":" .. cz
+                    river_source_buckets[key] = river_source_buckets[key] or {}
+                    river_source_buckets[key][#river_source_buckets[key] + 1] = segment
+                end
+            end
         end
     end
-    return nearest, false, nearest_dx or 0, nearest_dz or 0
+end
+local function near_vidourle(x, z)
+    local key = math.floor(x / river_cell_size) .. ":" .. math.floor(z / river_cell_size)
+    for _, seg in ipairs(river_source_buckets[key] or {}) do
+        if nearest_segment(x, z, seg.a[1], seg.a[2], seg.b[1], seg.b[2]) <= 48 * 48 then
+            return true
+        end
+    end
+    return false
+end
+local function source_grid_at(x, z)
+    if x >= t.xmin and x <= t.xmax and z >= t.zmin and z <= t.zmax then
+        return t, true, 0, 0
+    end
+    if ext and x >= ext.xmin and x <= ext.xmax and z >= ext.zmin and z <= ext.zmax
+        and near_vidourle(x, z) then
+        return ext, true, 0, 0
+    end
+    local dx = math.max(t.xmin - x, 0, x - t.xmax)
+    local dz = math.max(t.zmin - z, 0, z - t.zmax)
+    return t, false, dx, dz
 end
 
 local sample_step = 16
