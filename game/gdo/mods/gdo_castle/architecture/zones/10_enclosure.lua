@@ -2,7 +2,7 @@
 -- Towers, gatehouse, decorations and all staircases are separate future zones.
 return function(A)
     local Z={}
-    Z.VERSION=1
+    Z.VERSION=2
     Z.bounds={x1=-39,x2=39,z1=-41,z2=39}
     Z.wall_walk_y_offset=10
     Z.gate_gap={x1=-5,x2=5,z1=36,z2=38}
