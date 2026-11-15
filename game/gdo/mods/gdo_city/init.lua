@@ -557,23 +557,17 @@ local function set_building_block(x, y, z, id)
     set_block(x, y, z, id)
 end
 
-local function is_simple_house(b)
+local function is_height_landmark(b)
     local kind = string.lower(b.t or "yes")
-    local area = math.max(0, b._x2 - b._x1) * math.max(0, b._z2 - b._z1)
-    if area > 1000 then return false end
-    if kind == "industrial" or kind == "warehouse" or kind == "factory"
-        or kind == "school" or kind == "kindergarten" or kind == "hospital"
-        or kind == "office" or kind == "service" or kind == "church"
-        or kind == "temple" or kind == "castle" or kind == "tower"
-        or kind == "city_gate" or kind == "greenhouse" then
-        return false
-    end
-    if b.hist == "castle" or b.hist == "city_gate" then return false end
-    if b.n == "Beffroi de Sommières" or b.n == "Porte du Bourguet"
-        or b.n == "Église Saint-Pons" or b.n == "Château de Villevieille" then
-        return false
-    end
-    return true
+    return kind == "church" or kind == "temple" or kind == "castle"
+        or kind == "tower" or kind == "city_gate"
+        or b.hist == "castle" or b.hist == "city_gate"
+        or b.n == "Beffroi de Sommières" or b.n == "Porte du Bourguet"
+        or b.n == "Église Saint-Pons" or b.n == "Château de Villevieille"
+end
+
+local function is_simple_house(b)
+    return not is_height_landmark(b)
 end
 
 local function prepare_house_roof(b, seed)
@@ -595,7 +589,7 @@ local function prepare_house_roof(b, seed)
     local source_shape = (b.r and b.r.s) or "gab"
     local shape = "gab"
     if source_shape == "hip" or source_shape == "pyr" then shape = "hip" end
-    local rise = math.max(3, math.min(5, round(math.max(2.2, b.rh or 1.6) * 1.35)))
+    local rise = math.max(4, math.min(6, round(math.max(2.8, b.rh or 1.8) * 1.4)))
     if (b._top_y - b._base_y) >= 12 then rise = math.min(rise, 4) end
     b._house_roof = {cx, cz, w, d, angle, shape, rise}
     -- A warm terracotta majority, with some surveyed roof colours retained.
@@ -623,6 +617,9 @@ end
 -- Pass 1: clear only the exact surveyed parcel interiors. No footprint is
 -- expanded, contracted, squared-off or moved to fit the new house style.
 for _, b in ipairs(buildings) do
+    if not is_height_landmark(b) then
+        b._top_y = math.min(b._top_y, b._base_y + 9)
+    end
     if bbox_hits(b._x1, b._x2, b._z1, b._z2, lx1, lx2, lz1, lz2, 1) then
         visible_buildings[#visible_buildings + 1] = b
         local floor_y, top_y = b._base_y, b._top_y
@@ -656,7 +653,7 @@ for _, b in ipairs(visible_buildings) do
             if in_building(x + 0.5, z + 0.5, b) then
                 local roof_y = simple_house and house_roof_height(b, x, z) or make_roof_height(b, x, z)
                 local roof_id = simple_house and b._house_roof_id or b._roof_id
-                for y = math.max(b._top_y + 1, roof_y - 1), roof_y do
+                for y = math.max(b._top_y + 1, roof_y - 2), roof_y do
                     set_building_block(x, y, z, roof_id)
                 end
             end
@@ -1018,7 +1015,7 @@ _G.__gdo_city_gis_importer = importer_chunk()
 
 local renderer_source = minetest.decompress(read_file("renderer.deflate"), "deflate")
 assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
-renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 22")
+renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 23")
 renderer_source = replace_once(
     renderer_source,
     [=[center_x, center_z, base_y = candidate[1], candidate[2], ground_y]=],
@@ -1145,6 +1142,35 @@ renderer_source = replace_once(
     register_window_shutter("gdo_city:window_shutter_south", {{-0.40,-0.46,0.43,0.40,0.46,0.50}})
     register_window_shutter("gdo_city:window_shutter_west", {{-0.50,-0.46,-0.40,-0.43,0.46,0.40}})
     register_window_shutter("gdo_city:window_shutter_east", {{0.43,-0.46,-0.40,0.50,0.46,0.40}})]=]
+)
+renderer_source = replace_once(
+    renderer_source,
+    [=[local bbox = data.meta.bbox
+local LOCAL_BOUNDS = {
+    x1 = math.floor(bbox[1] - 5), x2 = math.ceil(bbox[3] + 5),
+    z1 = math.floor(bbox[2] - 5), z2 = math.ceil(bbox[4] + 40),
+}]=],
+    [=[local bbox = data.meta.bbox
+local TRANSITION_MARGIN = 384
+local terrain = data.terrain
+local LOCAL_BOUNDS = {
+    x1 = math.floor(math.min(bbox[1], terrain.xmin) - TRANSITION_MARGIN),
+    x2 = math.ceil(math.max(bbox[3], terrain.xmax) + TRANSITION_MARGIN),
+    z1 = math.floor(math.min(bbox[2], terrain.zmin) - TRANSITION_MARGIN),
+    z2 = math.ceil(math.max(bbox[4], terrain.zmax) + TRANSITION_MARGIN),
+}]=]
+)
+renderer_source = replace_once(
+    renderer_source,
+    "local CITY_Y_BELOW, CITY_Y_ABOVE = 18, 110",
+    "local CITY_Y_BELOW, CITY_Y_ABOVE = 18, 180"
+)
+renderer_source = replace_once(
+    renderer_source,
+    [=[            ids = node_ids,]=],
+    [=[            ids = node_ids,
+            transition_margin = TRANSITION_MARGIN,
+            find_surface_y = A.find_surface_y,]=]
 )
 local renderer_chunk, renderer_err = loader(renderer_source, "@gdo_city/renderer.lua")
 assert(renderer_chunk, renderer_err)
