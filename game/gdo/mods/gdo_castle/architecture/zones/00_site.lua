@@ -1,7 +1,7 @@
 -- Zone 00: raised rocky spur for the medieval castle and lower village terrace.
 return function(A)
     local Site = {}
-    Site.VERSION = 3
+    Site.VERSION = 4
 
     Site.bounds = {
         castle={x1=-70,x2=70,z1=-72,z2=90},
