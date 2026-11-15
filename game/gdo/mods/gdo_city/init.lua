@@ -192,11 +192,8 @@ importer_source = replace_once(
     "local W, D = math.max(0.5, w / 2 + 0.4), math.max(0.5, d / 2 + 0.4)",
     "local W, D = math.max(0.5, w / 2), math.max(0.5, d / 2)\n    -- Clip the roof to its surveyed rectangle; do not create fallback eaves outside it.\n    if math.abs(u) > W or math.abs(v) > D then return nil end"
 )
-importer_source = replace_once(
-    importer_source,
-    "for y = math.max(y_min, top_y + 1), math.min(y_max, roof_y) do set_block(x, y, z, roof_id) end",
-    "if roof_y then set_block(x, roof_y, z, roof_id) end"
-)
+-- Roof cells are emitted only by the replacement three-pass building renderer below.
+-- Do not patch the old per-building loop: it has been removed from this importer.
 
 -- Keep road cells walkable when a surveyed building footprint overlaps them.
 importer_source = replace_once(
@@ -311,7 +308,7 @@ _G.__gdo_city_gis_importer = importer_chunk()
 
 local renderer_source = minetest.decompress(read_file("renderer.deflate"), "deflate")
 assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
-renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 9")
+renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 10")
 local renderer_chunk, renderer_err = loader(renderer_source, "@gdo_city/renderer.lua")
 assert(renderer_chunk, renderer_err)
 renderer_chunk()
