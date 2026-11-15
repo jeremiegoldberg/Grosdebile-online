@@ -136,7 +136,7 @@ local extended_tile_loop = [=[    for z0 = tz0, tz1 - 1, tile do
     for _, td in ipairs(tiles) do tile_seen[td[1] .. ":" .. td[3]] = true end
     for _, line in ipairs((data.water and data.water.lines) or {}) do
         if line.n == "Le Vidourle" and line.p and #line.p > 1 then
-            local margin = (line.w or 14) / 2 + 8
+            local margin = 40
             for i = 1, #line.p - 1 do
                 local a, b = line.p[i], line.p[i + 1]
                 local gx1 = math.max(data.terrain_extension.xmin, math.min(a[1], b[1]) - margin)
@@ -166,7 +166,7 @@ local river_layer = [=[
         -- 2b) Extended Vidourle, rasterised from its measured centerline and per-point elevations.
         for _, line in ipairs((data.water and data.water.lines) or {}) do
             if line.n == "Le Vidourle" and line.p and #line.p > 1 then
-                local radius = math.max(14, (line.w or 14) / 2)
+                local radius = 32
                 local radius2, bank2 = radius * radius, (radius + 5) * (radius + 5)
                 for i = 1, #line.p - 1 do
                     local a, b = line.p[i], line.p[i + 1]
@@ -184,7 +184,7 @@ local river_layer = [=[
                                     a[1], a[2], b[1], b[2])
                                 local elev = ya + (yb - ya) * f
                                 local water_y = world_y(elev, cfg)
-                                if dist2 <= radius2 then
+                                if not (x + 0.5 >= t.xmin and x + 0.5 <= t.xmax and z + 0.5 >= t.zmin and z + 0.5 <= t.zmax) and dist2 <= radius2 then
                                     local ground = get_surface(x, z)
                                     local bed = math.max(y_min + 1, math.min(ground - 1, water_y - 4))
                                     set_block(x, bed, z, ids.riverbed)
@@ -194,7 +194,7 @@ local river_layer = [=[
                                     for y = water_y + 1, math.min(y_max, ground) do
                                         set_block(x, y, z, ids.air)
                                     end
-                                elseif dist2 <= bank2 then
+                                elseif not (x + 0.5 >= t.xmin and x + 0.5 <= t.xmax and z + 0.5 >= t.zmin and z + 0.5 <= t.zmax) and dist2 <= bank2 then
                                     local ground = get_surface(x, z)
                                     if ground >= water_y and ground <= water_y + 5 then
                                         set_block(x, ground, z, ids.river_pebbles)
@@ -800,7 +800,7 @@ assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
 renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 13")
 renderer_source = replace_once(renderer_source,
     "local importer = assert(_G.__gdo_city_gis_importer, \"[GDO Sommières] Importeur SIG absent.\")",
-    "local function emerge_river_corridor(y_min, y_max, callback)\n    local tile_size, margin = 32, 22\n    local tiles, seen = {}, {}\n    for _, line in ipairs((data.water and data.water.lines) or {}) do\n        if line.n == \"Le Vidourle\" and line.p and #line.p > 1 then\n            for i = 1, #line.p - 1 do\n                local a, b = line.p[i], line.p[i + 1]\n                local x1 = math.floor((math.min(a[1], b[1]) - margin) / tile_size) * tile_size\n                local x2 = math.floor((math.max(a[1], b[1]) + margin) / tile_size) * tile_size\n                local z1 = math.floor((math.min(a[2], b[2]) - margin) / tile_size) * tile_size\n                local z2 = math.floor((math.max(a[2], b[2]) + margin) / tile_size) * tile_size\n                for z = z1, z2, tile_size do\n                    for x = x1, x2, tile_size do\n                        local key = x .. \":\" .. z\n                        if not seen[key] then\n                            seen[key] = true\n                            tiles[#tiles + 1] = {x, z}\n                        end\n                    end\n                end\n            end\n        end\n    end\n\n    if #tiles == 0 then callback(false); return end\n    local pending, failed = #tiles, false\n    for _, tile in ipairs(tiles) do\n        minetest.emerge_area(\n            {x = world_x(tile[1]), y = y_min, z = world_z(tile[2])},\n            {x = world_x(tile[1] + tile_size - 1), y = y_max, z = world_z(tile[2] + tile_size - 1)},\n            function(_, action, remaining)\n                if action == minetest.EMERGE_ERRORED or action == minetest.EMERGE_CANCELLED then\n                    failed = true\n                end\n                if remaining == 0 then\n                    pending = pending - 1\n                    if pending == 0 then callback(failed) end\n                end\n            end\n        )\n    end\nend\n\nlocal importer = assert(_G.__gdo_city_gis_importer, \"[GDO Sommières] Importeur SIG absent.\")"
+    "local function emerge_river_corridor(y_min, y_max, callback)\n    local tile_size, margin = 32, 40\n    local tiles, seen = {}, {}\n    for _, line in ipairs((data.water and data.water.lines) or {}) do\n        if line.n == \"Le Vidourle\" and line.p and #line.p > 1 then\n            for i = 1, #line.p - 1 do\n                local a, b = line.p[i], line.p[i + 1]\n                local x1 = math.floor((math.min(a[1], b[1]) - margin) / tile_size) * tile_size\n                local x2 = math.floor((math.max(a[1], b[1]) + margin) / tile_size) * tile_size\n                local z1 = math.floor((math.min(a[2], b[2]) - margin) / tile_size) * tile_size\n                local z2 = math.floor((math.max(a[2], b[2]) + margin) / tile_size) * tile_size\n                for z = z1, z2, tile_size do\n                    for x = x1, x2, tile_size do\n                        local key = x .. \":\" .. z\n                        if not seen[key] then\n                            seen[key] = true\n                            tiles[#tiles + 1] = {x, z}\n                        end\n                    end\n                end\n            end\n        end\n    end\n\n    if #tiles == 0 then callback(false); return end\n    local pending, failed = #tiles, false\n    for _, tile in ipairs(tiles) do\n        minetest.emerge_area(\n            {x = world_x(tile[1]), y = y_min, z = world_z(tile[2])},\n            {x = world_x(tile[1] + tile_size - 1), y = y_max, z = world_z(tile[2] + tile_size - 1)},\n            function(_, action, remaining)\n                if action == minetest.EMERGE_ERRORED or action == minetest.EMERGE_CANCELLED then\n                    failed = true\n                end\n                if remaining == 0 then\n                    pending = pending - 1\n                    if pending == 0 then callback(failed) end\n                end\n            end\n        )\n    end\nend\n\nlocal importer = assert(_G.__gdo_city_gis_importer, \"[GDO Sommières] Importeur SIG absent.\")"
 )
 renderer_source = replace_once(renderer_source, "emerge_box(BOUNDS, y_min, y_max, function(failed)", "emerge_river_corridor(y_min, y_max, function(river_failed)\n        if river_failed then\n            building = false\n            minetest.log(\"error\", \"[GDO][SOMMIERES] Échec de l'émergence des tuiles du Vidourle.\")\n            minetest.after(10, build_city)\n            return\n        end\n        emerge_box(BOUNDS, y_min, y_max, function(failed)")
 renderer_source = replace_once(renderer_source, "        end)\n    end)\nend\n\nlocal function dry_reference_y", "        end)\n    end)\n    end)\nend\n\nlocal function dry_reference_y")
