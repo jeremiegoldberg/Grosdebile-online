@@ -850,6 +850,8 @@ for _, b in ipairs(visible_buildings) do
         end
     end
 
+end
+
 -- In the dense old town, narrow residual strips beside attached houses are
 -- paved calades, not bright green lawns. Road cells and adjacent plots win.
 for _, b in ipairs(visible_buildings) do
@@ -894,7 +896,6 @@ for _, b in ipairs(visible_buildings) do
     end
 end
 
-end
 
 ]=]
 importer_source = replace_between(
