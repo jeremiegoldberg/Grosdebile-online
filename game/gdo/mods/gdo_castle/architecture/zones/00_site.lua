@@ -4,7 +4,7 @@ return function(A)
     Site.VERSION = 3
 
     Site.bounds = {
-        castle={x1=-43,x2=43,z1=-54,z2=75},
+        castle={x1=-70,x2=70,z1=-72,z2=90},
         village={x1=-43,x2=43,z1=80,z2=128},
     }
 
@@ -21,7 +21,7 @@ return function(A)
     local function build_rocky_motte(base_y)
         -- A broad natural-looking hill: the castle plateau is raised by 12m,
         -- but the slopes extend over roughly 28m instead of forming a cliff.
-        local plateau = {x1=-16,x2=16,z1=-28,z2=44}
+        local plateau = {x1=-41,x2=41,z1=-43,z2=62}
         for x=Site.bounds.castle.x1,Site.bounds.castle.x2 do
             for z=Site.bounds.castle.z1,Site.bounds.castle.z2 do
                 local dx=math.max(plateau.x1-x,0,x-plateau.x2)
@@ -44,20 +44,27 @@ return function(A)
     end
 
     local function build_ramp(castle_y,village_y)
-        -- A broad, gentle stone path leaves the south-east edge of the plateau
-        -- and descends naturally into the first village streets.
-        local z_start,z_end=43,128
-        local x1,x2=14,18
+        -- A broad stone approach leaves the gatehouse drawbridge, follows the
+        -- east hillside, then eases down to the village level.
+        local base_y=castle_y-ELEVATION_RISE
+        local z_start,z_hill_end,z_end=58,90,128
+        local x1,x2=41,45
         for z=z_start,z_end do
-            local t=(z-z_start)/(z_end-z_start)
-            local level=math.floor(castle_y+(village_y-castle_y)*t+0.5)
+            local level
+            if z<=z_hill_end then
+                local drop=math.floor(math.max(0,z-62)/2.4)
+                level=base_y+math.max(0,ELEVATION_RISE-drop)
+            else
+                local t=(z-z_hill_end)/(z_end-z_hill_end)
+                level=math.floor(base_y+(village_y-base_y)*t+0.5)
+            end
             A.fill(x1,level-3,z,x2,level-1,z,"gdo_core:terre")
             A.deck(x1+1,z,x2-1,z,level,A.materials.path)
             A.put(x1,level+1,z,A.materials.trim)
             A.put(x2,level+1,z,A.materials.trim)
             if z%12==0 then A.lamp(x1,level+2,z) end
         end
-        A.deck(-5,42,16,46,castle_y,A.materials.path)
+        A.deck(3,58,42,62,castle_y,A.materials.path)
     end
 
     function Site.build(saved_levels)
@@ -87,7 +94,7 @@ return function(A)
 
         A.fix_light({
             x1=Site.bounds.castle.x1,z1=Site.bounds.castle.z1,
-            x2=Site.bounds.village.x2,z2=Site.bounds.village.z2,
+            x2=Site.bounds.castle.x2,z2=Site.bounds.village.z2,
         })
 
         Site.castle_y=castle_y
@@ -103,7 +110,7 @@ return function(A)
 
     function Site.spawn(player)
         if not Site.ready or not player or not player:is_player() then return end
-        player:set_pos({x=0,y=Site.castle_y+1,z=68})
+        player:set_pos({x=0,y=Site.castle_y+1,z=60})
         if player.set_velocity then player:set_velocity({x=0,y=0,z=0}) end
     end
 
