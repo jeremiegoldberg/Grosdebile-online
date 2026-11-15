@@ -1,7 +1,7 @@
 -- Zone 00: raised rocky spur for the medieval castle and lower village terrace.
 return function(A)
     local Site = {}
-    Site.VERSION = 2
+    Site.VERSION = 3
 
     Site.bounds = {
         castle={x1=-43,x2=43,z1=-54,z2=75},
@@ -19,67 +19,45 @@ return function(A)
     end
 
     local function build_rocky_motte(base_y)
-        -- A broad stepped rock mound, tapering every three blocks to a strong
-        -- plateau wide enough for the complete curtain wall and corner towers.
-        for rise=1,ELEVATION_RISE do
-            local inset=math.floor((rise-1)/3)
-            local x1,x2=Site.bounds.castle.x1+inset,Site.bounds.castle.x2-inset
-            local z1,z2=Site.bounds.castle.z1+inset,Site.bounds.castle.z2-inset
-            local level=base_y+rise
-            A.fill(x1,level,z1,x2,level,z2,"gdo_core:terre")
-
-            -- Exposed limestone courses form the visible retaining cliff.
-            for x=x1,x2 do
-                A.put(x,level,z1,A.materials.stone)
-                A.put(x,level,z2,A.materials.stone)
-            end
-            for z=z1,z2 do
-                A.put(x1,level,z,A.materials.stone)
-                A.put(x2,level,z,A.materials.stone)
+        -- A broad natural-looking hill: the castle plateau is raised by 12m,
+        -- but the slopes extend over roughly 28m instead of forming a cliff.
+        local plateau = {x1=-16,x2=16,z1=-28,z2=44}
+        for x=Site.bounds.castle.x1,Site.bounds.castle.x2 do
+            for z=Site.bounds.castle.z1,Site.bounds.castle.z2 do
+                local dx=math.max(plateau.x1-x,0,x-plateau.x2)
+                local dz=math.max(plateau.z1-z,0,z-plateau.z2)
+                local distance=math.max(dx,dz)
+                local rise=math.max(0,ELEVATION_RISE-math.floor(distance/2.4))
+                local top_y=base_y+rise
+                if rise>0 then
+                    A.fill(x,base_y+1,z,x,top_y-1,z,"gdo_core:terre")
+                    A.put(x,top_y,z,A.materials.grass)
+                    if rise>=3 and (x*17+z*31)%29==0 then
+                        A.put(x,top_y,z,A.materials.stone)
+                    end
+                end
             end
         end
-
-        local top_y=base_y+ELEVATION_RISE
-        local inset=math.floor((ELEVATION_RISE-1)/3)
-        A.deck(
-            Site.bounds.castle.x1+inset,Site.bounds.castle.z1+inset,
-            Site.bounds.castle.x2-inset,Site.bounds.castle.z2-inset,
-            top_y,A.materials.grass)
-
-        -- The exposed southern and eastern faces receive broken rock ledges,
-        -- like the limestone spur above the Vidourle valley.
-        for _,corner in ipairs({
-            {Site.bounds.castle.x1+inset,Site.bounds.castle.z1+inset},
-            {Site.bounds.castle.x2-inset,Site.bounds.castle.z1+inset},
-            {Site.bounds.castle.x1+inset,Site.bounds.castle.z2-inset},
-            {Site.bounds.castle.x2-inset,Site.bounds.castle.z2-inset},
-        }) do
-            A.fill(corner[1]-1,base_y+2,corner[2]-1,
-                corner[1]+1,base_y+5,corner[2]+1,A.materials.trim)
-        end
-        return top_y
+        A.deck(plateau.x1,plateau.z1,plateau.x2,plateau.z2,
+            base_y+ELEVATION_RISE,A.materials.grass)
+        return base_y+ELEVATION_RISE
     end
 
     local function build_ramp(castle_y,village_y)
-        -- A stepped, stone-paved approach descends the east flank to the village.
-        local z_start,z_end=76,128
-        local x1,x2=39,43
+        -- A broad, gentle stone path leaves the south-east edge of the plateau
+        -- and descends naturally into the first village streets.
+        local z_start,z_end=43,128
+        local x1,x2=14,18
         for z=z_start,z_end do
             local t=(z-z_start)/(z_end-z_start)
             local level=math.floor(castle_y+(village_y-castle_y)*t+0.5)
-            A.fill(x1,level-5,z,x2,level-1,z,"gdo_core:terre")
-            A.fill(x1,level-5,z,x1,level-1,z,A.materials.stone)
-            A.fill(x2,level-5,z,x2,level-1,z,A.materials.stone)
+            A.fill(x1,level-3,z,x2,level-1,z,"gdo_core:terre")
             A.deck(x1+1,z,x2-1,z,level,A.materials.path)
             A.put(x1,level+1,z,A.materials.trim)
             A.put(x2,level+1,z,A.materials.trim)
-            if z%9==0 then
-                A.lamp(x1,level+2,z)
-                A.lamp(x2,level+2,z)
-            end
+            if z%12==0 then A.lamp(x1,level+2,z) end
         end
-        -- A level landing joins the gate approach to the first ramp tread.
-        A.deck(-5,76,38,79,castle_y,A.materials.path)
+        A.deck(-5,42,16,46,castle_y,A.materials.path)
     end
 
     function Site.build(saved_levels)
@@ -97,12 +75,12 @@ return function(A)
             return false,"Terrain naturel introuvable: socle non construit."
         end
 
-        -- First restore the natural base, then raise only the castle platform.
+        -- First restore the natural base, then shape a broad hill below the castle.
         A.flatten_rect(Site.bounds.castle,castle_ground,192)
         local n2=A.flatten_rect(Site.bounds.village,village_y,192)
         local castle_y=build_rocky_motte(castle_ground)
 
-        -- Clear the old straight connection and replace it with a stepped descent.
+        -- Remove the obsolete straight connection before laying the gentle ramp.
         A.clear(-43,castle_ground+1,76,43,192,79)
         A.fill(-43,castle_ground-4,76,43,castle_ground-1,79,"gdo_core:terre")
         build_ramp(castle_y,village_y)
