@@ -416,6 +416,7 @@ local function register_wall_windows(set_block, b, ring, cfg, glass_id, sill_id,
     local spacing = historic and 5.2 or 7.0
     local floor_step, first_level, window_height = historic and 3 or 4, 3, 2
     local use_balcony = historic and (b.h or 0) >= 10
+    local use_shutters = historic or kind == "detached" or kind == "farm"
     local use_awning = historic and kind == "retail"
     local floor_y, top_y = b._base_y, b._top_y
 
@@ -478,9 +479,23 @@ local function register_wall_windows(set_block, b, ring, cfg, glass_id, sill_id,
             local z = math.floor(a[2] + dz * t + 0.5)
             local balcony_done = false
             for fy = floor_y + first_level, top_y - window_height, floor_step do
-                -- A narrow transparent pane flush with the facade, not a glass cube.
+                -- Thin panes and slim closed shutters sit flush with the facade; no AC or HVAC hardware.
                 for dy = 0, window_height - 1 do
                     set_block(x, fy + dy, z, window_id)
+                    if use_shutters then
+                        local shutter_id
+                        if window_id == ids.window_north then shutter_id = ids.window_shutter_north
+                        elseif window_id == ids.window_south then shutter_id = ids.window_shutter_south
+                        elseif window_id == ids.window_west then shutter_id = ids.window_shutter_west
+                        else shutter_id = ids.window_shutter_east end
+                        if dominant_x then
+                            set_block(x - 1, fy + dy, z, shutter_id)
+                            set_block(x + 1, fy + dy, z, shutter_id)
+                        else
+                            set_block(x, fy + dy, z - 1, shutter_id)
+                            set_block(x, fy + dy, z + 1, shutter_id)
+                        end
+                    end
                 end
                 if use_balcony and edge_index == 1 and not balcony_done
                     and fy >= floor_y + floor_step * 2 and n == math.ceil(count / 2) then
@@ -1051,7 +1066,7 @@ renderer_source = replace_once(renderer_source, "emerge_box(BOUNDS, y_min, y_max
 renderer_source = replace_once(renderer_source, "        end)\n    end)\nend\n\nlocal function dry_reference_y", "        end)\n    end)\n    end)\nend\n\nlocal function dry_reference_y")
 
 renderer_source = replace_once(renderer_source, "local wall_ids, roof_ids = {}, {}", "    -- Architectural relief for medieval Languedoc facades.\n    register_node(\"gdo_city:timber_beam\", \"Poutre de chêne ancien\", atlas_tile(1, 0))\n    register_node(\"gdo_city:window_arch\", \"Claveau de fenêtre\", atlas_tile(3, 0))\n    register_node(\"gdo_city:roof_parapet\", \"Acrotère de toiture\", atlas_tile(2, 0), {\n        drawtype = \"nodebox\", walkable = false,\n        node_box = {type = \"fixed\", fixed = {\n            {-0.5, -0.5, -0.5, 0.5, -0.08, 0.5},\n        }},\n    })\n    register_node(\"gdo_city:chimney\", \"Souche de cheminée ancienne\", atlas_tile(0, 3), {\n        drawtype = \"nodebox\", node_box = {type = \"fixed\", fixed = {\n            {-0.28, -0.5, -0.28, 0.28, 0.5, 0.28},\n        }},\n    })\n    register_node(\"gdo_city:shop_awning\", \"Store de boutique\", atlas_tile(0, 2), {\n        drawtype = \"nodebox\", walkable = false,\n        node_box = {type = \"fixed\", fixed = {\n            {-0.5, -0.45, -0.52, 0.5, -0.31, 0.42},\n            {-0.5, -0.50, 0.38, 0.5, -0.43, 0.48},\n        }},\n    })\n    register_node(\"gdo_city:iron_balcony_ns\", \"Balcon en ferronnerie\", atlas_tile(2, 2), {\n        drawtype = \"nodebox\", walkable = false,\n        node_box = {type = \"fixed\", fixed = {\n            {-0.5, -0.48, -0.52, 0.5, -0.40, 0.52},\n            {-0.5, -0.40, -0.52, -0.44, 0.08, -0.45},\n            {0.44, -0.40, -0.52, 0.5, 0.08, -0.45},\n            {-0.5, 0.03, -0.52, 0.5, 0.08, -0.45},\n            {-0.28, -0.40, -0.52, -0.23, 0.05, -0.45},\n            {0.23, -0.40, -0.52, 0.28, 0.05, -0.45},\n        }},\n    })\n    register_node(\"gdo_city:iron_balcony_ew\", \"Balcon en ferronnerie latéral\", atlas_tile(2, 2), {\n        drawtype = \"nodebox\", walkable = false,\n        node_box = {type = \"fixed\", fixed = {\n            {-0.52, -0.48, -0.5, 0.52, -0.40, 0.5},\n            {-0.52, -0.40, -0.5, -0.45, 0.08, 0.5},\n            {-0.52, 0.03, -0.5, -0.45, 0.08, 0.5},\n            {-0.52, -0.40, -0.28, -0.45, 0.05, -0.23},\n            {-0.52, -0.40, 0.23, -0.45, 0.05, 0.28},\n        }},\n    })\nlocal wall_ids, roof_ids = {}, {}")
-renderer_source = replace_once(renderer_source, "shutter = cid(\"gdo_city:shutter\"), door = cid(\"gdo_city:wooden_door\"),", "shutter = cid(\"gdo_city:shutter\"), door = cid(\"gdo_city:wooden_door\"),\n        timber = cid(\"gdo_city:timber_beam\"), arch = cid(\"gdo_city:window_arch\"),\n        chimney = cid(\"gdo_city:chimney\"), awning = cid(\"gdo_city:shop_awning\"),\n        roof_parapet = cid(\"gdo_city:roof_parapet\"),\n        balcony_ns = cid(\"gdo_city:iron_balcony_ns\"), balcony_ew = cid(\"gdo_city:iron_balcony_ew\"),\n        window_north = cid(\"gdo_city:window_north\"), window_south = cid(\"gdo_city:window_south\"),\n        window_west = cid(\"gdo_city:window_west\"), window_east = cid(\"gdo_city:window_east\"),")
+renderer_source = replace_once(renderer_source, "shutter = cid(\"gdo_city:shutter\"), door = cid(\"gdo_city:wooden_door\"),", "shutter = cid(\"gdo_city:shutter\"), door = cid(\"gdo_city:wooden_door\"),\n        timber = cid(\"gdo_city:timber_beam\"), arch = cid(\"gdo_city:window_arch\"),\n        chimney = cid(\"gdo_city:chimney\"), awning = cid(\"gdo_city:shop_awning\"),\n        roof_parapet = cid(\"gdo_city:roof_parapet\"),\n        balcony_ns = cid(\"gdo_city:iron_balcony_ns\"), balcony_ew = cid(\"gdo_city:iron_balcony_ew\"),\n        window_north = cid(\"gdo_city:window_north\"), window_south = cid(\"gdo_city:window_south\"),\n        window_west = cid(\"gdo_city:window_west\"), window_east = cid(\"gdo_city:window_east\"),\n        window_shutter_north = cid(\"gdo_city:window_shutter_north\"),\n        window_shutter_south = cid(\"gdo_city:window_shutter_south\"),\n        window_shutter_west = cid(\"gdo_city:window_shutter_west\"),\n        window_shutter_east = cid(\"gdo_city:window_shutter_east\"),")
 renderer_source = replace_once(
     renderer_source,
     [=[register_node("gdo_city:window_arch", "Claveau de fenêtre", atlas_tile(3, 0))]=],
@@ -1076,7 +1091,25 @@ renderer_source = replace_once(
     register_window_plane("gdo_city:window_north", {{-0.30,-0.46,-0.50,0.30,0.46,-0.43}})
     register_window_plane("gdo_city:window_south", {{-0.30,-0.46,0.43,0.30,0.46,0.50}})
     register_window_plane("gdo_city:window_west", {{-0.50,-0.46,-0.30,-0.43,0.46,0.30}})
-    register_window_plane("gdo_city:window_east", {{0.43,-0.46,-0.30,0.50,0.46,0.30}})]=]
+    register_window_plane("gdo_city:window_east", {{0.43,-0.46,-0.30,0.50,0.46,0.30}})
+    local shutter_texture = atlas_tile(1, 2) .. "^[multiply:#60756d"
+    local function register_window_shutter(name, fixed)
+        minetest.register_node(name, {
+            description = "Volet ancien",
+            drawtype = "nodebox",
+            tiles = {shutter_texture},
+            paramtype = "light",
+            sunlight_propagates = true,
+            walkable = false,
+            node_box = {type = "fixed", fixed = fixed},
+            selection_box = {type = "fixed", fixed = fixed},
+            groups = {cracky = 2, not_in_creative_inventory = 1},
+        })
+    end
+    register_window_shutter("gdo_city:window_shutter_north", {{-0.40,-0.46,-0.50,0.40,0.46,-0.43}})
+    register_window_shutter("gdo_city:window_shutter_south", {{-0.40,-0.46,0.43,0.40,0.46,0.50}})
+    register_window_shutter("gdo_city:window_shutter_west", {{-0.50,-0.46,-0.40,-0.43,0.46,0.40}})
+    register_window_shutter("gdo_city:window_shutter_east", {{0.43,-0.46,-0.40,0.50,0.46,0.40}})]=]
 )
 local renderer_chunk, renderer_err = loader(renderer_source, "@gdo_city/renderer.lua")
 assert(renderer_chunk, renderer_err)
