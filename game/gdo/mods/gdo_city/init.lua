@@ -548,7 +548,9 @@ local building_footprint_mask = {}
 local function set_building_block(x, y, z, id)
     if x < lx1 or x > lx2 or z < lz1 or z > lz2 then return end
     local key = (z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1
-    local road_y = road_mask[key]\n    -- Roads protect only their walking surface: never suppress an entire wall column.\n    if road_mask[key] and y <= road_mask[key] then return end
+    local road_y = road_mask[key]
+    -- Roads protect only their walking surface: never suppress an entire wall column.
+    if road_mask[key] and y <= road_mask[key] then return end
     set_block(x, y, z, id)
 end
 
