@@ -809,6 +809,55 @@ renderer_source = replace_once(renderer_source,
     "local importer = assert(_G.__gdo_city_gis_importer, \"[GDO Sommières] Importeur SIG absent.\")",
     "local function emerge_river_corridor(y_min, y_max, callback)\n    local tile_size, margin = 32, 40\n    local tiles, seen = {}, {}\n    for _, line in ipairs((data.water and data.water.lines) or {}) do\n        if line.n == \"Le Vidourle\" and line.p and #line.p > 1 then\n            for i = 1, #line.p - 1 do\n                local a, b = line.p[i], line.p[i + 1]\n                local x1 = math.floor((math.min(a[1], b[1]) - margin) / tile_size) * tile_size\n                local x2 = math.floor((math.max(a[1], b[1]) + margin) / tile_size) * tile_size\n                local z1 = math.floor((math.min(a[2], b[2]) - margin) / tile_size) * tile_size\n                local z2 = math.floor((math.max(a[2], b[2]) + margin) / tile_size) * tile_size\n                for z = z1, z2, tile_size do\n                    for x = x1, x2, tile_size do\n                        local key = x .. \":\" .. z\n                        if not seen[key] then\n                            seen[key] = true\n                            tiles[#tiles + 1] = {x, z}\n                        end\n                    end\n                end\n            end\n        end\n    end\n\n    if #tiles == 0 then callback(false); return end\n    local pending, failed = #tiles, false\n    for _, tile in ipairs(tiles) do\n        minetest.emerge_area(\n            {x = world_x(tile[1]), y = y_min, z = world_z(tile[2])},\n            {x = world_x(tile[1] + tile_size - 1), y = y_max, z = world_z(tile[2] + tile_size - 1)},\n            function(_, action, remaining)\n                if action == minetest.EMERGE_ERRORED or action == minetest.EMERGE_CANCELLED then\n                    failed = true\n                end\n                if remaining == 0 then\n                    pending = pending - 1\n                    if pending == 0 then callback(failed) end\n                end\n            end\n        )\n    end\nend\n\nlocal importer = assert(_G.__gdo_city_gis_importer, \"[GDO Sommières] Importeur SIG absent.\")"
 )
+
+renderer_source = replace_once(
+    renderer_source,
+    [=[    local pending, failed = #tiles, false
+    for _, tile in ipairs(tiles) do
+        minetest.emerge_area(
+            {x = world_x(tile[1]), y = y_min, z = world_z(tile[2])},
+            {x = world_x(tile[1] + tile_size - 1), y = y_max, z = world_z(tile[2] + tile_size - 1)},
+            function(_, action, remaining)
+                if action == minetest.EMERGE_ERRORED or action == minetest.EMERGE_CANCELLED then
+                    failed = true
+                end
+                if remaining == 0 then
+                    pending = pending - 1
+                    if pending == 0 then callback(failed) end
+                end
+            end
+        )
+    end
+end]=],
+    [=[    local failed, next_index, active = false, 1, 0
+    local launch_batch
+    launch_batch = function()
+        while active < 8 and next_index <= #tiles do
+            local tile = tiles[next_index]
+            next_index = next_index + 1
+            active = active + 1
+            minetest.emerge_area(
+                {x = world_x(tile[1]), y = y_min, z = world_z(tile[2])},
+                {x = world_x(tile[1] + tile_size - 1), y = y_max, z = world_z(tile[2] + tile_size - 1)},
+                function(_, action, remaining)
+                    if action == minetest.EMERGE_ERRORED or action == minetest.EMERGE_CANCELLED then
+                        failed = true
+                    end
+                    if remaining == 0 then
+                        active = active - 1
+                        if next_index > #tiles and active == 0 then
+                            callback(failed)
+                        else
+                            launch_batch()
+                        end
+                    end
+                end
+            )
+        end
+    end
+    launch_batch()
+end]=]
+)
 renderer_source = replace_once(renderer_source, "emerge_box(BOUNDS, y_min, y_max, function(failed)", "emerge_river_corridor(y_min, y_max, function(river_failed)\n        if river_failed then\n            building = false\n            minetest.log(\"error\", \"[GDO][SOMMIERES] Échec de l'émergence des tuiles du Vidourle.\")\n            minetest.after(10, build_city)\n            return\n        end\n        emerge_box(BOUNDS, y_min, y_max, function(failed)")
 renderer_source = replace_once(renderer_source, "        end)\n    end)\nend\n\nlocal function dry_reference_y", "        end)\n    end)\n    end)\nend\n\nlocal function dry_reference_y")
 
