@@ -65,7 +65,7 @@ assert(importer_source, "[GDO Sommières] Importeur GIS compressé invalide.")
 importer_source = replace_once(
     importer_source,
     "local W, D = math.max(0.5, w / 2 + 0.4), math.max(0.5, d / 2 + 0.4)",
-    "local W, D = math.max(0.5, w / 2), math.max(0.5, d / 2)\\n    -- Clip the roof to its surveyed rectangle; do not create fallback eaves outside it.\\n    if math.abs(u) > W or math.abs(v) > D then return nil end"
+    "local W, D = math.max(0.5, w / 2), math.max(0.5, d / 2)\n    -- Clip the roof to its surveyed rectangle; do not create fallback eaves outside it.\n    if math.abs(u) > W or math.abs(v) > D then return nil end"
 )
 importer_source = replace_once(
     importer_source,
