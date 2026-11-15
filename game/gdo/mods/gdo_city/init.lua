@@ -560,7 +560,7 @@ end
 local function is_simple_house(b)
     local kind = string.lower(b.t or "yes")
     local area = math.max(0, b._x2 - b._x1) * math.max(0, b._z2 - b._z1)
-    if area > 1600 then return false end
+    if area > 1000 then return false end
     if kind == "industrial" or kind == "warehouse" or kind == "factory"
         or kind == "school" or kind == "kindergarten" or kind == "hospital"
         or kind == "office" or kind == "service" or kind == "church"
@@ -593,8 +593,8 @@ local function prepare_house_roof(b, seed)
         angle = angle + math.pi / 2
     end
     local source_shape = (b.r and b.r.s) or "gab"
-    local shape = source_shape == "hip" or source_shape == "pyr" and "hip" or "gab"
-    if source_shape == "hip" or source_shape == "pyr" then shape = "hip" else shape = "gab" end
+    local shape = "gab"
+    if source_shape == "hip" or source_shape == "pyr" then shape = "hip" end
     local rise = math.max(3, math.min(5, round(math.max(2.2, b.rh or 1.6) * 1.35)))
     if (b._top_y - b._base_y) >= 12 then rise = math.min(rise, 4) end
     b._house_roof = {cx, cz, w, d, angle, shape, rise}
