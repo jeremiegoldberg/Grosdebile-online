@@ -362,8 +362,8 @@ local function prepare_site()
     building=true
     local failed=false
     minetest.emerge_area(
-        {x=-48,y=-32,z=-60},
-        {x=48,y=192,z=132},
+        {x=-75,y=-32,z=-80},
+        {x=75,y=192,z=132},
         function(_,action,remaining)
             if action==minetest.EMERGE_ERRORED or action==minetest.EMERGE_CANCELLED then failed=true end
             if remaining==0 then
