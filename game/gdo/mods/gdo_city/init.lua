@@ -374,7 +374,11 @@ local function register_wall_windows(set_block, b, ring, cfg, glass_id, sill_id,
     local use_shutters, wide_windows = true, false
     local use_balcony, use_awning = (style == 1 or style == 4) and (b.h or 0) >= 8, false
     local religious = kind == "church" or kind == "temple"
+    local named_gate = b.n == "Porte du Bourguet"
+    local named_belfry = b.n == "Beffroi de Sommières"
+        or b.n == "La tour de l'horloge" or b.n == "Tour Bermond"
     local fortified = kind == "tower" or kind == "castle" or kind == "city_gate"
+        or b.hist == "city_gate" or b.hist == "castle"
 
     if kind == "tower" then
         spacing, floor_step, first_level, window_height = 7.0, 4, 4, 2
@@ -665,6 +669,111 @@ for _, b in ipairs(visible_buildings) do
 
     register_wall_windows(set_building_block, b, b.p, cfg,
         ids.glass, ids.limestone_trim, ids.shutter, ids.door, ids)
+
+    -- Churches and temples receive a compact bell tower and a stepped local
+    -- roof cap. Its base remains within the measured building height.
+    if religious and (b.h or 0) >= 8 then
+        local roof = b.r or {}
+        local cx = math.floor((roof.o and roof.o[1] or (b._x1 + b._x2) / 2) + 0.5)
+        local cz = math.floor((roof.o and roof.o[2] or (b._z1 + b._z2) / 2) + 0.5)
+        local tower_base = math.max(floor_y + 3, top_y - 5)
+        for y = tower_base, top_y + 1 do
+            for dx = -1, 1 do
+                for dz = -1, 1 do
+                    if math.abs(dx) == 1 or math.abs(dz) == 1 then
+                        set_block(cx + dx, y, cz + dz, ids.ashlar)
+                    end
+                end
+            end
+        end
+        -- Open belfry on the four faces.
+        for _, p in ipairs({
+            {cx, top_y, cz - 1}, {cx, top_y, cz + 1},
+            {cx - 1, top_y, cz}, {cx + 1, top_y, cz},
+        }) do
+            set_block(p[1], p[2], p[3], ids.glass)
+        end
+        for layer = 0, 2 do
+            local inset = layer
+            for dx = -1 + inset, 1 - inset do
+                for dz = -1 + inset, 1 - inset do
+                    set_block(cx + dx, top_y + 2 + layer, cz + dz, b._roof_id)
+                end
+            end
+        end
+        set_block(cx, top_y + 5, cz, ids.limestone_trim)
+    end
+
+    -- The Porte du Bourguet is a real passage, not a blind rectangular facade.
+    if named_gate then
+        local longest, edge = 0, nil
+        for i = 1, #b.p do
+            local a, d = b.p[i], b.p[i % #b.p + 1]
+            local len = math.sqrt((d[1] - a[1])^2 + (d[2] - a[2])^2)
+            if len > longest then longest, edge = len, {a, d} end
+        end
+        if edge and longest >= 4 then
+            local a, d = edge[1], edge[2]
+            local dx, dz = d[1] - a[1], d[2] - a[2]
+            local x = math.floor((a[1] + d[1]) / 2 + 0.5)
+            local z = math.floor((a[2] + d[2]) / 2 + 0.5)
+            if math.abs(dx) >= math.abs(dz) then
+                for off = -1, 1 do
+                    for y = floor_y + 1, floor_y + 4 do
+                        set_block(x + off, y, z, ids.air)
+                    end
+                end
+                for off = -2, 2 do
+                    set_building_block(x + off, floor_y + 5, z, ids.limestone_trim)
+                end
+                for y = floor_y + 1, floor_y + 4 do
+                    set_building_block(x - 2, y, z, ids.ashlar)
+                    set_building_block(x + 2, y, z, ids.ashlar)
+                end
+            else
+                for off = -1, 1 do
+                    for y = floor_y + 1, floor_y + 4 do
+                        set_block(x, y, z + off, ids.air)
+                    end
+                end
+                for off = -2, 2 do
+                    set_building_block(x, floor_y + 5, z + off, ids.limestone_trim)
+                end
+                for y = floor_y + 1, floor_y + 4 do
+                    set_building_block(x, y, z - 2, ids.ashlar)
+                    set_building_block(x, y, z + 2, ids.ashlar)
+                end
+            end
+        end
+    end
+
+    -- Named clock towers and the Beffroi get a visible stone clock face.
+    if named_belfry then
+        local cx = math.floor((b._x1 + b._x2) / 2 + 0.5)
+        local cz = math.floor((b._z1 + b._z2) / 2 + 0.5)
+        local clock_y = math.max(floor_y + 4, top_y - 5)
+        for _, face in ipairs({"north", "south", "east", "west"}) do
+            if face == "north" or face == "south" then
+                local fz = cz + ((face == "north") and -1 or 1)
+                for off = -1, 1 do
+                    set_building_block(cx + off, clock_y - 1, fz, ids.limestone_trim)
+                    set_building_block(cx + off, clock_y + 1, fz, ids.limestone_trim)
+                end
+                set_building_block(cx - 1, clock_y, fz, ids.limestone_trim)
+                set_building_block(cx + 1, clock_y, fz, ids.limestone_trim)
+                set_building_block(cx, clock_y, fz, ids.glass)
+            else
+                local fx = cx + ((face == "west") and -1 or 1)
+                for off = -1, 1 do
+                    set_building_block(fx, clock_y - 1, cz + off, ids.limestone_trim)
+                    set_building_block(fx, clock_y + 1, cz + off, ids.limestone_trim)
+                end
+                set_building_block(fx, clock_y, cz - 1, ids.limestone_trim)
+                set_building_block(fx, clock_y, cz + 1, ids.limestone_trim)
+                set_building_block(fx, clock_y, cz, ids.glass)
+            end
+        end
+    end
 end
 
 ]=]
@@ -681,7 +790,7 @@ _G.__gdo_city_gis_importer = importer_chunk()
 
 local renderer_source = minetest.decompress(read_file("renderer.deflate"), "deflate")
 assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
-renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 12")
+renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 13")
 renderer_source = replace_once(renderer_source,
     "local importer = assert(_G.__gdo_city_gis_importer, \"[GDO Sommières] Importeur SIG absent.\")",
     "local function emerge_river_corridor(y_min, y_max, callback)\n    local tile_size, margin = 32, 22\n    local tiles, seen = {}, {}\n    for _, line in ipairs((data.water and data.water.lines) or {}) do\n        if line.n == \"Le Vidourle\" and line.p and #line.p > 1 then\n            for i = 1, #line.p - 1 do\n                local a, b = line.p[i], line.p[i + 1]\n                local x1 = math.floor((math.min(a[1], b[1]) - margin) / tile_size) * tile_size\n                local x2 = math.floor((math.max(a[1], b[1]) + margin) / tile_size) * tile_size\n                local z1 = math.floor((math.min(a[2], b[2]) - margin) / tile_size) * tile_size\n                local z2 = math.floor((math.max(a[2], b[2]) + margin) / tile_size) * tile_size\n                for z = z1, z2, tile_size do\n                    for x = x1, x2, tile_size do\n                        local key = x .. \":\" .. z\n                        if not seen[key] then\n                            seen[key] = true\n                            tiles[#tiles + 1] = {x, z}\n                        end\n                    end\n                end\n            end\n        end\n    end\n\n    if #tiles == 0 then callback(false); return end\n    local pending, failed = #tiles, false\n    for _, tile in ipairs(tiles) do\n        minetest.emerge_area(\n            {x = world_x(tile[1]), y = y_min, z = world_z(tile[2])},\n            {x = world_x(tile[1] + tile_size - 1), y = y_max, z = world_z(tile[2] + tile_size - 1)},\n            function(_, action, remaining)\n                if action == minetest.EMERGE_ERRORED or action == minetest.EMERGE_CANCELLED then\n                    failed = true\n                end\n                if remaining == 0 then\n                    pending = pending - 1\n                    if pending == 0 then callback(failed) end\n                end\n            end\n        )\n    end\nend\n\nlocal importer = assert(_G.__gdo_city_gis_importer, \"[GDO Sommières] Importeur SIG absent.\")"
