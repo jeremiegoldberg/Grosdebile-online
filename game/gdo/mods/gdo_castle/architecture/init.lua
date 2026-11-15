@@ -326,61 +326,57 @@ end)
 
 local function prepare_site()
     if building then return end
-    local saved_version=storage:get_int(SITE_KEY)
-    if saved_version>=A.Site.VERSION then
-        A.Site.castle_y=storage:get_int(LEVEL_CASTLE_KEY)
-        A.Site.village_y=storage:get_int(LEVEL_VILLAGE_KEY)
-        A.Site.ready=true
-        A.base_y=A.Site.castle_y
-        for _,player in ipairs(minetest.get_connected_players()) do apply_spawn(player) end
-        local enclosure_ok,enclosure_message=build_enclosure(false)
-        if not enclosure_ok then
-            minetest.log("error","[GDO] "..enclosure_message)
-        else
-            local gate_ok,gate_message=build_gatehouse(false)
-            if not gate_ok then
-                minetest.log("error","[GDO] "..gate_message)
-            else
-                local towers_ok,towers_message=build_towers(false)
-                if not towers_ok then
-                    minetest.log("error","[GDO] "..towers_message)
-                else
-                    local keep_ok,keep_message=build_keep(false)
-                    if not keep_ok then
-                        minetest.log("error","[GDO] "..keep_message)
-                    else
-                        local stairs_ok,stairs_message=build_stairs(false)
-                        if not stairs_ok then minetest.log("error","[GDO] "..stairs_message) end
-                    end
-                end
-            end
-        end
-        minetest.log("action","[GDO] Zones 00 à 40 vérifiées; escaliers du châtelet contrôlés.")
-        return
-    end
-
+    -- Les zones architecturales ne doivent jamais être posées dans des
+    -- mapblocks encore absents. Même une sauvegarde déjà à jour doit d'abord
+    -- faire émerger tout le terrain naturel sous le château et ses abords.
     building=true
     local failed=false
     minetest.emerge_area(
         {x=-75,y=-32,z=-80},
         {x=75,y=192,z=132},
         function(_,action,remaining)
-            if action==minetest.EMERGE_ERRORED or action==minetest.EMERGE_CANCELLED then failed=true end
+            if action==minetest.EMERGE_ERRORED or action==minetest.EMERGE_CANCELLED then
+                failed=true
+            end
             if remaining==0 then
                 building=false
                 if failed then
-                    minetest.log("error","[GDO] Échec du chargement du terrain pour la zone 00.")
+                    minetest.log("error","[GDO] Échec du chargement du terrain pour le château; aucune architecture n'a été posée.")
                     return
                 end
-                local saved_levels
-                if saved_version>0 then
-                    saved_levels={
-                        castle_y=storage:get_int(LEVEL_CASTLE_KEY),
-                        village_y=storage:get_int(LEVEL_VILLAGE_KEY),
-                    }
+
+                if saved_version < A.Site.VERSION then
+                    local saved_levels
+                    if saved_version>0 then
+                        saved_levels={
+                            castle_y=storage:get_int(LEVEL_CASTLE_KEY),
+                            village_y=storage:get_int(LEVEL_VILLAGE_KEY),
+                        }
+                    end
+                    local ok,message=build_site(saved_levels)
+                    if not ok then minetest.log("error","[GDO] "..message) end
+                    return
                 end
-                local ok,message=build_site(saved_levels)
-                if not ok then minetest.log("error","[GDO] "..message) end
+
+                -- Les altitudes enregistrées sont réutilisées, mais seulement
+                -- après l'émergence du terrain. On reconstruit ensuite les
+                -- zones dans l'ordre de leurs dépendances.
+                A.Site.castle_y=storage:get_int(LEVEL_CASTLE_KEY)
+                A.Site.village_y=storage:get_int(LEVEL_VILLAGE_KEY)
+                A.Site.ready=true
+                A.base_y=A.Site.castle_y
+                for _,player in ipairs(minetest.get_connected_players()) do apply_spawn(player) end
+
+                local ok,message=build_enclosure(false)
+                if ok then ok,message=build_gatehouse(false) end
+                if ok then ok,message=build_towers(false) end
+                if ok then ok,message=build_keep(false) end
+                if ok then ok,message=build_stairs(false) end
+                if not ok then
+                    minetest.log("error","[GDO] "..message)
+                else
+                    minetest.log("action","[GDO] Terrain émergé; zones 00 à 40 et escaliers vérifiés.")
+                end
             end
         end
     )
