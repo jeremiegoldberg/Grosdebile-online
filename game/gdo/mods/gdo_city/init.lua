@@ -534,7 +534,7 @@ importer_source = replace_once(
 importer_source = replace_once(
     importer_source,
     "set_block(x, road_y, z, surface_id)",
-    "set_block(x, road_y, z, surface_id)\n                            road_mask[(z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1] = true"
+    "set_block(x, road_y, z, surface_id)\n                            local road_key = (z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1\n                            road_mask[road_key] = math.max(road_mask[road_key] or -math.huge, road_y)"
 )
 -- The replacement building renderer declares its own road-aware block writer.
 
@@ -548,7 +548,7 @@ local building_footprint_mask = {}
 local function set_building_block(x, y, z, id)
     if x < lx1 or x > lx2 or z < lz1 or z > lz2 then return end
     local key = (z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1
-    if road_mask[key] then return end
+    local road_y = road_mask[key]\n    -- Roads protect only their walking surface: never suppress an entire wall column.\n    if road_y and y <= road_y then return end
     set_block(x, y, z, id)
 end
 
@@ -1213,7 +1213,7 @@ _G.__gdo_city_gis_importer = importer_chunk()
 
 local renderer_source = minetest.decompress(read_file("renderer.deflate"), "deflate")
 assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
-renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 27")
+renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 28")
 renderer_source = replace_once(
     renderer_source,
     [=[center_x, center_z, base_y = candidate[1], candidate[2], ground_y]=],
