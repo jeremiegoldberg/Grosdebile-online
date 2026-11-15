@@ -144,12 +144,7 @@ importer_source = replace_once(
     "if length > 5 then pont_tibere[#pont_tibere + 1] = {road = r, length = length} end"
 )
 
--- Select the extended IGN crop outside the compact town DEM.
-importer_source = replace_once(
-    importer_source,
-    "local function get_surface(x, z)\n            return world_y(terrain_sample(t, x + 0.5, z + 0.5), cfg)\n        end",
-    "local function get_surface(x, z)\n            local sx, sz = x + 0.5, z + 0.5\n            local ext, grid = data.terrain_extension, t\n            if ext and sx >= ext.xmin and sx <= ext.xmax and sz >= ext.zmin and sz <= ext.zmax\n                and not (sx >= t.xmin and sx <= t.xmax and sz >= t.zmin and sz <= t.zmax) then\n                grid = ext\n            end\n            return world_y(terrain_sample(grid, sx, sz), cfg)\n        end"
-)
+-- Terrain crop selection and transition blending are applied together below.
 
 -- Add small 32m map tiles touched by the river line; no large rectangular extension.
 local base_tile_loop = [=[    for z0 = tz0, tz1 - 1, tile do
