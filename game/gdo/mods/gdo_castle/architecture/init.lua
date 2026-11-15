@@ -149,9 +149,11 @@ local function build_stairs(force)
 end
 
 local function apply_spawn(player)
-    -- New characters start in the additional port city; existing regions remain accessible.
-    if gdo_city and gdo_city.spawn and gdo_city.spawn(player) then return end
-    if A.Site.ready then A.Site.spawn(player) end
+    -- New characters start in Sommières. Never silently fall back to the castle:
+    -- that was the cause of new arrivals appearing in the wrong region.
+    if gdo_city and gdo_city.spawn then
+        gdo_city.spawn(player)
+    end
 end
 
 local function build_site(saved_levels)
