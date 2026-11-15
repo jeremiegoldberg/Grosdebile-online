@@ -100,6 +100,91 @@ importer_source = replace_once(
     "b._base_y = world_y(b.b, cfg)\n        b._height_nodes = math.max(1, round(b.h or 0))\n        b._top_y = b._base_y + b._height_nodes"
 )
 
+-- OSM building-use class changes façade rhythm; footprint and measured height remain authoritative.
+local window_renderer = [=[
+local function register_wall_windows(set_block, b, ring, cfg, glass_id, sill_id, shutter_id, door_id)
+    local kind = b.t or "yes"
+    local spacing, floor_step, first_level = 5.5, 3, 3
+    local use_shutters, wide_windows = true, false
+    if kind == "tower" then
+        spacing, floor_step, first_level = 7, 4, 4
+        use_shutters = false
+    elseif kind == "church" or kind == "temple" or kind == "castle" then
+        spacing, floor_step, first_level = 8, 4, 4
+        use_shutters = false
+    elseif kind == "industrial" or kind == "retail" or kind == "office"
+        or kind == "service" or kind == "greenhouse" then
+        spacing, floor_step, first_level = 9, 4, 2
+        use_shutters, wide_windows = false, true
+    elseif kind == "apartments" or kind == "terrace" then
+        spacing, floor_step, first_level = 4, 3, 3
+    elseif kind == "detached" or kind == "farm" or kind == "hut" then
+        spacing, floor_step, first_level = 7, 3, 3
+    elseif kind == "school" or kind == "kindergarten" or kind == "civic"
+        or kind == "government" or kind == "public" or kind == "hotel" then
+        spacing, floor_step, first_level = 6, 3, 3
+        use_shutters = false
+    end
+
+    local longest, longest_index = 0, nil
+    for i = 1, #ring do
+        local a, c = ring[i], ring[i % #ring + 1]
+        local length = math.sqrt((c[1] - a[1]) ^ 2 + (c[2] - a[2]) ^ 2)
+        if length > longest then longest, longest_index = length, i end
+    end
+    if longest < 4 or not longest_index then return end
+
+    local floor_y, top_y = b._base_y, b._top_y
+    for i = 1, #ring do
+        local a, c = ring[i], ring[i % #ring + 1]
+        local dx, dz = c[1] - a[1], c[2] - a[2]
+        local length = math.sqrt(dx * dx + dz * dz)
+        if length >= spacing then
+            local count = math.floor(length / spacing)
+            for n = 1, count do
+                local t = n / (count + 1)
+                local x = math.floor(a[1] + dx * t + 0.5)
+                local z = math.floor(a[2] + dz * t + 0.5)
+                local dominant_x = math.abs(dx) >= math.abs(dz)
+                local width = wide_windows and 2 or 1
+                for w = 0, width - 1 do
+                    local wx, wz = x, z
+                    if dominant_x then wx = x + (dx >= 0 and w or -w)
+                    else wz = z + (dz >= 0 and w or -w) end
+                    for fy = floor_y + first_level, top_y - 2, floor_step do
+                        set_block(wx, fy, wz, glass_id)
+                        set_block(wx, fy + 1, wz, glass_id)
+                        if use_shutters then
+                            set_block(wx, fy - 1, wz, sill_id)
+                            if n % 2 == 1 then
+                                if dominant_x then
+                                    set_block(wx, fy, wz + (dz >= 0 and 1 or -1), shutter_id)
+                                else
+                                    set_block(wx + (dx >= 0 and -1 or 1), fy, wz, shutter_id)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    local a, c = ring[longest_index], ring[longest_index % #ring + 1]
+    local x = math.floor((a[1] + c[1]) / 2 + 0.5)
+    local z = math.floor((a[2] + c[2]) / 2 + 0.5)
+    set_block(x, floor_y + 1, z, door_id)
+    set_block(x, floor_y + 2, z, door_id)
+end
+
+]=]
+importer_source = replace_between(
+    importer_source,
+    "local function register_wall_windows(",
+    "-- Build a complete GIS tile: RGE ALTI terrain, water, roads, measured buildings and trees.",
+    window_renderer .. "-- Build a complete GIS tile: RGE ALTI terrain, water, roads, measured buildings and trees."
+)
+
 -- Roofs must be a one-node-thick sloped surface, not a solid mass between
 -- the eaves and ridge. Keep the roof within the surveyed building footprint.
 importer_source = replace_once(
