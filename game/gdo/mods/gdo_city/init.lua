@@ -262,10 +262,18 @@ importer_source = replace_once(
 )
 
 local building_renderer = [=[
--- 4) Individual building footprints: clear first, roof second, façades last.
+-- 4) Individual footprints: clear first, then roofs, then historic facades.
 local visible_buildings = {}
--- Pass 1: clear every footprint before placing any roof or wall. This prevents
--- a neighbour's interior-clearing pass from erasing an already-built façade.
+
+local function set_building_block(x, y, z, id)
+    if x < lx1 or x > lx2 or z < lz1 or z > lz2 then return end
+    local key = (z - lz1) * (lx2 - lx1 + 1) + (x - lx1) + 1
+    if road_mask[key] then return end
+    set_block(x, y, z, id)
+end
+
+-- Pass 1: clear all interiors before drawing any facade, so adjacent houses
+-- cannot erase one another. Heights stay tied to each BD TOPO measurement.
 for _, b in ipairs(buildings) do
     if bbox_hits(b._x1, b._x2, b._z1, b._z2, lx1, lx2, lz1, lz2, 1) then
         visible_buildings[#visible_buildings + 1] = b
@@ -275,9 +283,9 @@ for _, b in ipairs(buildings) do
         for z = az1, az2 do
             for x = ax1, ax2 do
                 if in_building(x + 0.5, z + 0.5, b) then
-                    set_block(x, floor_y, z, ids.floor)
+                    set_building_block(x, floor_y, z, ids.floor)
                     for y = floor_y + 1, math.min(y_max, top_y) do
-                        set_block(x, y, z, ids.air)
+                        set_building_block(x, y, z, ids.air)
                     end
                 end
             end
@@ -285,8 +293,7 @@ for _, b in ipairs(buildings) do
     end
 end
 
--- Pass 2: one roof surface per building, using its measured type, dimensions,
--- orientation and roof rise from r.s, r.o and rh.
+-- Pass 2: measured roof planes, followed by the occasional old chimney stack.
 for _, b in ipairs(visible_buildings) do
     local ax1, ax2 = math.max(lx1, math.floor(b._x1)), math.min(lx2, math.ceil(b._x2))
     local az1, az2 = math.max(lz1, math.floor(b._z1)), math.min(lz2, math.ceil(b._z2))
@@ -294,20 +301,44 @@ for _, b in ipairs(visible_buildings) do
         for x = ax1, ax2 do
             if in_building(x + 0.5, z + 0.5, b) then
                 local roof_y = make_roof_height(b, x, z)
-                if roof_y then set_block(x, roof_y, z, b._roof_id) end
+                if roof_y then set_building_block(x, roof_y, z, b._roof_id) end
             end
+        end
+    end
+
+    local kind = b.t or "yes"
+    local seed = math.floor(math.abs((b.p[1][1] or 0) * 31 + (b.p[1][2] or 0) * 17 + (b.h or 0) * 13))
+    local roof = b.r or {}
+    if roof.s ~= "flat" and roof.o and kind ~= "tower" and kind ~= "church"
+        and kind ~= "castle" and seed % 3 == 0 then
+        local o = roof.o
+        local angle = o[5] or 0
+        local rx = math.floor(o[1] + math.cos(angle) * (o[3] or 0) * 0.18 + 0.5)
+        local rz = math.floor(o[2] - math.sin(angle) * (o[3] or 0) * 0.18 + 0.5)
+        local ry = make_roof_height(b, rx, rz)
+        if ry then
+            set_building_block(rx, ry + 1, rz, ids.chimney)
+            set_building_block(rx, ry + 2, rz, ids.chimney)
+            set_building_block(rx, ry + 3, rz, ids.ashlar)
         end
     end
 end
 
--- Pass 3: façades follow the individual polygon rings and the exact measured
--- building top. Type-aware windows are generated only after all clearing.
+-- Pass 3: Languedoc facades. Pale limewash stays visible, the ground floor is
+-- stone, corners are dressed, and selective string-courses break up tall walls.
 for _, b in ipairs(visible_buildings) do
     local floor_y, top_y = b._base_y, b._top_y
+    local kind = b.t or "yes"
+    local seed = math.floor(math.abs((b.p[1][1] or 0) * 31 + (b.p[1][2] or 0) * 17 + (b.h or 0) * 13))
+    local style = seed % 7
+    local bands = style == 1 or style == 4 or kind == "church" or kind == "temple"
+    local timber = kind == "yes" and style == 6
+    local fortified = kind == "tower" or kind == "castle" or kind == "city_gate"
     local rings = {b.p}
     if b.ho then
         for _, hole in ipairs(b.ho) do rings[#rings + 1] = hole end
     end
+
     for _, ring in ipairs(rings) do
         for i = 1, #ring do
             local p0, p1 = ring[i], ring[i % #ring + 1]
@@ -319,19 +350,57 @@ for _, b in ipairs(visible_buildings) do
                 local x = math.floor(p0[1] + dx * f + 0.5)
                 local z = math.floor(p0[2] + dz * f + 0.5)
                 if x >= lx1 and x <= lx2 and z >= lz1 and z <= lz2 then
+                    local corner = step <= 1 or step >= steps - 1
                     for y = floor_y - 1, top_y do
-                        local wall_id = (y <= floor_y + 1) and ids.ashlar or b._wall_id
-                        set_block(x, y, z, wall_id)
+                        local rel = y - floor_y
+                        local wall_id = b._wall_id
+                        if rel <= 1 then
+                            wall_id = ids.ashlar
+                        elseif rel == (top_y - floor_y) then
+                            wall_id = ids.limestone_trim
+                        elseif bands and rel > 2 and rel < (top_y - floor_y) and rel % 3 == 0 then
+                            wall_id = ids.stone_coursed
+                        elseif corner and rel > 1 and rel % 2 == 0 then
+                            wall_id = ids.ashlar
+                        elseif timber and (corner or rel % 3 == 0) then
+                            wall_id = ids.timber
+                        end
+                        if fortified and rel == (top_y - floor_y) then
+                            wall_id = ids.ashlar
+                        end
+                        set_building_block(x, y, z, wall_id)
                     end
-                    if step == 0 then
-                        set_block(x, top_y, z, ids.limestone_trim)
-                        set_block(x, floor_y + 2, z, ids.limestone_trim)
+                    -- Buttresses only on actual large religious or defensive buildings.
+                    if (kind == "church" or kind == "temple" or fortified)
+                        and corner and length >= 7 then
+                        for y = floor_y + 2, top_y - 1 do
+                            if y % 4 == 0 then set_building_block(x, y, z, ids.ashlar) end
+                        end
                     end
                 end
             end
         end
     end
-    register_wall_windows(set_block, b, b.p, cfg, ids.glass, ids.limestone_trim, ids.shutter, ids.door)
+
+    -- Merlons belong to named/typed defensive structures, not ordinary roofs.
+    if fortified then
+        for _, ring in ipairs({b.p}) do
+            for i = 1, #ring do
+                local a, d = ring[i], ring[i % #ring + 1]
+                local dx, dz = d[1] - a[1], d[2] - a[2]
+                local steps = math.max(1, math.ceil(math.sqrt(dx * dx + dz * dz)))
+                for step = 0, steps, 2 do
+                    local f = step / steps
+                    local x = math.floor(a[1] + dx * f + 0.5)
+                    local z = math.floor(a[2] + dz * f + 0.5)
+                    set_building_block(x, top_y + 1, z, ids.ashlar)
+                end
+            end
+        end
+    end
+
+    register_wall_windows(set_building_block, b, b.p, cfg,
+        ids.glass, ids.limestone_trim, ids.shutter, ids.door, ids)
 end
 
 ]=]
@@ -341,23 +410,14 @@ importer_source = replace_between(
     "-- 4b) Covered lanes and passages mapped by OSM are kept open beneath the houses.",
     building_renderer .. "-- 4b) Covered lanes and passages mapped by OSM are kept open beneath the houses."
 )
-importer_source = replace_once(importer_source, "set_block(x, floor_y, z, ids.floor)", "set_building_block(x, floor_y, z, ids.floor)")
-importer_source = replace_once(importer_source, "set_block(x, roof_y, z, b._roof_id)", "set_building_block(x, roof_y, z, b._roof_id)")
-importer_source = replace_once(importer_source, "set_block(x, y, z, wall_id)", "set_building_block(x, y, z, wall_id)")
-importer_source = replace_once(importer_source, "set_block(x, top_y, z, ids.limestone_trim)", "set_building_block(x, top_y, z, ids.limestone_trim)")
-importer_source = replace_once(importer_source, "set_block(x, floor_y + 2, z, ids.limestone_trim)", "set_building_block(x, floor_y + 2, z, ids.limestone_trim)")
-importer_source = replace_once(
-    importer_source,
-    "register_wall_windows(set_block, b, b.p, cfg, ids.glass, ids.limestone_trim, ids.shutter, ids.door)",
-    "register_wall_windows(set_building_block, b, b.p, cfg, ids.glass, ids.limestone_trim, ids.shutter, ids.door)"
-)
+-- The replacement building renderer uses set_building_block directly.
 local importer_chunk, importer_err = loader(importer_source, "@gdo_city/gis_import.lua")
 assert(importer_chunk, importer_err)
 _G.__gdo_city_gis_importer = importer_chunk()
 
 local renderer_source = minetest.decompress(read_file("renderer.deflate"), "deflate")
 assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
-renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 10")
+renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 11")
 renderer_source = replace_once(renderer_source, "local wall_ids, roof_ids = {}, {}", "    -- Architectural relief for medieval Languedoc facades.\n    register_node(\"gdo_city:timber_beam\", \"Poutre de chêne ancien\", atlas_tile(1, 0))\n    register_node(\"gdo_city:window_arch\", \"Claveau de fenêtre\", atlas_tile(3, 0))\n    register_node(\"gdo_city:chimney\", \"Souche de cheminée ancienne\", atlas_tile(0, 3), {\n        drawtype = \"nodebox\", node_box = {type = \"fixed\", fixed = {\n            {-0.28, -0.5, -0.28, 0.28, 0.5, 0.28},\n        }},\n    })\n    register_node(\"gdo_city:shop_awning\", \"Store de boutique\", atlas_tile(0, 2), {\n        drawtype = \"nodebox\", walkable = false,\n        node_box = {type = \"fixed\", fixed = {\n            {-0.5, -0.45, -0.52, 0.5, -0.31, 0.42},\n            {-0.5, -0.50, 0.38, 0.5, -0.43, 0.48},\n        }},\n    })\n    register_node(\"gdo_city:iron_balcony_ns\", \"Balcon en ferronnerie\", atlas_tile(2, 2), {\n        drawtype = \"nodebox\", walkable = false,\n        node_box = {type = \"fixed\", fixed = {\n            {-0.5, -0.48, -0.52, 0.5, -0.40, 0.52},\n            {-0.5, -0.40, -0.52, -0.44, 0.08, -0.45},\n            {0.44, -0.40, -0.52, 0.5, 0.08, -0.45},\n            {-0.5, 0.03, -0.52, 0.5, 0.08, -0.45},\n            {-0.28, -0.40, -0.52, -0.23, 0.05, -0.45},\n            {0.23, -0.40, -0.52, 0.28, 0.05, -0.45},\n        }},\n    })\n    register_node(\"gdo_city:iron_balcony_ew\", \"Balcon en ferronnerie latéral\", atlas_tile(2, 2), {\n        drawtype = \"nodebox\", walkable = false,\n        node_box = {type = \"fixed\", fixed = {\n            {-0.52, -0.48, -0.5, 0.52, -0.40, 0.5},\n            {-0.52, -0.40, -0.5, -0.45, 0.08, 0.5},\n            {-0.52, 0.03, -0.5, -0.45, 0.08, 0.5},\n            {-0.52, -0.40, -0.28, -0.45, 0.05, -0.23},\n            {-0.52, -0.40, 0.23, -0.45, 0.05, 0.28},\n        }},\n    })\nlocal wall_ids, roof_ids = {}, {}")
 renderer_source = replace_once(renderer_source, "shutter = cid(\"gdo_city:shutter\"), door = cid(\"gdo_city:wooden_door\"),", "shutter = cid(\"gdo_city:shutter\"), door = cid(\"gdo_city:wooden_door\"),\n        timber = cid(\"gdo_city:timber_beam\"), arch = cid(\"gdo_city:window_arch\"),\n        chimney = cid(\"gdo_city:chimney\"), awning = cid(\"gdo_city:shop_awning\"),\n        balcony_ns = cid(\"gdo_city:iron_balcony_ns\"), balcony_ew = cid(\"gdo_city:iron_balcony_ew\"),")
 local renderer_chunk, renderer_err = loader(renderer_source, "@gdo_city/renderer.lua")
