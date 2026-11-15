@@ -3,7 +3,7 @@
 -- Stair nodes are the project's two-tread nodebox; no full-cube support blocks.
 return function(A)
     local Z={}
-    Z.VERSION=1
+    Z.VERSION=2
     Z.bounds={x1=-15,x2=15,z1=27,z2=37}
     Z.rise=9
     Z.width=2
