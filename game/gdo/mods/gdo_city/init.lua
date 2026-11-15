@@ -48,6 +48,28 @@ _G.__gdo_city_embedded_core = minetest.parse_json(core_json)
 assert(_G.__gdo_city_embedded_core and _G.__gdo_city_embedded_core.buildings,
     "[GDO Sommières] Relevé géographique invalide.")
 
+-- Restore BD TOPO / OSM building metadata removed from the compact GIS core.
+local metadata_raw = minetest.decompress(
+    b64decode(read_file("data/sommieres_building_metadata.b64")), "deflate")
+assert(metadata_raw, "[GDO Sommières] Métadonnées des bâtiments invalides.")
+local building_metadata = minetest.parse_json(metadata_raw)
+assert(building_metadata, "[GDO Sommières] Métadonnées des bâtiments illisibles.")
+local metadata_matches = 0
+for _, b in ipairs(_G.__gdo_city_embedded_core.buildings) do
+    local key = string.format("%.1f|%.1f|%.1f|%.1f",
+        b.p[1][1], b.p[1][2], b.b, b.h)
+    local source = building_metadata[key]
+    if source then
+        b.t, b.n, b.hist, b.id = source[1], source[2], source[3], source[4]
+        metadata_matches = metadata_matches + 1
+    else
+        b.t = b.t or "yes"
+    end
+end
+minetest.log("action", string.format(
+    "[GDO][SOMMIERES] Métadonnées du ZIP restaurées : %d/%d bâtiments.",
+    metadata_matches, #_G.__gdo_city_embedded_core.buildings))
+
 local loader = loadstring or load
 local function replace_once(source, needle, replacement)
     local first, last = string.find(source, needle, 1, true)
