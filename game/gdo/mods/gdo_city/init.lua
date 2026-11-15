@@ -47,6 +47,30 @@ assert(core_json, "[GDO Sommières] Impossible de décompresser le relevé géog
 _G.__gdo_city_embedded_core = minetest.parse_json(core_json)
 assert(_G.__gdo_city_embedded_core and _G.__gdo_city_embedded_core.buildings,
     "[GDO Sommières] Relevé géographique invalide.")
+
+-- Optional full-resolution GIS package generated from the original Sommières 3D ZIP.
+-- The compact fallback is kept for installations that have not installed the full package.
+local full_gis_file = io.open(modpath .. "/data/sommieres_full_gis.b64", "rb")
+if full_gis_file then
+    local packed_full_gis = full_gis_file:read("*a")
+    full_gis_file:close()
+    local full_gis_raw = minetest.decompress(b64decode(packed_full_gis), "deflate")
+    assert(full_gis_raw, "[GDO Sommières] Archive SIG complète illisible.")
+    local full_gis = minetest.parse_json(full_gis_raw)
+    assert(full_gis and full_gis.buildings and full_gis.roads and full_gis.terrain
+        and full_gis.water and full_gis.nature and full_gis.pois,
+        "[GDO Sommières] Archive SIG complète incomplète.")
+    local core = _G.__gdo_city_embedded_core
+    for _, layer in ipairs({"buildings", "roads", "terrain", "water", "nature", "pois"}) do
+        core[layer] = full_gis[layer]
+    end
+    minetest.log("action", string.format(
+        "[GDO][SOMMIERES] SIG haute résolution chargé : %d bâtiments, %d routes, %d arbres, %d POI.",
+        #core.buildings, #core.roads, #(core.nature.trees or {}), #core.pois))
+else
+    minetest.log("warning",
+        "[GDO][SOMMIERES] SIG compact actif. Génère data/sommieres_full_gis.b64 depuis l'archive 3D pour retrouver les 4 500 bâtiments.")
+end
 -- Extended Vidourle corridor and matching IGN terrain crop from the Sommières 3D archive.
 local hydrology_raw = minetest.decompress(
     b64decode(read_file("data/sommieres_hydrology.b64")), "deflate")
@@ -55,7 +79,17 @@ local hydrology = minetest.parse_json(hydrology_raw)
 assert(hydrology and hydrology.terrain and hydrology.lines and hydrology.lines[1],
     "[GDO Sommières] Tracé du Vidourle ou terrain étendu manquant.")
 _G.__gdo_city_embedded_core.terrain_extension = hydrology.terrain
-_G.__gdo_city_embedded_core.water.lines = hydrology.lines
+local retained_water_lines = {}
+for _, line in ipairs((_G.__gdo_city_embedded_core.water and _G.__gdo_city_embedded_core.water.lines) or {}) do
+    if line.n ~= "Le Vidourle" then
+        retained_water_lines[#retained_water_lines + 1] = line
+    end
+end
+for _, line in ipairs(hydrology.lines) do
+    retained_water_lines[#retained_water_lines + 1] = line
+end
+_G.__gdo_city_embedded_core.water = _G.__gdo_city_embedded_core.water or {}
+_G.__gdo_city_embedded_core.water.lines = retained_water_lines
 minetest.log("action", string.format(
     "[GDO][SOMMIERES] Vidourle étendu : %d points ; DEM IGN %dx%d.",
     #hydrology.lines[1].p, hydrology.terrain.nx, hydrology.terrain.nz))
@@ -600,7 +634,7 @@ for _, b in ipairs(visible_buildings) do
     local kind = b.t or "yes"
     local seed = math.floor(math.abs((b.p[1][1] or 0) * 31 + (b.p[1][2] or 0) * 17 + (b.h or 0) * 13))
     local style = seed % 7
-    local bands = style == 1 or style == 4 or kind == "church" or kind == "temple"
+    local bands = false -- No artificial green string-courses on ordinary town facades.
     local timber = kind == "yes" and style == 6
     local fortified = kind == "tower" or kind == "castle" or kind == "city_gate"
     local rings = {b.p}
@@ -798,7 +832,7 @@ _G.__gdo_city_gis_importer = importer_chunk()
 
 local renderer_source = minetest.decompress(read_file("renderer.deflate"), "deflate")
 assert(renderer_source, "[GDO Sommières] Renderer GIS compressé invalide.")
-renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 15")
+renderer_source = replace_once(renderer_source, "local VERSION = 6", "local VERSION = 16")
 renderer_source = replace_once(renderer_source,
     "local importer = assert(_G.__gdo_city_gis_importer, \"[GDO Sommières] Importeur SIG absent.\")",
     "local function emerge_river_corridor(y_min, y_max, callback)\n    local tile_size, margin = 32, 40\n    local tiles, seen = {}, {}\n    for _, line in ipairs((data.water and data.water.lines) or {}) do\n        if line.n == \"Le Vidourle\" and line.p and #line.p > 1 then\n            for i = 1, #line.p - 1 do\n                local a, b = line.p[i], line.p[i + 1]\n                local x1 = math.floor((math.min(a[1], b[1]) - margin) / tile_size) * tile_size\n                local x2 = math.floor((math.max(a[1], b[1]) + margin) / tile_size) * tile_size\n                local z1 = math.floor((math.min(a[2], b[2]) - margin) / tile_size) * tile_size\n                local z2 = math.floor((math.max(a[2], b[2]) + margin) / tile_size) * tile_size\n                for z = z1, z2, tile_size do\n                    for x = x1, x2, tile_size do\n                        local key = x .. \":\" .. z\n                        if not seen[key] then\n                            seen[key] = true\n                            tiles[#tiles + 1] = {x, z}\n                        end\n                    end\n                end\n            end\n        end\n    end\n\n    if #tiles == 0 then callback(false); return end\n    local pending, failed = #tiles, false\n    for _, tile in ipairs(tiles) do\n        minetest.emerge_area(\n            {x = world_x(tile[1]), y = y_min, z = world_z(tile[2])},\n            {x = world_x(tile[1] + tile_size - 1), y = y_max, z = world_z(tile[2] + tile_size - 1)},\n            function(_, action, remaining)\n                if action == minetest.EMERGE_ERRORED or action == minetest.EMERGE_CANCELLED then\n                    failed = true\n                end\n                if remaining == 0 then\n                    pending = pending - 1\n                    if pending == 0 then callback(failed) end\n                end\n            end\n        )\n    end\nend\n\nlocal importer = assert(_G.__gdo_city_gis_importer, \"[GDO Sommières] Importeur SIG absent.\")"
