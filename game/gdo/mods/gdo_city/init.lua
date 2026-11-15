@@ -1379,6 +1379,58 @@ renderer_chunk()
 _G.__gdo_city_gis_importer = nil
 _G.__gdo_city_embedded_core = nil
 
+-- New characters arrive in the old-town market square, not at the castle.
+-- The legacy Sommières plan places Place du Marché around (77, 808).
+_G.gdo_city = _G.gdo_city or {}
+local function find_town_spawn_surface()
+    local target_x, target_z = 77, 808
+    local best, best_score
+    for radius = 0, 10 do
+        for dx = -radius, radius do
+            for dz = -radius, radius do
+                if math.max(math.abs(dx), math.abs(dz)) == radius then
+                    local x, z = target_x + dx, target_z + dz
+                    for y = 128, -32, -1 do
+                        local node = minetest.get_node_or_nil({x=x, y=y, z=z})
+                        if node and node.name ~= "air" and node.name ~= "ignore" then
+                            local def = minetest.registered_nodes[node.name]
+                            local above = minetest.get_node_or_nil({x=x, y=y+1, z=z})
+                            local above2 = minetest.get_node_or_nil({x=x, y=y+2, z=z})
+                            if def and def.walkable and (not def.liquidtype or def.liquidtype == "none")
+                                and above and above.name == "air" and above2 and above2.name == "air" then
+                                local name = node.name:lower()
+                                local road_bonus = (name:find("road",1,true) or name:find("paving",1,true)
+                                    or name:find("path",1,true)) and -100 or 0
+                                local score = math.abs(dx) + math.abs(dz) + road_bonus
+                                if not best_score or score < best_score then
+                                    best = {x=x, y=y+1, z=z}
+                                    best_score = score
+                                end
+                                break
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        if best and best_score <= radius then break end
+    end
+    return best
+end
+
+function _G.gdo_city.spawn(player)
+    if not player or not player:is_player() then return false end
+    local pos = find_town_spawn_surface()
+    if not pos then
+        minetest.log("warning", "[GDO Sommières] Surface de départ introuvable près de la place du Marché.")
+        return false
+    end
+    player:set_pos(pos)
+    if player.set_velocity then player:set_velocity({x=0,y=0,z=0}) end
+    return true
+end
+
+
 -- Enable the native Luanti minimap for the city. The client must support it
 -- and must not have disabled minimap rendering in its own settings.
 local function enable_city_minimap(player)
