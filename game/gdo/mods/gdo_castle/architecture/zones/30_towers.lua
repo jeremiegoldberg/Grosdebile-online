@@ -2,7 +2,7 @@
 -- Their wall-walk entrances align with the zone 10 parapet at base_y + 10.
 return function(A)
     local Z={}
-    Z.VERSION=1
+    Z.VERSION=2
     Z.bounds={x1=-44,x2=44,z1=-46,z2=44}
     Z.height=21
 
