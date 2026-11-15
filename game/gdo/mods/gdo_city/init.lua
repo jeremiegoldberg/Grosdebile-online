@@ -285,8 +285,7 @@ for _, b in ipairs(visible_buildings) do
             end
         end
     end
-    register_wall_windows(set_block, b, b.p, cfg,
-        ids.glass, ids.limestone_trim, ids.shutter, ids.door)
+    register_wall_windows(set_block, b, b.p, cfg, ids.glass, ids.limestone_trim, ids.shutter, ids.door)
 end
 
 ]=]
