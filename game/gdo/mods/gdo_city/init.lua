@@ -409,9 +409,9 @@ local function register_wall_windows(set_block, b, ring, cfg, glass_id, sill_id,
         and kind ~= "kindergarten" and kind ~= "office" and kind ~= "service"
     local spacing = historic and 5.2 or 7.0
     local floor_step, first_level, window_height = historic and 3 or 4, 3, 2
-    local use_balcony = historic and (b.h or 0) >= 10
+    local use_balcony = false
     local use_shutters = historic or kind == "detached" or kind == "farm"
-    local use_awning = historic and kind == "retail"
+    local use_awning = false
     local floor_y, top_y = b._base_y, b._top_y
 
     -- Choose the frontage closest to a surveyed street; skip party walls
