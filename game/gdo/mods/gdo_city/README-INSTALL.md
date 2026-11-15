@@ -23,7 +23,7 @@ Si le paquet n'est pas présent, le jeu démarre sur le noyau compact et signale
 
 ## Mise à jour
 
-**Sauvegarde le monde avant la mise à jour.** La version 16 reconstruit l'emprise de Sommières afin d'appliquer les nouvelles géométries.
+**Sauvegarde le monde avant la mise à jour.** La version 17 reconstruit l'emprise de Sommières afin d'appliquer les nouvelles géométries. Les arbres dont le tronc ou la couronne empiète sur une route, un chemin ou un pont sont automatiquement exclus du placement.
 
 Commandes : `/gdo_city`, `/gdo_castle`, `/gdo_city_info`, `/gdo_city_rebuild`.
 
