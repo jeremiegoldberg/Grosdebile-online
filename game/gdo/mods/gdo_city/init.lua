@@ -113,10 +113,46 @@ importer_source = replace_once(
 )
 
 -- Add small 32m map tiles touched by the river line; no large rectangular extension.
-local base_tile_loop = "    for z0 = tz0, tz1 - 1, tile do\n        for x0 = tx0, tx1 - 1, tile do\n            tiles[#tiles + 1] = {x0, math.min(x0 + tile - 1, math.ceil(x2)), z0, math.min(z0 + tile - 1, math.ceil(z2))}\n        end\n    end"
-local extended_tile_loop = base_tile_loop .. "\n\n    local tile_seen = {}\n    for _, td in ipairs(tiles) do tile_seen[td[1] .. \\":\\" .. td[3]] = true end\n    for _, line in ipairs((data.water and data.water.lines) or {}) do\n        if line.n == \\"Le Vidourle\\" and line.p and #line.p > 1 then\n            local margin = (line.w or 14) / 2 + 8\n            for i = 1, #line.p - 1 do\n                local a, b = line.p[i], line.p[i + 1]\n                local gx1 = math.max(data.terrain_extension.xmin, math.min(a[1], b[1]) - margin)\n                local gx2 = math.min(data.terrain_extension.xmax, math.max(a[1], b[1]) + margin)\n                local gz1 = math.max(data.terrain_extension.zmin, math.min(a[2], b[2]) - margin)\n                local gz2 = math.min(data.terrain_extension.zmax, math.max(a[2], b[2]) + margin)\n                if gx1 <= gx2 and gz1 <= gz2 then\n                    local x0, xlast = math.floor(gx1 / tile) * tile, math.floor(gx2 / tile) * tile\n                    local z0, zlast = math.floor(gz1 / tile) * tile, math.floor(gz2 / tile) * tile\n                    for tz = z0, zlast, tile do\n                        for tx = x0, xlast, tile do\n                            local key = tx .. \\":\\" .. tz\n                            if not tile_seen[key] then\n                                tiles[#tiles + 1] = {tx, tx + tile - 1, tz, tz + tile - 1}\n                                tile_seen[key] = true\n                            end\n                        end\n                    end\n                end\n            end\n        end\n    end"
-importer_source = replace_once(importer_source, base_tile_loop, extended_tile_loop)
+local base_tile_loop = [=[    for z0 = tz0, tz1 - 1, tile do
+        for x0 = tx0, tx1 - 1, tile do
+            tiles[#tiles + 1] = {x0, math.min(x0 + tile - 1, math.ceil(x2)), z0, math.min(z0 + tile - 1, math.ceil(z2))}
+        end
+    end]=]
+local extended_tile_loop = [=[    for z0 = tz0, tz1 - 1, tile do
+        for x0 = tx0, tx1 - 1, tile do
+            tiles[#tiles + 1] = {x0, math.min(x0 + tile - 1, math.ceil(x2)), z0, math.min(z0 + tile - 1, math.ceil(z2))}
+        end
+    end
 
+    -- Add only narrow 32m tiles intersecting the surveyed river corridor.
+    local tile_seen = {}
+    for _, td in ipairs(tiles) do tile_seen[td[1] .. ":" .. td[3]] = true end
+    for _, line in ipairs((data.water and data.water.lines) or {}) do
+        if line.n == "Le Vidourle" and line.p and #line.p > 1 then
+            local margin = (line.w or 14) / 2 + 8
+            for i = 1, #line.p - 1 do
+                local a, b = line.p[i], line.p[i + 1]
+                local gx1 = math.max(data.terrain_extension.xmin, math.min(a[1], b[1]) - margin)
+                local gx2 = math.min(data.terrain_extension.xmax, math.max(a[1], b[1]) + margin)
+                local gz1 = math.max(data.terrain_extension.zmin, math.min(a[2], b[2]) - margin)
+                local gz2 = math.min(data.terrain_extension.zmax, math.max(a[2], b[2]) + margin)
+                if gx1 <= gx2 and gz1 <= gz2 then
+                    local x0, xlast = math.floor(gx1 / tile) * tile, math.floor(gx2 / tile) * tile
+                    local z0, zlast = math.floor(gz1 / tile) * tile, math.floor(gz2 / tile) * tile
+                    for tz = z0, zlast, tile do
+                        for tx = x0, xlast, tile do
+                            local key = tx .. ":" .. tz
+                            if not tile_seen[key] then
+                                tiles[#tiles + 1] = {tx, tx + tile - 1, tz, tz + tile - 1}
+                                tile_seen[key] = true
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end]=]
+importer_source = replace_once(importer_source, base_tile_loop, extended_tile_loop)
 -- Water follows the surveyed river centerline and elevations; adjoining banks become gravel shelves.
 local road_marker = "-- 3) Street and square surfaces. Elevation values come from the GIS road centre-lines."
 local river_layer = [=[
@@ -170,8 +206,9 @@ importer_source = replace_once(importer_source, road_marker, river_layer .. road
 -- Pont Tibère uses dressed stone rather than an asphalt road surface.
 importer_source = replace_once(
     importer_source,
-    "if r.sf == \\"asphalt\\" then surface_id = ids.road_asphalt",
-    "if is_bridge and r.n == \\"Pont Tibère\\" then surface_id = ids.road_stone\n                elseif r.sf == \\"asphalt\\" then surface_id = ids.road_asphalt"
+    [=[if r.sf == "asphalt" then surface_id = ids.road_asphalt]=],
+    [=[if is_bridge and r.n == "Pont Tibère" then surface_id = ids.road_stone
+                elseif r.sf == "asphalt" then surface_id = ids.road_asphalt]=]
 )
 
 -- Rebuild the Roman bridge as a sequence of open arches, piers and pointed cutwaters.
